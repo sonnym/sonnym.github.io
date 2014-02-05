@@ -1,0 +1,12 @@
+markdown: redcarpet
+pygments: true
+
+permalink: pretty
+
+title: effluence
+url: http://sonnym.github.io/
+
+paginate: 5
+
+safe: true
+lsi: false
