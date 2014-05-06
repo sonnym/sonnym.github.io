@@ -1,0 +1,171 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="UTF-8"><title>680ae988e3c9aca1da9544529da1a7fe</title><script type="text/javascript" src="/javascripts"></script><script type="text/javascript">Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
+   "use strict";
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values)
+   return _elm.Main.values;
+   var _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   _E = _N.Error.make(_elm),
+   $moduleName = "Main";
+   var Array = Elm.Array.make(_elm);
+   var Basics = Elm.Basics.make(_elm);
+   var Color = Elm.Color.make(_elm);
+   var Graphics = Graphics || {};
+   Graphics.Collage = Elm.Graphics.Collage.make(_elm);
+   var Graphics = Graphics || {};
+   Graphics.Element = Elm.Graphics.Element.make(_elm);
+   var List = Elm.List.make(_elm);
+   var Maybe = Elm.Maybe.make(_elm);
+   var Native = Native || {};
+   Native.Json = Elm.Native.Json.make(_elm);
+   var Native = Native || {};
+   Native.Ports = Elm.Native.Ports.make(_elm);
+   var Random = Elm.Random.make(_elm);
+   var Signal = Elm.Signal.make(_elm);
+   var String = Elm.String.make(_elm);
+   var Text = Elm.Text.make(_elm);
+   var Time = Elm.Time.make(_elm);
+   var _op = {};
+   var groupInto = F2(function (groups,
+   initial) {
+      return function () {
+         var len = List.length(initial);
+         var n = A2(Basics.div,
+         len,
+         groups);
+         return _U.eq(len,
+         0) ? _L.fromArray([]) : {ctor: "::"
+                                 ,_0: A2(List.take,n,initial)
+                                 ,_1: A2(groupInto,
+                                 groups - 1,
+                                 A2(List.drop,n,initial))};
+      }();
+   });
+   var generateRow = function (seeds) {
+      return A2(List.map,
+      function (n) {
+         return _U.cmp(n,0.5) > 0;
+      },
+      seeds);
+   };
+   var $ = {ctor: "_Tuple2"
+           ,_0: 35
+           ,_1: 35},
+   columns = $._0,
+   rows = $._1;
+   var generateGrid = function (seeds) {
+      return A2(List.map,
+      generateRow,
+      A2(groupInto,rows,seeds));
+   };
+   var seed = Signal.lift(generateGrid)(Random.floatList(Signal.constant(columns * rows)));
+   var descend = F3(function (generation,
+   x,
+   y) {
+      return function (l) {
+         return A2(Array.getOrFail,
+         x,
+         A2(Array.getOrFail,
+         y,
+         generation)) && (_U.cmp(l,
+         1) > 0 && _U.cmp(l,
+         4) < 0) || _U.eq(l,3);
+      }(List.length(List.filter(function (p) {
+         return _U.eq(A2(Array.getOrFail,
+         Basics.fst(p),
+         A2(Array.getOrFail,
+         Basics.snd(p),
+         generation)),
+         true);
+      })(List.filter(function (p) {
+         return _U.cmp(Basics.fst(p),
+         -1) > 0 && (_U.cmp(Basics.fst(p),
+         columns) < 0 && (_U.cmp(Basics.snd(p),
+         -1) > 0 && (_U.cmp(Basics.snd(p),
+         rows) < 0 && Basics.not(_U.eq(Basics.fst(p),
+         x) && _U.eq(Basics.snd(p),
+         y)))));
+      })(A2(List.concatMap,
+      function (n) {
+         return A2(List.map,
+         function (m) {
+            return {ctor: "_Tuple2"
+                   ,_0: x + n
+                   ,_1: y + m};
+         },
+         _L.fromArray([-1,0,1]));
+      },
+      _L.fromArray([-1,0,1]))))));
+   });
+   var evolve = function (grid) {
+      return function () {
+         var generation = Array.fromList(A2(List.map,
+         Array.fromList,
+         grid));
+         return List.map(Array.toList)(Array.toList(Array.indexedMap(F2(function (y,
+         row) {
+            return A2(Array.indexedMap,
+            F2(function (x,_v0) {
+               return function () {
+                  return A3(descend,
+                  generation,
+                  x,
+                  y);
+               }();
+            }),
+            row);
+         }))(generation)));
+      }();
+   };
+   var step = F2(function (current,
+   past) {
+      return List.isEmpty(List.head(past)) ? current : evolve(past);
+   });
+   var cellSize = 5;
+   var renderCell = function (on) {
+      return Graphics.Element.color(on ? A3(Color.rgb,
+      0,
+      0,
+      0) : A3(Color.rgb,
+      255,
+      255,
+      255))(A2(Graphics.Element.spacer,
+      cellSize,
+      cellSize));
+   };
+   var renderRow = function (row) {
+      return A2(List.map,
+      renderCell,
+      row);
+   };
+   var renderGrid = function (grid) {
+      return A3(Graphics.Element.container,
+      cellSize * columns,
+      cellSize * rows,
+      Graphics.Element.topLeft)(Graphics.Element.flow(Graphics.Element.down)(List.map(Graphics.Element.flow(Graphics.Element.right))(List.map(renderRow)(grid))));
+   };
+   var main = Signal.lift(renderGrid)(A2(Signal.foldp,
+   step,
+   _L.fromArray([_L.fromArray([])]))(A2(Signal.sampleOn,
+   Time.every(Time.second),
+   seed)));
+   _elm.Main.values = {_op: _op
+                      ,cellSize: cellSize
+                      ,columns: columns
+                      ,rows: rows
+                      ,main: main
+                      ,seed: seed
+                      ,step: step
+                      ,generateGrid: generateGrid
+                      ,generateRow: generateRow
+                      ,evolve: evolve
+                      ,descend: descend
+                      ,renderGrid: renderGrid
+                      ,renderRow: renderRow
+                      ,renderCell: renderCell
+                      ,groupInto: groupInto};
+   return _elm.Main.values;
+};</script></head><body><script type="text/javascript">Elm.fullscreen(Elm.Main)</script><noscript></noscript></body></html>

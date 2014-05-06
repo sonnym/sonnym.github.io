@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="UTF-8"><title>efcf301d2f6c1be9c23d065bab9967d7</title><script type="text/javascript" src="/javascripts"></script><script type="text/javascript">Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
+   "use strict";
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values)
+   return _elm.Main.values;
+   var _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   _E = _N.Error.make(_elm),
+   $moduleName = "Main";
+   var Basics = Elm.Basics.make(_elm);
+   var Color = Elm.Color.make(_elm);
+   var Graphics = Graphics || {};
+   Graphics.Collage = Elm.Graphics.Collage.make(_elm);
+   var Graphics = Graphics || {};
+   Graphics.Element = Elm.Graphics.Element.make(_elm);
+   var List = Elm.List.make(_elm);
+   var Maybe = Elm.Maybe.make(_elm);
+   var Native = Native || {};
+   Native.Json = Elm.Native.Json.make(_elm);
+   var Native = Native || {};
+   Native.Ports = Elm.Native.Ports.make(_elm);
+   var Signal = Elm.Signal.make(_elm);
+   var String = Elm.String.make(_elm);
+   var Text = Elm.Text.make(_elm);
+   var Time = Elm.Time.make(_elm);
+   var _op = {};
+   var $ = {ctor: "_Tuple2"
+           ,_0: 35
+           ,_1: 35},
+   columns = $._0,
+   rows = $._1;
+   var generateGrid = A2(List.repeat,
+   rows,
+   A2(List.repeat,columns,true));
+   var cellSize = 5;
+   var renderCell = function (on) {
+      return Graphics.Element.color(on ? A3(Color.rgb,
+      0,
+      0,
+      0) : A3(Color.rgb,
+      255,
+      255,
+      255))(A2(Graphics.Element.spacer,
+      cellSize,
+      cellSize));
+   };
+   var renderRow = function (row) {
+      return A2(List.map,
+      renderCell,
+      row);
+   };
+   var renderGrid = function (grid) {
+      return A3(Graphics.Element.container,
+      cellSize * columns,
+      cellSize * rows,
+      Graphics.Element.topLeft)(Graphics.Element.flow(Graphics.Element.down)(List.map(Graphics.Element.flow(Graphics.Element.right))(List.map(renderRow)(grid))));
+   };
+   var main = renderGrid(generateGrid);
+   _elm.Main.values = {_op: _op
+                      ,cellSize: cellSize
+                      ,columns: columns
+                      ,rows: rows
+                      ,main: main
+                      ,generateGrid: generateGrid
+                      ,renderGrid: renderGrid
+                      ,renderRow: renderRow
+                      ,renderCell: renderCell};
+   return _elm.Main.values;
+};</script></head><body><script type="text/javascript">Elm.fullscreen(Elm.Main)</script><noscript></noscript></body></html>

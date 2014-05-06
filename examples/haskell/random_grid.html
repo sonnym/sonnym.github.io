@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="UTF-8"><title>9a09544c32eb7b72f7ec3e12884f1f85</title><script type="text/javascript" src="/javascripts"></script><script type="text/javascript">Elm.Main = Elm.Main || {};
+Elm.Main.make = function (_elm) {
+   "use strict";
+   _elm.Main = _elm.Main || {};
+   if (_elm.Main.values)
+   return _elm.Main.values;
+   var _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   _E = _N.Error.make(_elm),
+   $moduleName = "Main";
+   var Basics = Elm.Basics.make(_elm);
+   var Color = Elm.Color.make(_elm);
+   var Graphics = Graphics || {};
+   Graphics.Collage = Elm.Graphics.Collage.make(_elm);
+   var Graphics = Graphics || {};
+   Graphics.Element = Elm.Graphics.Element.make(_elm);
+   var List = Elm.List.make(_elm);
+   var Maybe = Elm.Maybe.make(_elm);
+   var Native = Native || {};
+   Native.Json = Elm.Native.Json.make(_elm);
+   var Native = Native || {};
+   Native.Ports = Elm.Native.Ports.make(_elm);
+   var Random = Elm.Random.make(_elm);
+   var Signal = Elm.Signal.make(_elm);
+   var String = Elm.String.make(_elm);
+   var Text = Elm.Text.make(_elm);
+   var Time = Elm.Time.make(_elm);
+   var _op = {};
+   var groupInto = F2(function (groups,
+   initial) {
+      return function () {
+         var len = List.length(initial);
+         var n = A2(Basics.div,
+         len,
+         groups);
+         return _U.eq(len,
+         0) ? _L.fromArray([]) : {ctor: "::"
+                                 ,_0: A2(List.take,n,initial)
+                                 ,_1: A2(groupInto,
+                                 groups - 1,
+                                 A2(List.drop,n,initial))};
+      }();
+   });
+   var generateRow = function (seeds) {
+      return A2(List.map,
+      function (n) {
+         return _U.cmp(n,0.5) > 0;
+      },
+      seeds);
+   };
+   var $ = {ctor: "_Tuple2"
+           ,_0: 35
+           ,_1: 35},
+   columns = $._0,
+   rows = $._1;
+   var generateGrid = function (seeds) {
+      return A2(List.map,
+      generateRow,
+      A2(groupInto,rows,seeds));
+   };
+   var seed = Signal.lift(generateGrid)(Random.floatList(Signal.constant(columns * rows)));
+   var cellSize = 5;
+   var renderCell = function (on) {
+      return Graphics.Element.color(on ? A3(Color.rgb,
+      0,
+      0,
+      0) : A3(Color.rgb,
+      255,
+      255,
+      255))(A2(Graphics.Element.spacer,
+      cellSize,
+      cellSize));
+   };
+   var renderRow = function (row) {
+      return A2(List.map,
+      renderCell,
+      row);
+   };
+   var renderGrid = function (grid) {
+      return A3(Graphics.Element.container,
+      cellSize * columns,
+      cellSize * rows,
+      Graphics.Element.topLeft)(Graphics.Element.flow(Graphics.Element.down)(List.map(Graphics.Element.flow(Graphics.Element.right))(List.map(renderRow)(grid))));
+   };
+   var main = A2(Signal.lift,
+   renderGrid,
+   seed);
+   _elm.Main.values = {_op: _op
+                      ,cellSize: cellSize
+                      ,columns: columns
+                      ,rows: rows
+                      ,main: main
+                      ,seed: seed
+                      ,generateGrid: generateGrid
+                      ,generateRow: generateRow
+                      ,renderGrid: renderGrid
+                      ,renderRow: renderRow
+                      ,renderCell: renderCell
+                      ,groupInto: groupInto};
+   return _elm.Main.values;
+};</script></head><body><script type="text/javascript">Elm.fullscreen(Elm.Main)</script><noscript></noscript></body></html>
