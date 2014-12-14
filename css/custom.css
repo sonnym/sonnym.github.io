@@ -14,7 +14,7 @@ div.content {
 }
 
 .contributions img {
-  margin: 5px;
+  margin: 20px 5px;
   float: left;
 }
 
@@ -26,4 +26,8 @@ div.content {
 iframe {
   width: 200px;
   height: 200px;
+}
+
+.clearfix {
+  clear: both
 }
