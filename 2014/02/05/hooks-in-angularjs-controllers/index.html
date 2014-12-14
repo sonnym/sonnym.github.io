@@ -42,7 +42,6 @@
       
 
       
-      
         
       
         
@@ -103,7 +102,7 @@ invalid if none is provided.</p>
 
 <p>What remains is, simply, to make it work.</p>
 
-<div class="highlight"><pre><code class="html"><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;HookExample&quot;</span><span class="nt">&gt;</span>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;HookExample&quot;</span><span class="nt">&gt;</span>
   <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;FormPageCtrl&quot;</span><span class="nt">&gt;</span>
     <span class="nt">&lt;p&gt;</span>Please enter some text below.<span class="nt">&lt;/p&gt;</span>
 
@@ -119,7 +118,7 @@ invalid if none is provided.</p>
   <span class="nt">&lt;/div&gt;</span>
 <span class="nt">&lt;/body&gt;</span></code></pre></div>
 
-<div class="highlight"><pre><code class="javascript"><span class="kd">var</span> <span class="nx">HookExample</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;HookExample&quot;</span><span class="p">,</span> <span class="p">[]);</span>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">HookExample</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;HookExample&quot;</span><span class="p">,</span> <span class="p">[]);</span>
 
 <span class="nx">HookExample</span><span class="p">.</span><span class="nx">controller</span><span class="p">(</span><span class="s2">&quot;FormPageCtrl&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$scope</span><span class="p">,</span> <span class="nx">RegisterHook</span><span class="p">)</span> <span class="p">{</span>
   <span class="nx">$scope</span><span class="p">.</span><span class="nx">showResults</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
@@ -156,7 +155,7 @@ the scope, we can give ask if any controller nested within the heirarchy wishes
 to respond to the hook, thereby influincing the life cycle of our parent
 controller.</p>
 
-<div class="highlight"><pre><code class="javascript"><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
   <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">scope</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
     <span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="p">[];</span>
 

@@ -42,7 +42,6 @@
       
 
       
-      
         
       
         
@@ -129,37 +128,48 @@ solid base and build on top of it. This first example will simply a grid of a
 predetermined size. It has support for cells being turned on and off, but they
 are all on to begin with.</p>
 
-<p><h4>static_grid.elm</h4><h5>Source</h5>
-<div class="highlight"><pre><code class="haskell"><span class="nf">cellSize</span> <span class="ow">=</span> <span class="mi">5</span>
-<span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span></p>
+<h4>static_grid.elm</h4>
 
-<p><span class="nf">main</span> <span class="kt">:</span> <span class="kt">Element</span>
-<span class="nf">main</span> <span class="ow">=</span> <span class="n">renderGrid</span> <span class="n">generateGrid</span></p>
+<h5>Source</h5>
 
-<p><span class="nf">generateGrid</span> <span class="kt">:</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">generateGrid</span> <span class="ow">=</span> <span class="n">repeat</span> <span class="n">rows</span> <span class="p">(</span><span class="n">repeat</span> <span class="n">columns</span> <span class="kt">True</span><span class="p">)</span></p>
+<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">List</span>
 
-<p><span class="nf">renderGrid</span> <span class="kt">:</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span> <span class="ow">-&gt;</span> <span class="kt">Element</span>
-<span class="nf">renderGrid</span> <span class="n">grid</span> <span class="ow">=</span>
-  <span class="n">grid</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="n">renderRow</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="p">(</span><span class="n">flow</span> <span class="n">right</span><span class="p">)</span>
-    <span class="o">|&gt;</span> <span class="n">flow</span> <span class="n">down</span>
-    <span class="o">|&gt;</span> <span class="n">container</span> <span class="p">(</span><span class="n">cellSize</span> <span class="o"><em></span> <span class="n">columns</span><span class="p">)</span> <span class="p">(</span><span class="n">cellSize</span> <span class="o"></em></span> <span class="n">rows</span><span class="p">)</span> <span class="n">topLeft</span></p>
+<span class="kn">import </span><span class="nc">Color</span> <span class="p">(</span><span class="nv">rgb</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Graphics.Element</span> <span class="p">(</span><span class="kt">Element</span><span class="p">,</span> <span class="nv">flow</span><span class="p">,</span> <span class="nv">right</span><span class="p">,</span> <span class="nv">down</span><span class="p">,</span> <span class="nv">container</span><span class="p">,</span> <span class="nv">topLeft</span><span class="p">,</span> <span class="nv">spacer</span><span class="p">,</span> <span class="nv">color</span><span class="p">)</span>
 
-<p><span class="nf">renderRow</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Bool</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="kt">Element</span><span class="p">]</span>
-<span class="nf">renderRow</span> <span class="n">row</span> <span class="ow">=</span> <span class="n">map</span> <span class="n">renderCell</span> <span class="n">row</span></p>
+<span class="nv">cellSize</span> <span class="nf">=</span> <span class="mi">5</span>
+<span class="p">(</span><span class="nv">columns</span><span class="p">,</span> <span class="nv">rows</span><span class="p">)</span> <span class="nf">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span>
 
-<p><span class="nf">renderCell</span> <span class="kt">:</span> <span class="kt">Bool</span> <span class="ow">-&gt;</span> <span class="kt">Element</span>
-<span class="nf">renderCell</span> <span class="n">on</span> <span class="ow">=</span>
-  <span class="n">spacer</span> <span class="n">cellSize</span> <span class="n">cellSize</span>
-    <span class="o">|&gt;</span> <span class="n">color</span> <span class="p">(</span><span class="kr">if</span> <span class="n">on</span> <span class="kr">then</span> <span class="p">(</span><span class="n">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="n">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></code></pre></div>
-<h5>Result</h5><iframe src="/examples/haskell/static_grid.html" frameBorder="0"></iframe></p>
+<span class="kr">main </span><span class="nf">:</span> <span class="kt">Element</span>
+<span class="kr">main </span><span class="nf">=</span> <span class="nv">renderGrid</span> <span class="nv">generateGrid</span>
+
+<span class="nv">generateGrid</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">generateGrid</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">repeat</span> <span class="nv">rows</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">repeat</span> <span class="nv">columns</span> <span class="kt">True</span><span class="p">)</span>
+
+<span class="nv">renderGrid</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">renderGrid</span> <span class="nv">grid</span> <span class="nf">=</span>
+  <span class="nv">grid</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderRow</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nv">flow</span> <span class="nv">right</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="nv">flow</span> <span class="nv">down</span>
+    <span class="nf">|&gt;</span> <span class="nv">container</span> <span class="p">(</span><span class="nv">cellSize</span> <span class="nf">*</span> <span class="nv">columns</span><span class="p">)</span> <span class="p">(</span><span class="nv">cellSize</span> <span class="nf">*</span> <span class="nv">rows</span><span class="p">)</span> <span class="nv">topLeft</span>
+
+<span class="nv">renderRow</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="kt">Element</span>
+<span class="nv">renderRow</span> <span class="nv">row</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderCell</span> <span class="nv">row</span>
+
+<span class="nv">renderCell</span> <span class="nf">:</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">renderCell</span> <span class="nv">on</span> <span class="nf">=</span>
+  <span class="nv">spacer</span> <span class="nv">cellSize</span> <span class="nv">cellSize</span>
+    <span class="nf">|&gt;</span> <span class="nv">color</span> <span class="p">(</span><span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></code></pre></div>
+
+<h5>Result</h5>
+
+<iframe src="/examples/elm/static_grid.html" frameBorder="0"></iframe>
 
 <p>The crux of this program is that we want to turn a nested list of boolean
-values (<code>[[Bool]]</code>) into an <code>Element</code>, one of two possible types for the <code>main</code>
-function in an Elm program. We use the <code>Element</code> API to achieve thise in a few
-steps.</p>
+values (<code>List (List Bool)</code>) into an <code>Element</code>, one of two possible types for
+the <code>main</code> function in an Elm program. We use the <code>Element</code> API to achieve this
+in a few steps.</p>
 
 <p>This first example is, beyond those points, only really interesting
 syntactically. It should feel somewhat familiar to anyone who has worked with
@@ -176,11 +186,11 @@ functions, all of which are a <code>Signal</code>. This means that, we can no lo
 concerned with simply taking one value and mutating it into another, but
 instead, with taking a signal and converting it into another signal. The <code>main</code>
 function can also be of the type <code>Signal Element</code>, which, in a sense, becomes
-the goal of our program - we have an input of type <code>Signal [Float]</code> we will be
-taking from <code>Random.floatList</code>, and we want to convert it into a
+the goal of our program - we have an input of type <code>Signal (List Int)</code> we
+will be taking from <code>Random.list</code>, and we want to convert it into a
 <code>Signal Element</code> that Elm can consume.</p>
 
-<p>Herein lies a core concept - that of <code>lift</code>ing a signal. The <code>lift</code> function
+<p>Herein lies a core concept - that of <code>map</code>ing a signal. The <code>map</code> function
 has the type <code>(a -&gt; b) -&gt; Signal a -&gt; Signal b</code>; it takes a function from type
 <code>a</code> to type <code>b</code> and a signal of type <code>a</code> and returns a signal of type <code>b</code>. This
 function is the primay means by which signals are converted from one type to
@@ -192,59 +202,77 @@ very few steps. These are as follows:</p>
 
 <ol>
 <li>Change the type of <code>main</code> from <code>Element</code> to <code>Signal Element</code>.</li>
-<li>Write a <code>seed</code> function of type <code>Siganl [[Bool]]</code></li>
-<li>Change <code>generateGrid</code> from <code>[[Bool]]</code> to <code>[Float] -&gt; [[Bool]]</code></li>
-<li><code>lift</code> our <code>seed</code> function through our existing <code>renderGrid</code> function.</li>
+<li>Write an <code>initialSeed</code> function of type <code>Siganl Random.Seed</code></li>
+<li>Write a <code>seededGrid</code> function of type <code>Random.Seed -&gt; List (List Bool)</code></li>
+<li>Change <code>generateGrid</code> from <code>List (List Bool)</code> to <code>List Int -&gt; List (List Bool)</code></li>
+<li><code>map</code> our <code>seededGrid</code> function through our existing <code>renderGrid</code> function.</li>
 </ol>
 
-<p><h4>random_grid.elm</h4><h5>Source</h5>
-<div class="highlight"><pre><code class="haskell"><span class="kr">import</span> <span class="nn">Random</span></p>
+<h4>random_grid.elm</h4>
 
-<p><span class="nf">cellSize</span> <span class="ow">=</span> <span class="mi">5</span>
-<span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span></p>
+<h5>Source</h5>
 
-<p><span class="nf">main</span> <span class="kt">:</span> <span class="kt">Signal</span> <span class="kt">Element</span>
-<span class="nf">main</span> <span class="ow">=</span> <span class="n">lift</span> <span class="n">renderGrid</span> <span class="n">seed</span></p>
+<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">Signal</span> <span class="p">(</span><span class="nf">(&lt;~)</span><span class="p">,</span> <span class="kt">Signal</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Signal</span>
 
-<p><span class="nf">seed</span> <span class="kt">:</span> <span class="kt">Signal</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">seed</span> <span class="ow">=</span>
-  <span class="n">columns</span> <span class="o">*</span> <span class="n">rows</span>
-    <span class="o">|&gt;</span> <span class="n">constant</span>
-    <span class="o">|&gt;</span> <span class="kt">Random</span><span class="o">.</span><span class="n">floatList</span>
-    <span class="o">|&gt;</span> <span class="n">lift</span> <span class="n">generateGrid</span></p>
+<span class="kn">import </span><span class="nc">List</span> <span class="p">(</span><span class="nf">(::)</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">List</span>
 
-<p><span class="nf">generateGrid</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Float</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">generateGrid</span> <span class="n">seeds</span> <span class="ow">=</span> <span class="n">map</span> <span class="n">generateRow</span> <span class="p">(</span><span class="n">groupInto</span> <span class="n">rows</span> <span class="n">seeds</span><span class="p">)</span></p>
+<span class="kn">import </span><span class="nc">Time</span>
+<span class="kn">import </span><span class="nc">Random</span>
 
-<p><span class="nf">generateRow</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Float</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="kt">Bool</span><span class="p">]</span>
-<span class="nf">generateRow</span> <span class="n">seeds</span> <span class="ow">=</span> <span class="n">map</span> <span class="p">(</span><span class="nf"><span class="n">\n</span> <span class="ow">-&gt;</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="n">seeds</span></p>
+<span class="kn">import </span><span class="nc">Color</span> <span class="p">(</span><span class="nv">rgb</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Graphics.Element</span> <span class="p">(</span><span class="kt">Element</span><span class="p">,</span> <span class="nv">flow</span><span class="p">,</span> <span class="nv">right</span><span class="p">,</span> <span class="nv">down</span><span class="p">,</span> <span class="nv">container</span><span class="p">,</span> <span class="nv">topLeft</span><span class="p">,</span> <span class="nv">spacer</span><span class="p">,</span> <span class="nv">color</span><span class="p">)</span>
 
-<p><span class="nf">renderGrid</span> <span class="kt">:</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span> <span class="ow">-&gt;</span> <span class="kt">Element</span>
-<span class="nf">renderGrid</span> <span class="n">grid</span> <span class="ow">=</span>
-  <span class="n">grid</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="n">renderRow</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="p">(</span><span class="n">flow</span> <span class="n">right</span><span class="p">)</span>
-    <span class="o">|&gt;</span> <span class="n">flow</span> <span class="n">down</span>
-    <span class="o">|&gt;</span> <span class="n">container</span> <span class="p">(</span><span class="n">cellSize</span> <span class="o"><em></span> <span class="n">columns</span><span class="p">)</span> <span class="p">(</span><span class="n">cellSize</span> <span class="o"></em></span> <span class="n">rows</span><span class="p">)</span> <span class="n">topLeft</span></p>
+<span class="nv">cellSize</span> <span class="nf">=</span> <span class="mi">5</span>
+<span class="p">(</span><span class="nv">columns</span><span class="p">,</span> <span class="nv">rows</span><span class="p">)</span> <span class="nf">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span>
 
-<p><span class="nf">renderRow</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Bool</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="kt">Element</span><span class="p">]</span>
-<span class="nf">renderRow</span> <span class="n">row</span> <span class="ow">=</span> <span class="n">map</span> <span class="n">renderCell</span> <span class="n">row</span></p>
+<span class="kr">main </span><span class="nf">:</span> <span class="kt">Signal</span> <span class="kt">Element</span>
+<span class="kr">main </span><span class="nf">=</span> <span class="nv">renderGrid</span> <span class="nf">&lt;~</span> <span class="p">(</span><span class="nv">seededGrid</span> <span class="nf">&lt;~</span> <span class="nv">initialSeed</span><span class="p">)</span>
 
-<p><span class="nf">renderCell</span> <span class="kt">:</span> <span class="kt">Bool</span> <span class="ow">-&gt;</span> <span class="kt">Element</span>
-<span class="nf">renderCell</span> <span class="n">on</span> <span class="ow">=</span>
-  <span class="n">spacer</span> <span class="n">cellSize</span> <span class="n">cellSize</span>
-    <span class="o">|&gt;</span> <span class="n">color</span> <span class="p">(</span><span class="kr">if</span> <span class="n">on</span> <span class="kr">then</span> <span class="p">(</span><span class="n">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="n">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></p>
+<span class="nv">initialSeed</span> <span class="nf">:</span> <span class="kt">Signal</span> <span class="kt">Random</span><span class="nf">.</span><span class="kt">Seed</span>
+<span class="nv">initialSeed</span> <span class="nf">=</span> <span class="p">(</span><span class="nf">\</span><span class="p">(</span><span class="nv">time</span><span class="p">,</span> <span class="nv">_</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">initialSeed</span> <span class="p">(</span><span class="nv">round</span> <span class="nv">time</span><span class="p">))</span> <span class="nf">&lt;~</span> <span class="kt">Time</span><span class="nf">.</span><span class="nv">timestamp</span> <span class="p">(</span><span class="kt">Signal</span><span class="nf">.</span><span class="nv">constant</span> <span class="p">())</span>
 
-<p><span class="nf">groupInto</span> <span class="kt">:</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="n">a</span><span class="p">]]</span>
-<span class="nf">groupInto</span> <span class="n">groups</span> <span class="n">initial</span> <span class="ow">=</span>
+<span class="nv">seededGrid</span> <span class="nf">:</span> <span class="kt">Random</span><span class="nf">.</span><span class="kt">Seed</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">seededGrid</span> <span class="nv">seed</span> <span class="nf">=</span>
+  <span class="kr">let</span> <span class="p">(</span><span class="nv">lst</span><span class="p">,</span> <span class="nv">_</span><span class="p">)</span> <span class="nf">=</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">generate</span> <span class="p">(</span><span class="kt">Random</span><span class="nf">.</span><span class="nv">list</span> <span class="p">(</span><span class="nv">columns</span> <span class="nf">*</span> <span class="nv">rows</span><span class="p">)</span> <span class="p">(</span><span class="kt">Random</span><span class="nf">.</span><span class="nv">int</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">))</span> <span class="nv">seed</span>
+  <span class="kr">in</span> <span class="nv">generateGrid</span> <span class="nv">lst</span>
+
+<span class="nv">generateGrid</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">generateGrid</span> <span class="nv">seeds</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">generateRow</span> <span class="p">(</span><span class="nv">groupInto</span> <span class="nv">rows</span> <span class="nv">seeds</span><span class="p">)</span>
+
+<span class="nv">generateRow</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="kt">Bool</span>
+<span class="nv">generateRow</span> <span class="nv">seeds</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nf">\</span><span class="nv">n</span> <span class="nf">-&gt;</span> <span class="nv">n</span> <span class="nf">==</span> <span class="mi">1</span><span class="p">)</span> <span class="nv">seeds</span>
+
+<span class="nv">renderGrid</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">renderGrid</span> <span class="nv">grid</span> <span class="nf">=</span>
+  <span class="nv">grid</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderRow</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nv">flow</span> <span class="nv">right</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="nv">flow</span> <span class="nv">down</span>
+    <span class="nf">|&gt;</span> <span class="nv">container</span> <span class="p">(</span><span class="nv">cellSize</span> <span class="nf">*</span> <span class="nv">columns</span><span class="p">)</span> <span class="p">(</span><span class="nv">cellSize</span> <span class="nf">*</span> <span class="nv">rows</span><span class="p">)</span> <span class="nv">topLeft</span>
+
+<span class="nv">renderRow</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="kt">Element</span>
+<span class="nv">renderRow</span> <span class="nv">row</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderCell</span> <span class="nv">row</span>
+
+<span class="nv">renderCell</span> <span class="nf">:</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">renderCell</span> <span class="nv">on</span> <span class="nf">=</span>
+  <span class="nv">spacer</span> <span class="nv">cellSize</span> <span class="nv">cellSize</span>
+    <span class="nf">|&gt;</span> <span class="nv">color</span> <span class="p">(</span><span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span>
+
+<span class="nv">groupInto</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="nv">a</span><span class="p">)</span>
+<span class="nv">groupInto</span> <span class="nv">groups</span> <span class="nv">initial</span> <span class="nf">=</span>
   <span class="kr">let</span>
-    <span class="n">len</span> <span class="ow">=</span> <span class="n">length</span> <span class="n">initial</span>
-    <span class="n">n</span> <span class="ow">=</span> <span class="n">div</span> <span class="n">len</span> <span class="n">groups</span>
+    <span class="nv">len</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">length</span> <span class="nv">initial</span>
+    <span class="nv">n</span> <span class="nf">=</span> <span class="nv">len</span> <span class="nf">//</span> <span class="nv">groups</span>
   <span class="kr">in</span>
-    <span class="kr">if</span> <span class="o">|</span> <span class="n">len</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">-&gt;</span> <span class="kt">[]</span>
-       <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">take</span> <span class="n">n</span> <span class="n">initial</span><span class="p">)</span> <span class="ow">::</span> 
-                        <span class="p">(</span><span class="n">groupInto</span> <span class="p">(</span><span class="n">groups</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="n">drop</span> <span class="n">n</span> <span class="n">initial</span><span class="p">))</span></code></pre></div>
-<h5>Result</h5><iframe src="/examples/haskell/random_grid.html" frameBorder="0"></iframe></p>
+    <span class="kt">List</span><span class="nf">.</span><span class="nv">repeat</span> <span class="nv">groups</span> <span class="p">[]</span>
+      <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">i</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
+          <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></div>
+
+<h5>Result</h5>
+
+<iframe src="/examples/elm/random_grid.html" frameBorder="0"></iframe>
 
 <p>We do write two other helper functions, <code>generateRow</code> and <code>groupInto</code>, but
 neither change is essential for the example. In fact, the rendering we wrote
@@ -263,97 +291,116 @@ a default value for the output signal, and an input signal. The function takes
 two arguments: the current value of the input signal, and the past value (or
 the default on the first event).</p>
 
-<p>We can use this construct to take our <code>seed</code> of <code>Signal [[Bool]]</code> and step it
-from generation to generation. This is, again, a comparatively simple process,
-consisting primarily of the following steps:</p>
+<p>We can use this construct to take our <code>initialSeed</code> of <code>Signal (List (List Bool))</code>
+and step it from generation to generation. This is, again, a comparatively simple
+process, consisting primarily of the following steps:</p>
 
 <ol>
 <li>Update the main function to make use of <code>foldp</code>.</li>
-<li>Create a <code>step</code> function of type <code>[[Bool]] -&gt; [[Bool]] -&gt; [[Bool]]</code>.</li>
-<li>Create an <code>evolve</code> function of type <code>[[Bool]] -&gt; [[Bool]]</code>.</li>
+<li>Create a <code>step</code> function of type <code>List (List Bool) -&gt; List (List Bool) -&gt; List (List Bool)</code>.</li>
+<li>Create an <code>evolve</code> function of type <code>List (List Bool) -&gt; List (List Bool)</code>.</li>
 </ol>
 
-<p><h4>game<em>of</em>life.elm</h4><h5>Source</h5>
-<div class="highlight"><pre><code class="haskell"><span class="kr">import</span> <span class="nn">Array</span> <span class="p">(</span><span class="kt">Array</span><span class="p">,</span> <span class="nf">fromList</span><span class="p">,</span> <span class="nf">toList</span><span class="p">,</span> <span class="nf">getOrFail</span><span class="p">,</span> <span class="nf">indexedMap</span><span class="p">)</span>
-<span class="kr">import</span> <span class="nn">Random</span></p>
+<h4>game_of_life.elm</h4>
 
-<p><span class="nf">cellSize</span> <span class="ow">=</span> <span class="mi">5</span>
-<span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span></p>
+<h5>Source</h5>
 
-<p><span class="nf">main</span> <span class="kt">:</span> <span class="kt">Signal</span> <span class="kt">Element</span>
-<span class="nf">main</span> <span class="ow">=</span> <span class="n">sampleOn</span> <span class="p">(</span><span class="n">every</span> <span class="n">second</span><span class="p">)</span> <span class="n">seed</span> <span class="o">|&gt;</span> <span class="n">foldp</span> <span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="p">[</span><span class="kt">[]</span><span class="p">]</span> <span class="o">|&gt;</span> <span class="n">lift</span> <span class="n">renderGrid</span></p>
+<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">Signal</span> <span class="p">(</span><span class="nf">(&lt;~)</span><span class="p">,</span> <span class="kt">Signal</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Signal</span>
 
-<p><span class="nf">seed</span> <span class="kt">:</span> <span class="kt">Signal</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">seed</span> <span class="ow">=</span>
-  <span class="n">columns</span> <span class="o">*</span> <span class="n">rows</span>
-    <span class="o">|&gt;</span> <span class="n">constant</span>
-    <span class="o">|&gt;</span> <span class="kt">Random</span><span class="o">.</span><span class="n">floatList</span>
-    <span class="o">|&gt;</span> <span class="n">lift</span> <span class="n">generateGrid</span></p>
+<span class="kn">import </span><span class="nc">List</span> <span class="p">(</span><span class="nf">(::)</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">List</span>
 
-<p><span class="nf">step</span> <span class="kt">:</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">step</span> <span class="n">current</span> <span class="n">past</span> <span class="ow">=</span> <span class="kr">if</span> <span class="p">(</span><span class="n">isEmpty</span> <span class="p">(</span><span class="n">head</span> <span class="n">past</span><span class="p">))</span> <span class="kr">then</span> <span class="n">current</span> <span class="kr">else</span> <span class="p">(</span><span class="n">evolve</span> <span class="n">past</span><span class="p">)</span></p>
+<span class="kn">import </span><span class="nc">Time</span>
+<span class="kn">import </span><span class="nc">Random</span>
 
-<p><span class="nf">generateGrid</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Float</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">generateGrid</span> <span class="n">seeds</span> <span class="ow">=</span> <span class="n">map</span> <span class="n">generateRow</span> <span class="p">(</span><span class="n">groupInto</span> <span class="n">rows</span> <span class="n">seeds</span><span class="p">)</span></p>
+<span class="kn">import </span><span class="nc">Color</span> <span class="p">(</span><span class="nv">rgb</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Graphics.Element</span> <span class="p">(</span><span class="kt">Element</span><span class="p">,</span> <span class="nv">flow</span><span class="p">,</span> <span class="nv">right</span><span class="p">,</span> <span class="nv">down</span><span class="p">,</span> <span class="nv">container</span><span class="p">,</span> <span class="nv">topLeft</span><span class="p">,</span> <span class="nv">spacer</span><span class="p">,</span> <span class="nv">color</span><span class="p">)</span>
 
-<p><span class="nf">generateRow</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Float</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="kt">Bool</span><span class="p">]</span>
-<span class="nf">generateRow</span> <span class="n">seeds</span> <span class="ow">=</span> <span class="n">map</span> <span class="p">(</span><span class="nf"><span class="n">\n</span> <span class="ow">-&gt;</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="n">seeds</span></p>
+<span class="nv">cellSize</span> <span class="nf">=</span> <span class="mi">5</span>
+<span class="p">(</span><span class="nv">columns</span><span class="p">,</span> <span class="nv">rows</span><span class="p">)</span> <span class="nf">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span>
 
-<p><span class="nf">evolve</span> <span class="kt">:</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span>
-<span class="nf">evolve</span> <span class="n">grid</span> <span class="ow">=</span>
-  <span class="kr">let</span> <span class="n">generation</span> <span class="ow">=</span> <span class="n">fromList</span> <span class="p">(</span><span class="n">map</span> <span class="n">fromList</span> <span class="n">grid</span><span class="p">)</span>
-  <span class="kr">in</span>  <span class="n">generation</span>
-    <span class="o">|&gt;</span> <span class="n">indexedMap</span> <span class="p">(</span><span class="nf"><span class="n">\y</span> <span class="n">row</span> <span class="ow">-&gt;</span> <span class="n">indexedMap</span>
-                    <span class="p">(</span><span class="nf"><span class="n">\x</span> <span class="kr">_</span> <span class="ow">-&gt;</span> <span class="n">descend</span> <span class="n">generation</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">row</span><span class="p">)</span>
-    <span class="o">|&gt;</span> <span class="n">toList</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="n">toList</span></p>
+<span class="kr">main </span><span class="nf">:</span> <span class="kt">Signal</span> <span class="kt">Element</span>
+<span class="kr">main </span><span class="nf">=</span>
+  <span class="kt">Signal</span><span class="nf">.</span><span class="nv">sampleOn</span> <span class="p">(</span><span class="kt">Time</span><span class="nf">.</span><span class="nv">every</span> <span class="kt">Time</span><span class="nf">.</span><span class="nv">second</span><span class="p">)</span> <span class="p">(</span><span class="nv">seededGrid</span> <span class="nf">&lt;~</span> <span class="nv">initialSeed</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="kt">Signal</span><span class="nf">.</span><span class="nv">foldp</span> <span class="p">(</span><span class="nv">step</span><span class="p">)</span> <span class="p">[[]]</span>
+    <span class="nf">|&gt;</span> <span class="kt">Signal</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderGrid</span>
 
-<p><span class="nf">descend</span> <span class="kt">:</span> <span class="kt">Array</span> <span class="p">(</span><span class="kt">Array</span> <span class="kt">Bool</span><span class="p">)</span> <span class="ow">-&gt;</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="kt">Bool</span>
-<span class="nf">descend</span> <span class="n">generation</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">=</span>
-  <span class="n">concatMap</span> <span class="p">(</span><span class="nf"><span class="n">\n</span> <span class="ow">-&gt;</span> <span class="n">map</span> <span class="p">(</span><span class="nf"><span class="n">\m</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">n</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">m</span><span class="p">))</span> 
-              <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="o">|&gt;</span> <span class="n">filter</span> <span class="p">(</span><span class="nf"><span class="n">\p</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">fst</span> <span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">fst</span> <span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">columns</span> <span class="o">&amp;&amp;</span>
-                     <span class="p">(</span><span class="n">snd</span> <span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">snd</span> <span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rows</span> <span class="o">&amp;&amp;</span>
-                     <span class="p">(</span><span class="n">not</span> <span class="p">((</span><span class="n">fst</span> <span class="n">p</span><span class="p">)</span> <span class="o">==</span> <span class="n">x</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">snd</span> <span class="n">p</span><span class="p">)</span> <span class="o">==</span> <span class="n">y</span><span class="p">)))</span>
-    <span class="o">|&gt;</span> <span class="n">filter</span> <span class="p">(</span><span class="nf"><span class="n">\p</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">getOrFail</span> <span class="p">(</span><span class="n">fst</span> <span class="n">p</span><span class="p">)</span>
-                       <span class="p">(</span><span class="n">getOrFail</span> <span class="p">(</span><span class="n">snd</span> <span class="n">p</span><span class="p">)</span> <span class="n">generation</span><span class="p">))</span> <span class="o">==</span> <span class="kt">True</span><span class="p">)</span>
-    <span class="o">|&gt;</span> <span class="n">length</span>
-    <span class="o">|&gt;</span> <span class="p">(</span><span class="nf"><span class="n">\l</span> <span class="ow">-&gt;</span> <span class="p">((</span><span class="n">getOrFail</span> <span class="n">x</span> <span class="p">(</span><span class="n">getOrFail</span> <span class="n">y</span> <span class="n">generation</span><span class="p">))</span>
-                <span class="o">&amp;&amp;</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">||</span> <span class="n">l</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span></p>
+<span class="nv">step</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">step</span> <span class="nv">current</span> <span class="nv">past</span> <span class="nf">=</span> <span class="kr">if</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">isEmpty</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">head</span> <span class="nv">past</span><span class="p">))</span> <span class="kr">then</span> <span class="nv">current</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">evolve</span> <span class="nv">past</span><span class="p">)</span>
 
-<p><span class="nf">renderGrid</span> <span class="kt">:</span> <span class="p">[[</span><span class="kt">Bool</span><span class="p">]]</span> <span class="ow">-&gt;</span> <span class="kt">Element</span>
-<span class="nf">renderGrid</span> <span class="n">grid</span> <span class="ow">=</span>
-  <span class="n">grid</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="n">renderRow</span>
-    <span class="o">|&gt;</span> <span class="n">map</span> <span class="p">(</span><span class="n">flow</span> <span class="n">right</span><span class="p">)</span>
-    <span class="o">|&gt;</span> <span class="n">flow</span> <span class="n">down</span>
-    <span class="o">|&gt;</span> <span class="n">container</span> <span class="p">(</span><span class="n">cellSize</span> <span class="o"><em></span> <span class="n">columns</span><span class="p">)</span> <span class="p">(</span><span class="n">cellSize</span> <span class="o"></em></span> <span class="n">rows</span><span class="p">)</span> <span class="n">topLeft</span></p>
+<span class="nv">initialSeed</span> <span class="nf">:</span> <span class="kt">Signal</span> <span class="kt">Random</span><span class="nf">.</span><span class="kt">Seed</span>
+<span class="nv">initialSeed</span> <span class="nf">=</span> <span class="p">(</span><span class="nf">\</span><span class="p">(</span><span class="nv">time</span><span class="p">,</span> <span class="nv">_</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">initialSeed</span> <span class="p">(</span><span class="nv">round</span> <span class="nv">time</span><span class="p">))</span> <span class="nf">&lt;~</span> <span class="kt">Time</span><span class="nf">.</span><span class="nv">timestamp</span> <span class="p">(</span><span class="kt">Signal</span><span class="nf">.</span><span class="nv">constant</span> <span class="p">())</span>
 
-<p><span class="nf">renderRow</span> <span class="kt">:</span> <span class="p">[</span><span class="kt">Bool</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="kt">Element</span><span class="p">]</span>
-<span class="nf">renderRow</span> <span class="n">row</span> <span class="ow">=</span> <span class="n">map</span> <span class="n">renderCell</span> <span class="n">row</span></p>
+<span class="nv">seededGrid</span> <span class="nf">:</span> <span class="kt">Random</span><span class="nf">.</span><span class="kt">Seed</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">seededGrid</span> <span class="nv">seed</span> <span class="nf">=</span>
+  <span class="kr">let</span> <span class="p">(</span><span class="nv">lst</span><span class="p">,</span> <span class="nv">_</span><span class="p">)</span> <span class="nf">=</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">generate</span> <span class="p">(</span><span class="kt">Random</span><span class="nf">.</span><span class="nv">list</span> <span class="p">(</span><span class="nv">columns</span> <span class="nf">*</span> <span class="nv">rows</span><span class="p">)</span> <span class="p">(</span><span class="kt">Random</span><span class="nf">.</span><span class="nv">int</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">))</span> <span class="nv">seed</span>
+  <span class="kr">in</span> <span class="nv">generateGrid</span> <span class="nv">lst</span>
 
-<p><span class="nf">renderCell</span> <span class="kt">:</span> <span class="kt">Bool</span> <span class="ow">-&gt;</span> <span class="kt">Element</span>
-<span class="nf">renderCell</span> <span class="n">on</span> <span class="ow">=</span>
-  <span class="n">spacer</span> <span class="n">cellSize</span> <span class="n">cellSize</span>
-    <span class="o">|&gt;</span> <span class="n">color</span> <span class="p">(</span><span class="kr">if</span> <span class="n">on</span> <span class="kr">then</span> <span class="p">(</span><span class="n">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="n">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></p>
+<span class="nv">generateGrid</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">generateGrid</span> <span class="nv">seeds</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">generateRow</span> <span class="p">(</span><span class="nv">groupInto</span> <span class="nv">rows</span> <span class="nv">seeds</span><span class="p">)</span>
 
-<p><span class="nf">groupInto</span> <span class="kt">:</span> <span class="kt">Int</span> <span class="ow">-&gt;</span> <span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="ow">-&gt;</span> <span class="p">[[</span><span class="n">a</span><span class="p">]]</span>
-<span class="nf">groupInto</span> <span class="n">groups</span> <span class="n">initial</span> <span class="ow">=</span>
+<span class="nv">generateRow</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="kt">Bool</span>
+<span class="nv">generateRow</span> <span class="nv">seeds</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nf">\</span><span class="nv">n</span> <span class="nf">-&gt;</span> <span class="nv">n</span> <span class="nf">==</span> <span class="mi">1</span><span class="p">)</span> <span class="nv">seeds</span>
+
+<span class="nv">evolve</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="nv">evolve</span> <span class="nv">generation</span> <span class="nf">=</span>
+  <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">y</span> <span class="nv">row</span> <span class="nf">-&gt;</span>
+    <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">x</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
+      <span class="nv">descend</span> <span class="nv">generation</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)</span> <span class="nv">row</span><span class="p">)</span> <span class="nv">generation</span>
+
+<span class="nv">descend</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Bool</span>
+<span class="nv">descend</span> <span class="nv">grid</span> <span class="nv">x</span> <span class="nv">y</span> <span class="nf">=</span>
+  <span class="kt">List</span><span class="nf">.</span><span class="nv">concatMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">n</span> <span class="nf">-&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nf">\</span><span class="nv">m</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="nv">x</span> <span class="nf">+</span> <span class="nv">n</span><span class="p">,</span> <span class="nv">y</span> <span class="nf">+</span> <span class="nv">m</span><span class="p">))</span>
+                   <span class="p">[</span><span class="nf">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="p">[</span><span class="nf">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">filter</span> <span class="p">(</span><span class="nf">\</span><span class="nv">p</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="nv">fst</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&gt;</span> <span class="nf">-</span><span class="mi">1</span> <span class="nf">&amp;&amp;</span> <span class="p">(</span><span class="nv">fst</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&lt;</span> <span class="nv">columns</span> <span class="nf">&amp;&amp;</span>
+                          <span class="p">(</span><span class="nv">snd</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&gt;</span> <span class="nf">-</span><span class="mi">1</span> <span class="nf">&amp;&amp;</span> <span class="p">(</span><span class="nv">snd</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&lt;</span> <span class="nv">rows</span> <span class="nf">&amp;&amp;</span>
+                          <span class="p">(</span><span class="nv">not</span> <span class="p">((</span><span class="nv">fst</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">==</span> <span class="nv">x</span> <span class="nf">&amp;&amp;</span> <span class="p">(</span><span class="nv">snd</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">==</span> <span class="nv">y</span><span class="p">)))</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">filter</span> <span class="p">(</span><span class="nf">\</span><span class="nv">p</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="nv">itemAt</span> <span class="p">(</span><span class="nv">fst</span> <span class="nv">p</span><span class="p">)</span>
+                            <span class="p">(</span><span class="nv">itemAt</span> <span class="p">(</span><span class="nv">snd</span> <span class="nv">p</span><span class="p">)</span> <span class="nv">grid</span><span class="p">))</span> <span class="nf">==</span> <span class="kt">True</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">length</span>
+    <span class="nf">|&gt;</span> <span class="p">(</span><span class="nf">\</span><span class="nv">l</span> <span class="nf">-&gt;</span> <span class="p">((</span><span class="nv">itemAt</span> <span class="nv">x</span> <span class="p">(</span><span class="nv">itemAt</span> <span class="nv">y</span> <span class="nv">grid</span><span class="p">))</span>
+                <span class="nf">&amp;&amp;</span> <span class="nv">l</span> <span class="nf">&gt;</span> <span class="mi">1</span> <span class="nf">&amp;&amp;</span> <span class="nv">l</span> <span class="nf">&lt;</span> <span class="mi">4</span><span class="p">)</span> <span class="nf">||</span> <span class="nv">l</span> <span class="nf">==</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="nv">renderGrid</span> <span class="nf">:</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">renderGrid</span> <span class="nv">grid</span> <span class="nf">=</span>
+  <span class="nv">grid</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderRow</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nv">flow</span> <span class="nv">right</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="nv">flow</span> <span class="nv">down</span>
+    <span class="nf">|&gt;</span> <span class="nv">container</span> <span class="p">(</span><span class="nv">cellSize</span> <span class="nf">*</span> <span class="nv">columns</span><span class="p">)</span> <span class="p">(</span><span class="nv">cellSize</span> <span class="nf">*</span> <span class="nv">rows</span><span class="p">)</span> <span class="nv">topLeft</span>
+
+<span class="nv">renderRow</span> <span class="nf">:</span> <span class="kt">List</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="kt">Element</span>
+<span class="nv">renderRow</span> <span class="nv">row</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">renderCell</span> <span class="nv">row</span>
+
+<span class="nv">renderCell</span> <span class="nf">:</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">renderCell</span> <span class="nv">on</span> <span class="nf">=</span>
+  <span class="nv">spacer</span> <span class="nv">cellSize</span> <span class="nv">cellSize</span>
+    <span class="nf">|&gt;</span> <span class="nv">color</span> <span class="p">(</span><span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span>
+
+<span class="nv">itemAt</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="nv">a</span>
+<span class="nv">itemAt</span> <span class="nv">i</span> <span class="nv">lst</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">head</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="nv">i</span> <span class="nv">lst</span><span class="p">)</span>
+
+<span class="nv">groupInto</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="nv">a</span><span class="p">)</span>
+<span class="nv">groupInto</span> <span class="nv">groups</span> <span class="nv">initial</span> <span class="nf">=</span>
   <span class="kr">let</span>
-    <span class="n">len</span> <span class="ow">=</span> <span class="n">length</span> <span class="n">initial</span>
-    <span class="n">n</span> <span class="ow">=</span> <span class="n">div</span> <span class="n">len</span> <span class="n">groups</span>
+    <span class="nv">len</span> <span class="nf">=</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">length</span> <span class="nv">initial</span>
+    <span class="nv">n</span> <span class="nf">=</span> <span class="nv">len</span> <span class="nf">//</span> <span class="nv">groups</span>
   <span class="kr">in</span>
-    <span class="kr">if</span> <span class="o">|</span> <span class="n">len</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">-&gt;</span> <span class="kt">[]</span>
-       <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">-&gt;</span> <span class="p">(</span><span class="n">take</span> <span class="n">n</span> <span class="n">initial</span><span class="p">)</span> <span class="ow">::</span> 
-                        <span class="p">(</span><span class="n">groupInto</span> <span class="p">(</span><span class="n">groups</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="n">drop</span> <span class="n">n</span> <span class="n">initial</span><span class="p">))</span></code></pre></div>
-<h5>Result</h5><iframe src="/examples/haskell/game_of_life.html" frameBorder="0"></iframe></p>
+    <span class="kt">List</span><span class="nf">.</span><span class="nv">repeat</span> <span class="nv">groups</span> <span class="p">[]</span>
+      <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">i</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
+          <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></div>
+
+<h5>Result</h5>
+
+<iframe src="/examples/elm/game_of_life.html" frameBorder="0"></iframe>
 
 <p>The only real nuance here is that we must <code>sampleOn seed (every second)</code>, which
 updates the signal with the constant initial value. We use an empty default to
 determine whether we should return the value from the seed, or whether we should
 evlove the past value.</p>
 
-<p>We use the <code>Array</code> component for the <code>evolve</code> function, because we will need to
+<p>We use an <code>indexedMap</code> for the <code>evolve</code> function, because we will need to
 have the index of the cell available when calling the <code>descend</code> function. Aside
 from these points, it is simply gathering all the neighboring cells, filtering
 invalid ones, counting live neighbors, and mapping to a new boolean value.</p>
