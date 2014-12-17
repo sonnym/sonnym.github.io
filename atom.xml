@@ -4,7 +4,7 @@
  <title>effluence</title>
  <link href="http://sonnym.github.io//atom.xml" rel="self"/>
  <link href="http://sonnym.github.io//"/>
- <updated>2014-12-13T22:43:20-05:00</updated>
+ <updated>2014-12-17T18:33:48-05:00</updated>
  <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
@@ -372,6 +372,8 @@ count, duration of a generation, to flip individuals cells, to pause the game.
 The list could probaby go on and on, and combining signals from many different
 inputs is one of the strengths of Elm. I intend on revisiting this example and
 improving upon it in the near future, so wach out for that update.&lt;/p&gt;
+
+&lt;p&gt;(This post was updated for Elm 0.14 on 13 Dec 2014)&lt;/p&gt;
 </content>
  </entry>
  
