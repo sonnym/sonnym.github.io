@@ -81,7 +81,7 @@
   <h2>The Situation</h2>
 
 <p>Sometimes when working with nested scopes, you may encounter a situation in
-which some scope action depends on the status of some arbitarily nested
+which some scope action depends on the status of some arbitrarily nested
 controller. This could be a multi-part form built from reusable components,
 preventing the user from proceeding until complete, for example.</p>
 
@@ -104,7 +104,7 @@ liberty of using
 to simplify checking if all conditions are met.</p>
 
 <p>Here, the <code>FormCheckboxCtrl</code> has no validation, but does coerce its results to
-be human readible, while <code>FormTextInputCtrl</code> returns the text input and is
+be human readable, while <code>FormTextInputCtrl</code> returns the text input and is
 invalid if none is provided.</p>
 
 <p>What remains is, simply, to make it work.</p>
@@ -158,8 +158,8 @@ invalid if none is provided.</p>
 <h2>A Hook Implementation</h2>
 
 <p>By recursively traversing the <code>$$childHead</code> and <code>$$nextSibling</code> properties of
-the scope, we can give ask if any controller nested within the heirarchy wishes
-to respond to the hook, thereby influincing the life cycle of our parent
+the scope, we can give ask if any controller nested within the hierarchy wishes
+to respond to the hook, thereby influencing the life cycle of our parent
 controller.</p>
 
 <div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
@@ -218,7 +218,7 @@ exposing carefully selected points of interaction.</p>
 <p>Herein, we have only examined a very simple hooking mechanism, which can
 certainly be built out to have some additional interesting properties. Optional
 callbacks and the ability to handle arguments would be straight forward
-changes.  More interesting is the possiblity to return more than just a single
+changes.  More interesting is the possibility to return more than just a single
 function for accumulating results, but instead having a more robust interface.
 This could include functionality akin to that in <code>ActiveRecord</code> callbacks,
 wherein returning false prevents future hooks from running and prevents some

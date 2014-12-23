@@ -23,11 +23,6 @@ div.content {
   font-size: 2.25rem;
 }
 
-iframe {
-  width: 200px;
-  height: 200px;
-}
-
 .clearfix {
   clear: both
 }

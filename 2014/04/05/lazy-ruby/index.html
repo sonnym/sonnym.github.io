@@ -125,7 +125,7 @@ enumerator.</p>
 
 <p>Unfortunately, <code>Enumerator::Lazy#zip</code> is limited, such that it is not possible
 to pass it a block without eager evaluation being triggered. This is easy,
-albeit inelegent, to circumvent by <code>#map</code>ing subsequent to a <code>#zip</code> call. For
+albeit inelegant, to circumvent by <code>#map</code>ing subsequent to a <code>#zip</code> call. For
 instance, to get the sum of all adjacent numbers, the following never
 completes.</p>
 
@@ -139,7 +139,7 @@ completes.</p>
 <span class="o">&gt;</span> <span class="n">adjacents</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">force</span>
 <span class="o">=&gt;</span> <span class="o">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">21</span><span class="o">]</span></code></pre></div>
 
-<p>Note that it is necessary to forece the evaluation, otherwise Ruby continues to
+<p>Note that it is necessary to force the evaluation, otherwise Ruby continues to
 return lazy enumerators to allow chaining.</p>
 
 <h2>Fibonacci in Lazy Ruby</h2>

@@ -80,6 +80,183 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2014/12/23/barebones-architecture-in-elm/">
+        Barebones Architecture in Elm
+      </a>
+    </h1>
+
+    <h2>Motivation and Background</h2>
+
+<p>In the process of writing larger applications in
+<a href="http://elm-lang.org/" target="_blank">Elm</a>,
+I find it far too easy to initially focus on one small part of the problem
+while losing perspective on the bigger picture. For instance, I will begin by
+rendering a simple scene, followed by splitting out components, and finally
+adding in signals.  While this is generally a good approach, in my mind,
+it is sometimes difficult to retrofit patterns onto the basis of the application
+I have already written.</p>
+
+<p>There are some really excellent resources covering the architecture of applications
+in the Elm language. The
+<a href="http://elm-lang.org/learn/Architecture.elm" target="_blank">canonical article</a>
+on the subject can be found on the official Elm site and covers everything at
+a high level. The best example is likely
+<a href="https://evancz.github.io/elm-todomvc/" target="_blank">TodoMVC</a>
+(<a href="https://github.com/evancz/elm-todomvc" target="_blank">source</a>)
+ported to Elm which uses many the concepts from the article to create a rich
+and simple interface, showcasing just how powerful Elm is.  Another great and
+extremely polished example is
+<a href="http://dreamwriter.io/" target="_blank">Dreamwriter</a>
+(<a href="https://github.com/rtfeldman/dreamwriter" target="_blank">source</a>),
+which also incorporates the separation of components as outlined in the original
+article.</p>
+
+<p>The only problem with these examples, and the theory behind them, is that they
+are too fleshed out, too complete. It is difficult to extract the core concepts
+from the specific details of the problem they are solving. In attempting to
+retrofit this pattern onto my own programs, I had to remove everything
+extraneous and reduce the implementation to the fundamentals.</p>
+
+<h2>A Simple Example</h2>
+
+<p>First, I will present the source and result of a very, very basic (practically
+trivial) user interface in Elm. It consists of nothing more that a button
+that increments a value, but this simple scene gives us the foundation  upon
+which we can build larger applications.</p>
+
+<h4>barebones_architecture.elm</h4>
+
+<h5>Source</h5>
+
+<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">Signal</span>
+
+<span class="kn">import </span><span class="nc">Text</span>
+
+<span class="kn">import </span><span class="nc">Graphics.Input</span> <span class="kr">as</span> <span class="kt">Input</span>
+
+<span class="kn">import </span><span class="nc">Graphics.Element</span> <span class="p">(</span><span class="kt">Element</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Graphics.Element</span> <span class="kr">as</span> <span class="kt">Element</span>
+
+<span class="kr">type</span> <span class="kr">alias</span> <span class="kt">State</span> <span class="nf">=</span> <span class="p">{</span> <span class="nv">value</span><span class="nf">:</span> <span class="kt">Int</span> <span class="p">}</span>
+
+<span class="kr">type</span> <span class="kt">Action</span>
+  <span class="nf">=</span> <span class="kt">NoOp</span>
+  <span class="nf">|</span> <span class="kt">Increment</span>
+
+<span class="kr">main </span><span class="nf">:</span> <span class="kt">Signal</span> <span class="kt">Element</span>
+<span class="kr">main </span><span class="nf">=</span> <span class="kt">Signal</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">scene</span> <span class="nv">state</span>
+
+<span class="nv">scene</span> <span class="nf">:</span> <span class="kt">State</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
+<span class="nv">scene</span> <span class="nv">state</span> <span class="nf">=</span>
+  <span class="kt">Element</span><span class="nf">.</span><span class="nv">flow</span> <span class="kt">Element</span><span class="nf">.</span><span class="nv">down</span> <span class="p">[</span><span class="nv">incrementButton</span><span class="p">,</span> <span class="p">(</span><span class="kt">Text</span><span class="nf">.</span><span class="nv">asText</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">value</span><span class="p">)]</span>
+
+<span class="nv">state</span> <span class="nf">:</span> <span class="kt">Signal</span> <span class="kt">State</span>
+<span class="nv">state</span> <span class="nf">=</span> <span class="kt">Signal</span><span class="nf">.</span><span class="nv">foldp</span> <span class="nv">step</span> <span class="nv">initialState</span> <span class="p">(</span><span class="kt">Signal</span><span class="nf">.</span><span class="nv">subscribe</span> <span class="nv">actions</span><span class="p">)</span>
+
+<span class="nv">step</span> <span class="nf">:</span> <span class="kt">Action</span> <span class="nf">-&gt;</span> <span class="kt">State</span> <span class="nf">-&gt;</span> <span class="kt">State</span>
+<span class="nv">step</span> <span class="nv">action</span> <span class="nv">state</span> <span class="nf">=</span>
+  <span class="kr">case</span> <span class="nv">action</span> <span class="kr">of</span>
+    <span class="kt">NoOp</span> <span class="nf">-&gt;</span> <span class="nv">state</span>
+    <span class="kt">Increment</span> <span class="nf">-&gt;</span> <span class="p">{</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">value</span> <span class="nf">&lt;-</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">value</span> <span class="nf">+</span> <span class="mi">1</span> <span class="p">}</span>
+
+<span class="nv">initialState</span> <span class="nf">:</span> <span class="kt">State</span>
+<span class="nv">initialState</span> <span class="nf">=</span> <span class="p">{</span> <span class="nv">value</span> <span class="nf">=</span> <span class="mi">0</span> <span class="p">}</span>
+
+<span class="nv">actions</span> <span class="nf">:</span> <span class="kt">Signal</span><span class="nf">.</span><span class="kt">Channel</span> <span class="kt">Action</span>
+<span class="nv">actions</span> <span class="nf">=</span> <span class="kt">Signal</span><span class="nf">.</span><span class="nv">channel</span> <span class="kt">NoOp</span>
+
+<span class="nv">incrementButton</span> <span class="nf">:</span> <span class="kt">Element</span>
+<span class="nv">incrementButton</span> <span class="nf">=</span>
+  <span class="kt">Input</span><span class="nf">.</span><span class="nv">button</span> <span class="p">(</span><span class="kt">Signal</span><span class="nf">.</span><span class="nv">send</span> <span class="nv">actions</span> <span class="kt">Increment</span><span class="p">)</span> <span class="s">&quot;Increment&quot;</span></code></pre></div>
+
+<h5>Result</h5>
+
+<iframe src="/examples/elm/barebones_architecture.html" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
+
+<h2>The Moving Parts</h2>
+
+<p>This example consists of the four core components for any such application:</p>
+
+<ol>
+<li>User input represented as a union type</li>
+<li>A signal channel for passing messages generated by user input</li>
+<li>State dependence on a subscription to that channel</li>
+<li>Rendering a scene based on the current state</li>
+</ol>
+
+<p>We will discuss each in turn.</p>
+
+<h3>User Input Union Type</h3>
+
+<p>Most applications are not very interesting without user input. We choose to
+represent all user input as a
+<a href="http://elm-lang.org/learn/Union-Types.elm" target="_blank">union type</a>
+This gives us the ability to easily
+<a href="https://en.wikipedia.org/wiki/Pattern_matching" target="_blank">pattern match</a>
+on the user action in a case statement, which will be useful very soon. In this
+particular example, the <code>Action</code> type can only consist of either a <code>NoOp</code> or
+<code>Increment</code>.</p>
+
+<h3>Signal Channel for Message Passing</h3>
+
+<p>We then create a
+<a href="http://elm-lang.org/blog/announce/0.14.elm#signal-channels" target="_blank">signal channel</a>
+of actions. The <code>actions</code> method creates a new channel that will default to the
+<code>NoOp</code> value. The <code>incrementButton</code> function creates a new button that will send
+the <code>Increment</code> value to the channel.</p>
+
+<h3>Subscribing and Updating State</h3>
+
+<p>The <code>state</code> function begins to really pull all the pieces together. Here, we
+use <code>Signal.foldp</code> to create a past-dependent <code>Signal State</code>. The <code>State</code> type
+alias is defined as having only one field, a <code>value</code> of type <code>Int</code>. We start
+with an <code>initialState</code> where the <code>value</code> field is set to zero. The signal we
+provide to the <code>foldp</code> function is the result of passing the <code>actions</code> channel
+to the <code>Signal.subscribe</code> function.</p>
+
+<p>We then define a <code>step</code> function, of type <code>Action -&gt; State -&gt; State</code>. Because
+of the pattern matching on union types, the case statement is very simple to
+follow: if the action parameter is a <code>NoOp</code>, simply return the original state,
+but if it is an <code>Increment</code> action, return a new <code>State</code> record with its
+<code>value</code> increased by one.</p>
+
+<h3>Rendering a State Dependent Scene</h3>
+
+<p>The final piece of glue is very typical in Elm, the <code>main</code> function of type
+<code>Signal Element</code>. In this very simple example, we are using <code>Signal.map</code> to
+call <code>scene</code> with the current state.</p>
+
+<h2>Extensibility</h2>
+
+<p>While this example does not actually do particularly much, that is precisely
+the point. You can transparently observe how the pieces fit together to make
+up the core of the application. In practice, there are many more steps to be
+made, but the general principles remain the same:</p>
+
+<ol>
+<li>A central location for state in the application</li>
+<li>Accepting user input to mutate that state</li>
+<li>Outputting some representation of that state</li>
+</ol>
+
+<p>Generally speaking, to add real functionality, we only need to add more values
+to the <code>Action</code> union type, extend the case statement in <code>step</code>, and create
+more sources of input like <code>incrementButton</code>. In reality, however, our
+applications will be much more maintainable if we create separate components
+and nested <code>Action</code> and <code>State</code> types (which the
+<a href="http://elm-lang.org/learn/Architecture.elm#nesting" target="_blank">architecture article</a>
+covers in detail).</p>
+
+<p>In conclusion, the basic pattern that is being used in more complex and feature
+rich Elm applications can be distilled to very little, but is an extremely
+powerful concept that can be extended to a great degree. This is the case to
+such a degree that I will likely start with a core similar to this, rather than
+some trivial scene, when writing new applications.</p>
+
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2014/05/05/writing-game-of-life-in-elm/">
         Writing Game of Life in Elm
       </a>
@@ -178,7 +355,7 @@ are all on to begin with.</p>
 
 <h5>Result</h5>
 
-<iframe src="/examples/elm/static_grid.html" frameBorder="0"></iframe>
+<iframe src="/examples/elm/static_grid.html" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
 
 <p>The crux of this program is that we want to turn a nested list of boolean
 values (<code>List (List Bool)</code>) into an <code>Element</code>, one of two possible types for
@@ -207,7 +384,7 @@ will be taking from <code>Random.list</code>, and we want to convert it into a
 <p>Herein lies a core concept - that of <code>map</code>ing a signal. The <code>map</code> function
 has the type <code>(a -&gt; b) -&gt; Signal a -&gt; Signal b</code>; it takes a function from type
 <code>a</code> to type <code>b</code> and a signal of type <code>a</code> and returns a signal of type <code>b</code>. This
-function is the primay means by which signals are converted from one type to
+function is the primary means by which signals are converted from one type to
 another.</p>
 
 <p>As a consequence of the way <code>lift</code> works, by taking a function to convert a
@@ -216,7 +393,7 @@ very few steps. These are as follows:</p>
 
 <ol>
 <li>Change the type of <code>main</code> from <code>Element</code> to <code>Signal Element</code>.</li>
-<li>Write an <code>initialSeed</code> function of type <code>Siganl Random.Seed</code></li>
+<li>Write an <code>initialSeed</code> function of type <code>Signal Random.Seed</code></li>
 <li>Write a <code>seededGrid</code> function of type <code>Random.Seed -&gt; List (List Bool)</code></li>
 <li>Change <code>generateGrid</code> from <code>List (List Bool)</code> to <code>List Int -&gt; List (List Bool)</code></li>
 <li><code>map</code> our <code>seededGrid</code> function through our existing <code>renderGrid</code> function.</li>
@@ -286,7 +463,7 @@ very few steps. These are as follows:</p>
 
 <h5>Result</h5>
 
-<iframe src="/examples/elm/random_grid.html" frameBorder="0"></iframe>
+<iframe src="/examples/elm/random_grid.html" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
 
 <p>We do write two other helper functions, <code>generateRow</code> and <code>groupInto</code>, but
 neither change is essential for the example. In fact, the rendering we wrote
@@ -407,19 +584,19 @@ process, consisting primarily of the following steps:</p>
 
 <h5>Result</h5>
 
-<iframe src="/examples/elm/game_of_life.html" frameBorder="0"></iframe>
+<iframe src="/examples/elm/game_of_life.html" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
 
 <p>The only real nuance here is that we must <code>sampleOn seed (every second)</code>, which
 updates the signal with the constant initial value. We use an empty default to
 determine whether we should return the value from the seed, or whether we should
-evlove the past value.</p>
+evolve the past value.</p>
 
 <p>We use an <code>indexedMap</code> for the <code>evolve</code> function, because we will need to
 have the index of the cell available when calling the <code>descend</code> function. Aside
 from these points, it is simply gathering all the neighboring cells, filtering
 invalid ones, counting live neighbors, and mapping to a new boolean value.</p>
 
-<h2>Conclusion and Futher Steps</h2>
+<h2>Conclusion and Further Steps</h2>
 
 <p>Elm is a wonderful and extremely expressive language, and my experiences with it
 have been overwhelmingly positive. I think it is excellent for these types of
@@ -437,9 +614,9 @@ were that the goal of the exercise.</p>
 <p>As such, the most interesting way to proceed with this start would be to add
 interactive elements. Allowing a user to control things like cell size and
 count, duration of a generation, to flip individuals cells, to pause the game.
-The list could probaby go on and on, and combining signals from many different
+The list could probably go on and on, and combining signals from many different
 inputs is one of the strengths of Elm. I intend on revisiting this example and
-improving upon it in the near future, so wach out for that update.</p>
+improving upon it in the near future, so watch out for that update.</p>
 
 <p>(This post was updated for Elm 0.14 on 13 Dec 2014)</p>
 
@@ -499,7 +676,7 @@ enumerator.</p>
 
 <p>Unfortunately, <code>Enumerator::Lazy#zip</code> is limited, such that it is not possible
 to pass it a block without eager evaluation being triggered. This is easy,
-albeit inelegent, to circumvent by <code>#map</code>ing subsequent to a <code>#zip</code> call. For
+albeit inelegant, to circumvent by <code>#map</code>ing subsequent to a <code>#zip</code> call. For
 instance, to get the sum of all adjacent numbers, the following never
 completes.</p>
 
@@ -513,7 +690,7 @@ completes.</p>
 <span class="o">&gt;</span> <span class="n">adjacents</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">force</span>
 <span class="o">=&gt;</span> <span class="o">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">21</span><span class="o">]</span></code></pre></div>
 
-<p>Note that it is necessary to forece the evaluation, otherwise Ruby continues to
+<p>Note that it is necessary to force the evaluation, otherwise Ruby continues to
 return lazy enumerators to allow chaining.</p>
 
 <h2>Fibonacci in Lazy Ruby</h2>
@@ -596,7 +773,7 @@ may as well abuse it functionally as well.</p>
     <h2>The Situation</h2>
 
 <p>Sometimes when working with nested scopes, you may encounter a situation in
-which some scope action depends on the status of some arbitarily nested
+which some scope action depends on the status of some arbitrarily nested
 controller. This could be a multi-part form built from reusable components,
 preventing the user from proceeding until complete, for example.</p>
 
@@ -619,7 +796,7 @@ liberty of using
 to simplify checking if all conditions are met.</p>
 
 <p>Here, the <code>FormCheckboxCtrl</code> has no validation, but does coerce its results to
-be human readible, while <code>FormTextInputCtrl</code> returns the text input and is
+be human readable, while <code>FormTextInputCtrl</code> returns the text input and is
 invalid if none is provided.</p>
 
 <p>What remains is, simply, to make it work.</p>
@@ -673,8 +850,8 @@ invalid if none is provided.</p>
 <h2>A Hook Implementation</h2>
 
 <p>By recursively traversing the <code>$$childHead</code> and <code>$$nextSibling</code> properties of
-the scope, we can give ask if any controller nested within the heirarchy wishes
-to respond to the hook, thereby influincing the life cycle of our parent
+the scope, we can give ask if any controller nested within the hierarchy wishes
+to respond to the hook, thereby influencing the life cycle of our parent
 controller.</p>
 
 <div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
@@ -733,7 +910,7 @@ exposing carefully selected points of interaction.</p>
 <p>Herein, we have only examined a very simple hooking mechanism, which can
 certainly be built out to have some additional interesting properties. Optional
 callbacks and the ability to handle arguments would be straight forward
-changes.  More interesting is the possiblity to return more than just a single
+changes.  More interesting is the possibility to return more than just a single
 function for accumulating results, but instead having a more robust interface.
 This could include functionality akin to that in <code>ActiveRecord</code> callbacks,
 wherein returning false prevents future hooks from running and prevents some
