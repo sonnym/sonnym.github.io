@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 
   <title>
-    projects &middot; effluence
+    home &middot; effluence
   </title>
 
   <!-- CSS -->
@@ -35,7 +35,7 @@
     </div>
 
     <ul class="sidebar-nav">
-      <li class="sidebar-nav-item">
+      <li class="sidebar-nav-item active">
         <a href="/">home</a>
       </li>
 
@@ -58,7 +58,7 @@
       
         
           
-            <li class="sidebar-nav-item active">
+            <li class="sidebar-nav-item">
               <a href="/projects/">projects</a>
             </li>
           
@@ -80,25 +80,46 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">projects</h1>
+      <div class="posts">
   
-  <div>
-    <h3><a href="http://craigle.us/" target="_blank">Craigle</a></h3>
-    <div>A simple aggregator of global telecommute contract jobs in technology.</div>
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2014/02/05/hooks-in-angularjs-controllers/">
+        Hooks in AngularJS Controllers
+      </a>
+    </h1>
+
+    <h2>The Situation</h2>
+
+<p>Sometimes when working with nested scopes, you may encounter a situation in
+which some scope action depends on the status of some arbitrarily nested
+controller. This could be a multi-part form built from reusable components,
+preventing the user from proceeding until complete, for example.</p>
+
+<p>An architecture that allows scopes nested within another scope to influence the
+life cycle of the latter has one primary advantage, namely, greater separation
+of concerns. A nested controller can supply functions for data validation and
+formatting, while the parent controller defines functions for navigation and
+accumulation of results. This leads to better modularity, as the parent
+controller is isolated from the implementation of nested controllers, while the
+latter are able to be used modularly in more contexts.</p>
+
+
+    <a href="/2014/02/05/hooks-in-angularjs-controllers/">Continue reading</a>
   </div>
+  
+</div>
 
-  <div>
-    <h3><a href="https://fics.bughou.se/" target="_blank">FICS Web Interface</a></h3>
-    <div>A modern online interface for the Free Internet Chess Server.</div>
-  </div>
+<div class="pagination">
+  
+    <span class="pagination-item older">Older</span>
+  
 
-  <div>
-    <h3><a href="http://gource.tv/" target="_blank">GourceTV</a></h3>
-    <div>An exercise in data as a service, GourceTV allows people to add their Github repository and have it rendered and automatically uploaded to a Youtube channel.</div>
-  </div>
-
-
+  
+    
+      <a class="pagination-item newer" href="/">Newer</a>
+    
+  
 </div>
 
     </div>

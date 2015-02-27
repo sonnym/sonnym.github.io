@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    Hacking S-expressions into Ruby &middot; effluence
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/poole.css">
+  <link rel="stylesheet" href="/css/syntax.css">
+  <link rel="stylesheet" href="/css/hyde.css">
+  <link rel="stylesheet" href="/css/custom.css">
+
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body class="layout-reverse">
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>effluence</h1>
+      <p class="lead"></p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+        <a href="/">home</a>
+      </li>
+
+      
+
+      
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/about/">about</a>
+            </li>
+          
+        
+      
+        
+          
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/projects/">projects</a>
+            </li>
+          
+        
+      
+        
+          
+        
+      
+
+      <li class="sidebar-nav-item">
+        <a href="/atom.xml" target="_blank">rss</a>
+      </li>
+    </ul>
+
+    <p>&copy; 2015. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Hacking S-expressions into Ruby</h1>
+  <h2>Background</h2>
+
+<p><a href="https://en.wikipedia.org/wiki/S-expression" target="_blank">S-expressions</a>
+are a classic means of storing trees of data. Part of the original Lisp
+specification, they have been a part of software engineering since the very
+beginning. Other languages, notably Scheme and, more recently, Clojure, have
+helped maintain the relevancy of this very simple means for representing data.</p>
+
+<p>In the spirit of
+<a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule" target="_blank">Greenspun&#39;s tenth rule</a>,
+we are going to attempt make first-class s-expressions in Ruby. There is
+already a
+<a href="http://rosettacode.org/wiki/S-Expressions#Ruby" target="_blank">nice implementation</a>
+of s-expressions in Ruby, for reference, but they are not first-class, which
+makes them less than ideal. As such, we are going to to see how far we can
+push (read: abuse) the dynamic nature of the Ruby language, and investigate
+just how much control we have over certain elements of its syntax.</p>
+
+<p>For anyone more interested in the result than the journey, be warned that this
+attempt will not be successful, but some interesting results will be found
+along the road to ultimate failure.</p>
+
+<h2>A Simple Hack</h2>
+
+<p>The most natural way for storing nested lists of data in Ruby, is its <code>Array</code>
+class. We will be able to skip most of the important details, and simply need
+to write a mechanism for calling an Array.</p>
+
+<p>The following is a fairly trivial
+<a href="https://en.wikipedia.org/wiki/Monkey-patch" target="_blank">duck punch</a>
+on the <code>Array</code> class that introduces a new <code>Array#call</code> method. This method
+treats the first item in the array as an operation to be performed, and the
+second as the implicit receiver of that message. If the receiver responds to
+the message, that method is called, with the rest of the original array as
+arguments; if not, then the operation is called directly with the entire
+remainder of the array as arguments.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Array</span>
+  <span class="k">def</span> <span class="nf">call</span>
+    <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">empty?</span>
+
+    <span class="n">op</span> <span class="o">=</span> <span class="n">first</span>
+    <span class="n">receiver</span> <span class="o">=</span> <span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span>
+
+    <span class="k">if</span> <span class="n">receiver</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+      <span class="n">receiver</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">drop</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">else</span>
+      <span class="nb">send</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>
+
+<p>This is a terribly incomplete implementation, and we cannot recommend it for
+production software. Were it more correct, it would still not be advisable to
+use for any realistic purposes. In spite of that realistic perspective, this
+actually produces some decent results.</p>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[].</span><span class="n">call</span>
+<span class="go">=&gt; []</span>
+
+<span class="gp">&gt;&gt; </span><span class="o">[</span><span class="ss">:puts</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="o">].</span><span class="n">call</span>
+<span class="go">foo</span>
+<span class="go">=&gt; nil</span>
+
+<span class="gp">&gt;&gt; </span><span class="o">[</span><span class="ss">:+</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="o">].</span><span class="n">call</span>
+<span class="go">=&gt; 3</span>
+
+<span class="gp">&gt;&gt; </span><span class="o">[</span><span class="ss">:puts</span><span class="p">,</span> <span class="o">[</span><span class="ss">:class</span><span class="p">,</span> <span class="o">[]].</span><span class="n">call</span><span class="o">].</span><span class="n">call</span>
+<span class="go">=&gt; Array</span></code></pre></div>
+
+<p>Being required to <code>call</code> each array after instantiation, however, is incredibly
+suboptimal &emdash; from a standpoint of maintainability and legibility, of
+course.  Perhaps it will be possible for us to be able to have this method
+get called automatically under some circumstances. In order to do this, we will
+need to investigate how arrays get instantiated and see if we can hook into
+that process to streamline our s-expressions.</p>
+
+<h2>Array Literals in Ruby</h2>
+
+<p>The first thing to try is overriding <code>Array#initialize</code>, which should be a
+simple enough way to transform arrays into s-expressions (read: completely
+break the functionality thereof). For this first pass, we will just add some
+debugging output to verify that this is the correct place to hook in and abuse
+Ruby.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Array</span>
+  <span class="k">alias</span> <span class="n">orig_initialize</span> <span class="kp">initialize</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="s2">&quot;This is where we break things&quot;</span>
+    <span class="n">orig_initialize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<span class="go">=&gt; []</span></code></pre></div>
+
+<p>For some reason, the constructor function never gets called when using the
+array literal syntax. Luckily, we can also manipulate the <code>Array::new</code> method,
+so surely that must be the answer. Tapping into individual methods to check if
+they are getting called will quickly become tedious, however, so first we should
+factor out that process into a function.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">observe_method</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
+  <span class="n">object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:alias_method</span><span class="p">,</span> <span class="s2">&quot;orig_</span><span class="si">#{</span><span class="nb">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
+
+  <span class="n">object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:define_method</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span> <span class="k">do</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">object</span><span class="si">}</span><span class="s2">#</span><span class="si">#{</span><span class="nb">method</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nb">puts</span>  <span class="s2">&quot;</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2"> args: &quot;</span><span class="c1">#{args.inspect}&quot;</span>
+
+    <span class="nb">send</span><span class="p">(</span><span class="s2">&quot;orig_</span><span class="si">#{</span><span class="nb">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">tap</span> <span class="k">do</span> <span class="o">|</span><span class="n">return_value</span><span class="o">|</span>
+      <span class="nb">puts</span> <span class="s2">&quot;return value is: </span><span class="si">#{</span><span class="n">return_value</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="ss">:new</span><span class="p">)</span></code></pre></div>
+
+<p>Now, looking into the call to <code>Array::new</code>, we should expect to see some
+debugging output.</p>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<span class="go">=&gt; []</span>
+<span class="gp">&gt;&gt; </span><span class="sx">%w()</span>
+<span class="go">=&gt; []</span>
+<span class="gp">&gt;&gt; </span><span class="o">%</span><span class="n">i</span><span class="p">()</span>
+<span class="go">=&gt; []</span></code></pre></div>
+
+<p>Surely, <code>Kernel.Array</code>, <code>Array::[]</code>, <code>Array.to_a</code>, or <code>Array.to_ary</code> must get
+called at some point during the instantiation of an array from the literal
+syntax.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">observe_method</span><span class="p">(</span><span class="no">Kernel</span><span class="p">,</span> <span class="ss">:Array</span><span class="p">)</span>
+<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="ss">:[]</span><span class="p">)</span>
+<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="p">,</span> <span class="ss">:to_a</span><span class="p">)</span>
+<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="p">,</span> <span class="ss">:to_ary</span><span class="p">)</span></code></pre></div>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<span class="go">Array.to_a args:</span>
+<span class="go">Array.to_a returns: [&quot;[&quot;, &quot;]&quot;, &quot;\n&quot;]</span></code></pre></div>
+
+<p>This result, in spite of not being at all what we were seeking or expecting, is
+very interesting, indeed. We have finally found a method being invoked during
+the instantiation of an array from the literal syntax, but it is an array
+containing all the characters from our line of input. Very strange, indeed.</p>
+
+<h2>Becoming Truly Desperate</h2>
+
+<p>Desperate times, desperate measures. Looking through the calls to specific
+functions is all well and good, but does not give a holistic enough picture of
+what is actually happening. Perhaps, we should observe every single method call
+on every single object and class in the entire <code>ObjectSpace</code> of the <code>Class</code>
+class. Surely, that will reveal something about array instantiation.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">observe_all_methods</span><span class="p">(</span><span class="n">object</span><span class="p">)</span>
+  <span class="n">object</span><span class="o">.</span><span class="n">instance_methods</span><span class="p">(</span><span class="kp">false</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="nb">method</span><span class="o">|</span> <span class="n">observe_method</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span> <span class="p">}</span>
+  <span class="n">object</span><span class="o">.</span><span class="n">methods</span><span class="p">(</span><span class="kp">false</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="nb">method</span><span class="o">|</span> <span class="n">observe_method</span><span class="p">(</span><span class="n">object</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span> <span class="p">}</span>
+<span class="k">end</span>
+
+<span class="no">ObjectSpace</span><span class="o">.</span><span class="n">each_object</span><span class="p">(</span><span class="no">Class</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
+  <span class="n">observe_all_methods</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+<span class="k">end</span></code></pre></div>
+
+<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span class="o">[</span>1<span class="o">]</span>    <span class="m">27580</span> segmentation fault  irb</code></pre></div>
+
+<p>A not particularly surprising result. If we, however, limit it to the classes of
+live objects in the session, we do get slightly better results.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">ObjectSpace</span><span class="o">.</span><span class="n">each_object</span><span class="p">()</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">o</span><span class="o">|</span> <span class="n">o</span><span class="o">.</span><span class="n">class</span> <span class="p">}</span><span class="o">.</span><span class="n">uniq</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
+  <span class="n">observe_all_methods</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+<span class="k">end</span></code></pre></div>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<span class="go">Array#[]= args:</span>
+<span class="go">return value is: []</span>
+<span class="go">Array#to_a args:</span>
+<span class="go">Array#to_s args:</span>
+
+<span class="go">[...]</span>
+
+<span class="go">return value is: [RubyToken::TkLBRACK]</span>
+<span class="go">return value is: [RubyToken::TkLBRACK]</span>
+
+<span class="go">[...]</span>
+
+<span class="go">return value is: RubyToken::TkLBRACK</span>
+<span class="go">Array#[] args:</span>
+<span class="go">return value is: RubyToken::TkRBRACK</span>
+
+<span class="go">[...]</span>
+
+<span class="go">Array#join args:</span>
+<span class="go">return value is: []</span>
+<span class="go">Array#inspect args:</span>
+<span class="go">return value is: []</span>
+<span class="go">=&gt; []</span>
+<span class="go">Array#empty? args:</span>
+<span class="go">return value is: true</span></code></pre></div>
+
+<p>This is mostly garbage, but there are some interesting snippets amongst the
+multitude of noise. Maybe we can abuse something in <code>RubyToken</code> to allow us to
+intercept (and own) the normal array instantiation process. Unfortunately, this
+has actually all been a red herring. The <code>RubyToken</code> module is a part of
+<a href="http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html" target="_blank"><code>irb</code></a>,
+which we conveniently neglected to mention are using to test the various
+examples. We get no useful output trying the same hacks from within a ruby
+script, and get different ones when we use <code>pry</code>. The one glimmer of hope was
+naught but the interactive shell processing our commands.</p>
+
+<h2>Some Final Probes</h2>
+
+<p>There are a couple more things we can try, but few avenues remain. We can look
+at what Ruby does to our input string using <code>Ripper</code>, but that is not of any
+real value in this case.</p>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="nb">require</span> <span class="s1">&#39;ripper&#39;</span>
+<span class="go">=&gt; true</span>
+<span class="gp">&gt;&gt; </span><span class="no">Ripper</span><span class="o">.</span><span class="n">lex</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">)</span>
+<span class="go">=&gt; [[[1, 0], :on_lbracket, &quot;[&quot;], [[1, 1], :on_rbracket, &quot;]&quot;]]</span>
+<span class="gp">&gt;&gt; </span><span class="no">Ripper</span><span class="o">.</span><span class="n">sexp_raw</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">)</span>
+<span class="go">=&gt; [:program, [:stmts_add, [:stmts_new], [:array, nil]]]</span></code></pre></div>
+
+<p>A more insightful approach could be to use <code>Kernel#set_trace_func</code> to see
+exactly what happens internally during array instantiation.</p>
+
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="nb">set_trace_func</span><span class="p">(</span><span class="o">-&gt;</span> <span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="nb">binding</span><span class="p">,</span> <span class="n">classname</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nb">printf</span> <span class="s2">&quot;%8s %-2d %10s %8s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">classname</span>
+<span class="p">},)</span>
+
+<span class="o">[]</span></code></pre></div>
+
+<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="go">c-return 1  set_trace_func   Kernel</span>
+<span class="go">    line 5</span></code></pre></div>
+
+<p>Here we see only one <code>line</code> event occurring on line 5, where the array is
+instantiated. This is the final dead end.</p>
+
+<h2>Conclusions</h2>
+
+<p>With no other avenues to explore, we must concede defeat. At some point, Ruby
+really must be just magic. Realistically, of course, what appears to be
+happening is quite the opposite. We have found a situation where Ruby is not as
+flexible as we would like it to be (N.B. this is not pejorative). In the end,
+our little edifice is built atop C, and we cannot always manipulate all aspects
+of our Ruby code in ways that are stupid or downright dangerous.  Fortunately,
+this exploration was not entirely in vain, for we learned about a few
+interesting features of Ruby and the point at which you can no longer bend the
+language.</p>
+
+  <span class="post-date">26 Feb 2015</span>
+</div>
+
+
+
+    </div>
+
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-47296801-1', 'sonnym.github.io');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

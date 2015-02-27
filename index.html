@@ -64,6 +64,10 @@
           
         
       
+        
+          
+        
+      
 
       <li class="sidebar-nav-item">
         <a href="/atom.xml" target="_blank">rss</a>
@@ -77,6 +81,39 @@
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
+        Hacking S-expressions into Ruby
+      </a>
+    </h1>
+
+    <h2>Background</h2>
+
+<p><a href="https://en.wikipedia.org/wiki/S-expression" target="_blank">S-expressions</a>
+are a classic means of storing trees of data. Part of the original Lisp
+specification, they have been a part of software engineering since the very
+beginning. Other languages, notably Scheme and, more recently, Clojure, have
+helped maintain the relevancy of this very simple means for representing data.</p>
+
+<p>In the spirit of
+<a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule" target="_blank">Greenspun&#39;s tenth rule</a>,
+we are going to attempt make first-class s-expressions in Ruby. There is
+already a
+<a href="http://rosettacode.org/wiki/S-Expressions#Ruby" target="_blank">nice implementation</a>
+of s-expressions in Ruby, for reference, but they are not first-class, which
+makes them less than ideal. As such, we are going to to see how far we can
+push (read: abuse) the dynamic nature of the Ruby language, and investigate
+just how much control we have over certain elements of its syntax.</p>
+
+<p>For anyone more interested in the result than the journey, be warned that this
+attempt will not be successful, but some interesting results will be found
+along the road to ultimate failure.</p>
+
+
+    <a href="/2015/02/26/hacking-s-expressions-into-ruby/">Continue reading</a>
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -202,37 +239,11 @@ the fibonacci sequence.</p>
     <a href="/2014/04/05/lazy-ruby/">Continue reading</a>
   </div>
   
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2014/02/05/hooks-in-angularjs-controllers/">
-        Hooks in AngularJS Controllers
-      </a>
-    </h1>
-
-    <h2>The Situation</h2>
-
-<p>Sometimes when working with nested scopes, you may encounter a situation in
-which some scope action depends on the status of some arbitrarily nested
-controller. This could be a multi-part form built from reusable components,
-preventing the user from proceeding until complete, for example.</p>
-
-<p>An architecture that allows scopes nested within another scope to influence the
-life cycle of the latter has one primary advantage, namely, greater separation
-of concerns. A nested controller can supply functions for data validation and
-formatting, while the parent controller defines functions for navigation and
-accumulation of results. This leads to better modularity, as the parent
-controller is isolated from the implementation of nested controllers, while the
-latter are able to be used modularly in more contexts.</p>
-
-
-    <a href="/2014/02/05/hooks-in-angularjs-controllers/">Continue reading</a>
-  </div>
-  
 </div>
 
 <div class="pagination">
   
-    <span class="pagination-item older">Older</span>
+    <a class="pagination-item older" href="/page2">Older</a>
   
 
   
