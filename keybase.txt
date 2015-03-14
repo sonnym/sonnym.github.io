@@ -1,0 +1,72 @@
+==================================================================
+https://keybase.io/sonnym
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://sonnym.github.com
+  * I am sonnym (https://keybase.io/sonnym) on keybase.
+  * I have a public key with fingerprint DC9D 47E8 4A00 6BE7 F3E7  4780 0BD7 F8E6 349F 3C61
+
+To do so, I am signing this object:
+
+{
+    "body": {
+        "key": {
+            "fingerprint": "dc9d47e84a006be7f3e747800bd7f8e6349f3c61",
+            "host": "keybase.io",
+            "key_id": "0bd7f8e6349f3c61",
+            "kid": "01010635c242f024058611fcef9acf5c4005f7dafd2f6967351ea4bbf3e1a2e4e2f00a",
+            "uid": "ed3881c5f5530ce69f9bd90ba97a6c00",
+            "username": "sonnym"
+        },
+        "service": {
+            "hostname": "sonnym.github.com",
+            "protocol": "https:"
+        },
+        "type": "web_service_binding",
+        "version": 1
+    },
+    "ctime": 1426300212,
+    "expire_in": 157680000,
+    "prev": "3b1e8be5ca8551c2777af6640c723dbe59df0e7a1563faff8ed322ad8cdc3b40",
+    "seqno": 6,
+    "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+Version: GnuPG v2
+
+owFtUn1QFGUYv+M8OgkR6WvGiMFFoUk49ntvD7BShDxxMpurIJhr9913YQN2j7vj
+8vioMJDBBgYJT/EMBMWRiImhsWwQmXBCDmycKCIMw4ovUcexyb7QqV2rP5pp3j/e
+eZ/fx/s8v3kaVxl0Jv39k7/Nk22pnH7sKq+zG95NK0d4RfAh1nKkEN67REnOhy6n
+S5I9iBURACuQDLSQHIrSPGREAjIkY0FRXmBEC6QJkhUJQGNIIlKguDWFasNzbmiW
+FLWmPhySoFb/h1/4N4CphyYogJO4iOIkSlloDBMBFFkOiBQgUZQSGYETBVykWZoh
+KAxyJM+rjWAcDkmoqlBOtSu9ZwcFwmLBACVSFIECSLMiywssynMsw9EARTWiG7pk
+rhiqbLciy75ipDIRUWteCUAtAG2O/+DmfMlTUMqbgVKsyp0uxaMApUiFCzwep9uq
+yT0+p8Z/DfKOf5wcvCQLapSqwgtdbkmRESumMoFH0qwxEqcJFMUxPBGBu52SCzok
+jUExtBouimr/QK9qSfAYtPCQApyFojCAMwzDiTRNooDBCUEFWEFEIcNhFE2InKhm
+LBA4zgkWIACCJ7WB3bBEVhArrbbJ5WtTSfky5yk1uiBSGVYXEr1CpzfpQo0h2jro
+wlZG/rsjSxORundObj13tLlxc25R6tz0xcbL0u2WtstIn35+PntqZ/v7dU9kXL3z
+9Lpjq0xT6YGowYQ1m0BESeBr+9uhL9SsJZsiqt2feUu6y4da52x7D46Z8xIWlz7c
+9dUQ/Wt8m3/D3u/FhTJLUlVz65Sh6Mz0wsCNDEPWgcor7Zc+zXm15kTklonJ0rjO
+mwXPN7UYj5iHGzds//m55NHBlsDIyrD46XHleEfPaI+tIjwGGXbklZxo2HGJGLiS
+dWv0Lfanh+K9me600NGkux2z2zfeyu+u/vLU7dmRwLGlTdl39fXnnjKcbPrkkLl6
+83LUBZB8/cXTxO/Ker8ciW+9ZvMfOfzYRxPXpga67JS94YdmrGN1fa+utWHOuc6X
+V5ViPJpxsSriwb5g3KnOPqO+8mD6cnthuLMrbT52oy8ruHhYNF9gScQU98BkdLBs
+v7HfNlhU0eUsi1q/zZ7pGBJmdp9uFHKi/SnnH1+Qn+2d3rn/UIzNgA5lkw1/9ifX
+J0mznT3f9Atn4MzqH/9IiWX1zp73Zm4+XB/y+tncuJrxfbXDi/GUry68eMnr6Bq/
+vm/keGxMTk7Zk/CZXb90WhPn9txYvG8y9rvlxPa1oRPN5OCBN+EHfHds78evpMyO
++R8NBruza22Zn+9pWjMWM2O6s1w86lmR+0aaq0IJnH15x0u9xBeP1Ppzzm9LUIzp
+qd/+BQ==
+=kStV
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/sonnym
+
+==================================================================
