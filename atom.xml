@@ -4,7 +4,7 @@
  <title>effluence</title>
  <link href="http://sonnym.github.io//atom.xml" rel="self"/>
  <link href="http://sonnym.github.io//"/>
- <updated>2015-03-16T22:53:19-04:00</updated>
+ <updated>2015-03-19T17:02:00-04:00</updated>
  <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
@@ -568,7 +568,7 @@ which we can build larger applications.&lt;/p&gt;
 
 &lt;h5&gt;Result&lt;/h5&gt;
 
-&lt;iframe src=&quot;/examples/elm/barebones_architecture.html&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
+&lt;iframe src=&quot;/examples/elm/barebones_architecture/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
 
 &lt;h2&gt;The Moving Parts&lt;/h2&gt;
 
@@ -750,7 +750,7 @@ are all on to begin with.&lt;/p&gt;
 
 &lt;h5&gt;Result&lt;/h5&gt;
 
-&lt;iframe src=&quot;/examples/elm/static_grid.html&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
+&lt;iframe src=&quot;/examples/elm/static_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
 
 &lt;p&gt;The crux of this program is that we want to turn a nested list of boolean
 values (&lt;code&gt;List (List Bool)&lt;/code&gt;) into an &lt;code&gt;Element&lt;/code&gt;, one of two possible types for
@@ -858,7 +858,7 @@ very few steps. These are as follows:&lt;/p&gt;
 
 &lt;h5&gt;Result&lt;/h5&gt;
 
-&lt;iframe src=&quot;/examples/elm/random_grid.html&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
+&lt;iframe src=&quot;/examples/elm/random_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
 
 &lt;p&gt;We do write two other helper functions, &lt;code&gt;generateRow&lt;/code&gt; and &lt;code&gt;groupInto&lt;/code&gt;, but
 neither change is essential for the example. In fact, the rendering we wrote
@@ -979,7 +979,7 @@ process, consisting primarily of the following steps:&lt;/p&gt;
 
 &lt;h5&gt;Result&lt;/h5&gt;
 
-&lt;iframe src=&quot;/examples/elm/game_of_life.html&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
+&lt;iframe src=&quot;/examples/elm/game_of_life/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + &#39;px&#39;;this.width = this.contentWindow.document.body.scrollWidth + &#39;px&#39;&quot;&gt;&lt;/iframe&gt;
 
 &lt;p&gt;The only real nuance here is that we must &lt;code&gt;sampleOn seed (every second)&lt;/code&gt;, which
 updates the signal with the constant initial value. We use an empty default to
@@ -1204,7 +1204,7 @@ invalid if none is provided.&lt;/p&gt;
       &lt;span class=&quot;nt&quot;&gt;&amp;lt;input&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;type=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;text&amp;quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;ng-model=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;textInput&amp;quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;/span&amp;gt;&lt;/span&gt;
 
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;ng-show=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;showResults()&amp;quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;ng-show=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;showResults()&amp;quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;{{ $scope.results() }}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
 &lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
