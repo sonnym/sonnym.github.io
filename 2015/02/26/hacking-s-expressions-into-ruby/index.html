@@ -47,20 +47,20 @@
         
           
             <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
+              <a href="/projects/">projects</a>
             </li>
-          
-        
-      
-        
           
         
       
         
           
             <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
+              <a href="/about/">about</a>
             </li>
+          
+        
+      
+        
           
         
       
@@ -74,7 +74,7 @@
       </li>
     </ul>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2017. All rights reserved.</p>
   </div>
 </div>
 
@@ -119,7 +119,7 @@ the message, that method is called, with the rest of the original array as
 arguments; if not, then the operation is called directly with the entire
 remainder of the array as arguments.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Array</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">class</span> <span class="nc">Array</span>
   <span class="k">def</span> <span class="nf">call</span>
     <span class="k">return</span> <span class="o">[]</span> <span class="k">if</span> <span class="n">empty?</span>
 
@@ -132,14 +132,14 @@ remainder of the array as arguments.</p>
       <span class="nb">send</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
     <span class="k">end</span>
   <span class="k">end</span>
-<span class="k">end</span></code></pre></div>
+<span class="k">end</span></code></pre></figure>
 
 <p>This is a terribly incomplete implementation, and we cannot recommend it for
 production software. Were it more correct, it would still not be advisable to
 use for any realistic purposes. In spite of that realistic perspective, this
 actually produces some decent results.</p>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[].</span><span class="n">call</span>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="o">[].</span><span class="n">call</span>
 <span class="go">=&gt; []</span>
 
 <span class="gp">&gt;&gt; </span><span class="o">[</span><span class="ss">:puts</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="o">].</span><span class="n">call</span>
@@ -150,7 +150,7 @@ actually produces some decent results.</p>
 <span class="go">=&gt; 3</span>
 
 <span class="gp">&gt;&gt; </span><span class="o">[</span><span class="ss">:puts</span><span class="p">,</span> <span class="o">[</span><span class="ss">:class</span><span class="p">,</span> <span class="o">[]].</span><span class="n">call</span><span class="o">].</span><span class="n">call</span>
-<span class="go">=&gt; Array</span></code></pre></div>
+<span class="go">=&gt; Array</span></code></pre></figure>
 
 <p>Being required to <code>call</code> each array after instantiation, however, is incredibly
 suboptimal &emdash; from a standpoint of maintainability and legibility, of
@@ -167,17 +167,17 @@ break the functionality thereof). For this first pass, we will just add some
 debugging output to verify that this is the correct place to hook in and abuse
 Ruby.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Array</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">class</span> <span class="nc">Array</span>
   <span class="k">alias</span> <span class="n">orig_initialize</span> <span class="kp">initialize</span>
 
   <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
     <span class="nb">puts</span> <span class="s2">&quot;This is where we break things&quot;</span>
     <span class="n">orig_initialize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
   <span class="k">end</span>
-<span class="k">end</span></code></pre></div>
+<span class="k">end</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
-<span class="go">=&gt; []</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<span class="go">=&gt; []</span></code></pre></figure>
 
 <p>For some reason, the constructor function never gets called when using the
 array literal syntax. Luckily, we can also manipulate the <code>Array::new</code> method,
@@ -185,7 +185,7 @@ so surely that must be the answer. Tapping into individual methods to check if
 they are getting called will quickly become tedious, however, so first we should
 factor out that process into a function.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">observe_method</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">def</span> <span class="nf">observe_method</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
   <span class="n">object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:alias_method</span><span class="p">,</span> <span class="s2">&quot;orig_</span><span class="si">#{</span><span class="nb">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
 
   <span class="n">object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="ss">:define_method</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span> <span class="k">do</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span>
@@ -199,30 +199,30 @@ factor out that process into a function.</p>
   <span class="k">end</span>
 <span class="k">end</span>
 
-<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="ss">:new</span><span class="p">)</span></code></pre></div>
+<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="ss">:new</span><span class="p">)</span></code></pre></figure>
 
 <p>Now, looking into the call to <code>Array::new</code>, we should expect to see some
 debugging output.</p>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="o">[]</span>
 <span class="go">=&gt; []</span>
 <span class="gp">&gt;&gt; </span><span class="sx">%w()</span>
 <span class="go">=&gt; []</span>
 <span class="gp">&gt;&gt; </span><span class="o">%</span><span class="n">i</span><span class="p">()</span>
-<span class="go">=&gt; []</span></code></pre></div>
+<span class="go">=&gt; []</span></code></pre></figure>
 
 <p>Surely, <code>Kernel.Array</code>, <code>Array::[]</code>, <code>Array.to_a</code>, or <code>Array.to_ary</code> must get
 called at some point during the instantiation of an array from the literal
 syntax.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">observe_method</span><span class="p">(</span><span class="no">Kernel</span><span class="p">,</span> <span class="ss">:Array</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="n">observe_method</span><span class="p">(</span><span class="no">Kernel</span><span class="p">,</span> <span class="ss">:Array</span><span class="p">)</span>
 <span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="ss">:[]</span><span class="p">)</span>
 <span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="p">,</span> <span class="ss">:to_a</span><span class="p">)</span>
-<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="p">,</span> <span class="ss">:to_ary</span><span class="p">)</span></code></pre></div>
+<span class="n">observe_method</span><span class="p">(</span><span class="nb">Array</span><span class="p">,</span> <span class="ss">:to_ary</span><span class="p">)</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="o">[]</span>
 <span class="go">Array.to_a args:</span>
-<span class="go">Array.to_a returns: [&quot;[&quot;, &quot;]&quot;, &quot;\n&quot;]</span></code></pre></div>
+<span class="go">Array.to_a returns: [&quot;[&quot;, &quot;]&quot;, &quot;\n&quot;]</span></code></pre></figure>
 
 <p>This result, in spite of not being at all what we were seeking or expecting, is
 very interesting, indeed. We have finally found a method being invoked during
@@ -237,25 +237,25 @@ what is actually happening. Perhaps, we should observe every single method call
 on every single object and class in the entire <code>ObjectSpace</code> of the <code>Class</code>
 class. Surely, that will reveal something about array instantiation.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">observe_all_methods</span><span class="p">(</span><span class="n">object</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">def</span> <span class="nf">observe_all_methods</span><span class="p">(</span><span class="n">object</span><span class="p">)</span>
   <span class="n">object</span><span class="o">.</span><span class="n">instance_methods</span><span class="p">(</span><span class="kp">false</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="nb">method</span><span class="o">|</span> <span class="n">observe_method</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span> <span class="p">}</span>
   <span class="n">object</span><span class="o">.</span><span class="n">methods</span><span class="p">(</span><span class="kp">false</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="nb">method</span><span class="o">|</span> <span class="n">observe_method</span><span class="p">(</span><span class="n">object</span><span class="o">.</span><span class="n">singleton_class</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span> <span class="p">}</span>
 <span class="k">end</span>
 
 <span class="no">ObjectSpace</span><span class="o">.</span><span class="n">each_object</span><span class="p">(</span><span class="no">Class</span><span class="p">)</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
   <span class="n">observe_all_methods</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
-<span class="k">end</span></code></pre></div>
+<span class="k">end</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span class="o">[</span>1<span class="o">]</span>    <span class="m">27580</span> segmentation fault  irb</code></pre></div>
+<figure class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span><span class="o">[</span><span class="m">1</span><span class="o">]</span>    <span class="m">27580</span> segmentation fault  irb</code></pre></figure>
 
 <p>A not particularly surprising result. If we, however, limit it to the classes of
 live objects in the session, we do get slightly better results.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">ObjectSpace</span><span class="o">.</span><span class="n">each_object</span><span class="p">()</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">o</span><span class="o">|</span> <span class="n">o</span><span class="o">.</span><span class="n">class</span> <span class="p">}</span><span class="o">.</span><span class="n">uniq</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="no">ObjectSpace</span><span class="o">.</span><span class="n">each_object</span><span class="p">()</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">o</span><span class="o">|</span> <span class="n">o</span><span class="o">.</span><span class="n">class</span> <span class="p">}</span><span class="o">.</span><span class="n">uniq</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
   <span class="n">observe_all_methods</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
-<span class="k">end</span></code></pre></div>
+<span class="k">end</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="o">[]</span>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="o">[]</span>
 <span class="go">Array#[]= args:</span>
 <span class="go">return value is: []</span>
 <span class="go">Array#to_a args:</span>
@@ -280,7 +280,7 @@ live objects in the session, we do get slightly better results.</p>
 <span class="go">return value is: []</span>
 <span class="go">=&gt; []</span>
 <span class="go">Array#empty? args:</span>
-<span class="go">return value is: true</span></code></pre></div>
+<span class="go">return value is: true</span></code></pre></figure>
 
 <p>This is mostly garbage, but there are some interesting snippets amongst the
 multitude of noise. Maybe we can abuse something in <code>RubyToken</code> to allow us to
@@ -298,24 +298,24 @@ naught but the interactive shell processing our commands.</p>
 at what Ruby does to our input string using <code>Ripper</code>, but that is not of any
 real value in this case.</p>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="gp">&gt;&gt; </span><span class="nb">require</span> <span class="s1">&#39;ripper&#39;</span>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="nb">require</span> <span class="s1">&#39;ripper&#39;</span>
 <span class="go">=&gt; true</span>
 <span class="gp">&gt;&gt; </span><span class="no">Ripper</span><span class="o">.</span><span class="n">lex</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">)</span>
 <span class="go">=&gt; [[[1, 0], :on_lbracket, &quot;[&quot;], [[1, 1], :on_rbracket, &quot;]&quot;]]</span>
 <span class="gp">&gt;&gt; </span><span class="no">Ripper</span><span class="o">.</span><span class="n">sexp_raw</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">)</span>
-<span class="go">=&gt; [:program, [:stmts_add, [:stmts_new], [:array, nil]]]</span></code></pre></div>
+<span class="go">=&gt; [:program, [:stmts_add, [:stmts_new], [:array, nil]]]</span></code></pre></figure>
 
 <p>A more insightful approach could be to use <code>Kernel#set_trace_func</code> to see
 exactly what happens internally during array instantiation.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="nb">set_trace_func</span><span class="p">(</span><span class="o">-&gt;</span> <span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="nb">binding</span><span class="p">,</span> <span class="n">classname</span><span class="p">)</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="nb">set_trace_func</span><span class="p">(</span><span class="o">-&gt;</span> <span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="nb">binding</span><span class="p">,</span> <span class="n">classname</span><span class="p">)</span> <span class="p">{</span>
   <span class="nb">printf</span> <span class="s2">&quot;%8s %-2d %10s %8s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">classname</span>
 <span class="p">},)</span>
 
-<span class="o">[]</span></code></pre></div>
+<span class="o">[]</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-irb" data-lang="irb"><span class="go">c-return 1  set_trace_func   Kernel</span>
-<span class="go">    line 5</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="go">c-return 1  set_trace_func   Kernel</span>
+<span class="go">    line 5</span></code></pre></figure>
 
 <p>Here we see only one <code>line</code> event occurring on line 5, where the array is
 instantiated. This is the final dead end.</p>
@@ -342,15 +342,6 @@ language.</p>
       
         <li>
           <h3>
-            <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
-              Hacking S-expressions into Ruby
-              <small>26 Feb 2015</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
             <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
               Using Defined Properties for Better AngularJS Directives
               <small>21 Jan 2015</small>
@@ -363,6 +354,15 @@ language.</p>
             <a href="/2014/05/05/writing-game-of-life-in-elm/">
               Writing Game of Life in Elm
               <small>05 May 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2014/04/05/lazy-ruby/">
+              Lazy Ruby
+              <small>05 Apr 2014</small>
             </a>
           </h3>
         </li>

@@ -47,20 +47,20 @@
         
           
             <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
+              <a href="/projects/">projects</a>
             </li>
-          
-        
-      
-        
           
         
       
         
           
             <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
+              <a href="/about/">about</a>
             </li>
+          
+        
+      
+        
           
         
       
@@ -74,7 +74,7 @@
       </li>
     </ul>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2017. All rights reserved.</p>
   </div>
 </div>
 
@@ -121,11 +121,11 @@ determined, e.g. if we have push notifications from the server to affect the
 active state of our tabs, we are required to use a <code>$watch</code> in our controller
 to set the attribute on our object &mdash; something like the following:</p>
 
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">angular</span><span class="p">.</span><span class="nx">controller</span><span class="p">(</span><span class="s2">&quot;TabsController&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;$scope&quot;</span><span class="p">,</span> <span class="s2">&quot;TabModel&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$scope</span><span class="p">,</span> <span class="nx">TabModel</span><span class="p">)</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="nx">angular</span><span class="p">.</span><span class="nx">controller</span><span class="p">(</span><span class="s2">&quot;TabsController&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;$scope&quot;</span><span class="p">,</span> <span class="s2">&quot;TabModel&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$scope</span><span class="p">,</span> <span class="nx">TabModel</span><span class="p">)</span> <span class="p">{</span>
   <span class="nx">$scope</span><span class="p">.</span><span class="nx">$watch</span><span class="p">(</span><span class="nx">TabModel</span><span class="p">.</span><span class="nx">activeFn</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
     <span class="nx">$scope</span><span class="p">.</span><span class="nx">isTabActive</span> <span class="o">=</span> <span class="nx">val</span><span class="p">;</span>
   <span class="p">});</span>
-<span class="p">}]);</span></code></pre></div>
+<span class="p">}]);</span></code></pre></figure>
 
 <p>This boilerplate quickly accumulates, making our controllers fatter than they
 optimally should be. We could move this logic into our service layer, but that
@@ -156,7 +156,7 @@ the <code>TabWrapper</code> class which prevents notifications from being displa
 currently active tab, but could also be used to perform other operations, such
 as automatically triggering updates in the model.</p>
 
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">app</span><span class="p">.</span><span class="nx">service</span><span class="p">(</span><span class="s2">&quot;TabWrapper&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="nx">app</span><span class="p">.</span><span class="nx">service</span><span class="p">(</span><span class="s2">&quot;TabWrapper&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
   <span class="kd">function</span> <span class="nx">TabWrapper</span><span class="p">(</span><span class="nx">tabModel</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">this</span><span class="p">.</span><span class="nx">model</span> <span class="o">=</span> <span class="nx">tabModel</span><span class="p">;</span>
 
@@ -184,7 +184,7 @@ as automatically triggering updates in the model.</p>
   <span class="p">};</span>
 
   <span class="k">return</span> <span class="nx">TabWrapper</span><span class="p">;</span>
-<span class="p">});</span></code></pre></div>
+<span class="p">});</span></code></pre></figure>
 
 <p>In short, what we have accomplished is hiding all the details of how our tabs
 operate in our service layer without any of it leaking into our controllers or
@@ -204,7 +204,7 @@ cannot recommend highly enough Reginald Braithwaite&#39;s treatise on the topic:
 <p>Using the above service, we can construct a complete example of how this
 process works. This example underscores all of the advantages discussed above.</p>
 
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;DefinedPropertyExample&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;ui.bootstrap&quot;</span><span class="p">]);</span>
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="kd">var</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;DefinedPropertyExample&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;ui.bootstrap&quot;</span><span class="p">]);</span>
 
 <span class="nx">app</span><span class="p">.</span><span class="nx">service</span><span class="p">(</span><span class="s2">&quot;TabModel&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;$timeout&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$timeout</span><span class="p">)</span> <span class="p">{</span>
   <span class="kd">function</span> <span class="nx">TabModel</span><span class="p">()</span> <span class="p">{</span>
@@ -238,22 +238,22 @@ process works. This example underscores all of the advantages discussed above.</
   <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
     <span class="nx">$scope</span><span class="p">.</span><span class="nx">tabs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">TabWrapper</span><span class="p">(</span><span class="k">new</span> <span class="nx">TabModel</span><span class="p">());</span>
   <span class="p">}</span>
-<span class="p">}]);</span></code></pre></div>
+<span class="p">}]);</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;DefinedPropertyExample&quot;</span><span class="nt">&gt;</span>
-  <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;TabsCtrl&quot;</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;tabset&gt;</span>
-      <span class="nt">&lt;tab</span> <span class="na">ng-repeat=</span><span class="s">&quot;tab in tabs track by $index&quot;</span> <span class="na">active=</span><span class="s">&quot;tab.active&quot;</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;tab-heading&gt;</span>
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">body</span> <span class="na">ng-app</span><span class="o">=</span><span class="s">&quot;DefinedPropertyExample&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">ng-controller</span><span class="o">=</span><span class="s">&quot;TabsCtrl&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">tabset</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">tab</span> <span class="na">ng-repeat</span><span class="o">=</span><span class="s">&quot;tab in tabs track by $index&quot;</span> <span class="na">active</span><span class="o">=</span><span class="s">&quot;tab.active&quot;</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">tab-heading</span><span class="p">&gt;</span>
           Tab { { $index + 1 } }
-          <span class="nt">&lt;span</span> <span class="na">ng-if=</span><span class="s">&quot;tab.notify()&quot;</span><span class="nt">&gt;</span>!<span class="nt">&lt;/span&gt;</span>
-        <span class="nt">&lt;/tab-heading&gt;</span>
+          <span class="p">&lt;</span><span class="nt">span</span> <span class="na">ng-if</span><span class="o">=</span><span class="s">&quot;tab.notify()&quot;</span><span class="p">&gt;</span>!<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">tab-heading</span><span class="p">&gt;</span>
 
         { { tab.model.content } }
-      <span class="nt">&lt;/tab&gt;</span>
-    <span class="nt">&lt;/tabset&gt;</span>
-  <span class="nt">&lt;/div&gt;</span>
-<span class="nt">&lt;/body&gt;</span></code></pre></div>
+      <span class="p">&lt;/</span><span class="nt">tab</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">tabset</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span></code></pre></figure>
 
 <p>First, we create a service object to drive our tabs. This model conforms to the
 interface we have specified, namely the <code>activate</code>, <code>deactivate</code>, and <code>notify</code>
@@ -293,15 +293,6 @@ the long term viability of our AngularJS applications.</p>
       
         <li>
           <h3>
-            <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
-              Using Defined Properties for Better AngularJS Directives
-              <small>21 Jan 2015</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
             <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
               Hacking S-expressions into Ruby
               <small>26 Feb 2015</small>
@@ -314,6 +305,15 @@ the long term viability of our AngularJS applications.</p>
             <a href="/2014/05/05/writing-game-of-life-in-elm/">
               Writing Game of Life in Elm
               <small>05 May 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2014/02/05/hooks-in-angularjs-controllers/">
+              Hooks in AngularJS Controllers
+              <small>05 Feb 2014</small>
             </a>
           </h3>
         </li>

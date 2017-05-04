@@ -47,20 +47,20 @@
         
           
             <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
+              <a href="/projects/">projects</a>
             </li>
-          
-        
-      
-        
           
         
       
         
           
             <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
+              <a href="/about/">about</a>
             </li>
+          
+        
+      
+        
           
         
       
@@ -74,7 +74,7 @@
       </li>
     </ul>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2017. All rights reserved.</p>
   </div>
 </div>
 
@@ -94,15 +94,15 @@ calculated and the program would never terminate.</p>
 defining an infinite series is very simple. The following list represents
 the fibonacci sequence.</p>
 
-<div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="nf">fibs</span> <span class="ow">=</span> <span class="mi">1</span> <span class="kt">:</span> <span class="mi">1</span> <span class="kt">:</span> <span class="n">zipWith</span> <span class="p">(</span><span class="o">+</span><span class="p">)</span> <span class="n">fibs</span> <span class="p">(</span><span class="n">tail</span> <span class="n">fibs</span><span class="p">)</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span></span><span class="nf">fibs</span> <span class="ow">=</span> <span class="mi">1</span> <span class="kt">:</span> <span class="mi">1</span> <span class="kt">:</span> <span class="n">zipWith</span> <span class="p">(</span><span class="o">+</span><span class="p">)</span> <span class="n">fibs</span> <span class="p">(</span><span class="n">tail</span> <span class="n">fibs</span><span class="p">)</span></code></pre></figure>
 
 <p>The list is defined recursively; the first two values are one, and every
 subsequent value is the sum of zipping the entire list with the tail of the
 list, evaluating to the sum of the two previous number for any position beyond
 the second. Pulling numbers off the list is as easy as the following.</p>
 
-<div class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span class="o">&gt;</span> <span class="n">take</span> <span class="mi">10</span> <span class="n">fibs</span>
-<span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">34</span><span class="p">,</span><span class="mi">55</span><span class="p">]</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-haskell" data-lang="haskell"><span></span><span class="o">&gt;</span> <span class="n">take</span> <span class="mi">10</span> <span class="n">fibs</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">34</span><span class="p">,</span><span class="mi">55</span><span class="p">]</span></code></pre></figure>
 
 <p>I was originally exposed to this concept while reading the book
 <a href="http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/">Programming Languages: Application and Interpretation</a>
@@ -120,8 +120,8 @@ returns a new instance of a
 possible in Haskell. First, we start by generating a simple infinite series,
 upon which we can build further abstractions.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&gt;</span> <span class="n">inf</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="no">Float</span><span class="o">::</span><span class="no">INFINITY</span><span class="p">)</span><span class="o">.</span><span class="n">lazy</span>
-<span class="o">=&gt;</span> <span class="c1">#&lt;Enumerator::Lazy: 1..Infinity&gt;</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="o">&gt;</span> <span class="n">inf</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="no">Float</span><span class="o">::</span><span class="no">INFINITY</span><span class="p">)</span><span class="o">.</span><span class="n">lazy</span>
+<span class="o">=&gt;</span> <span class="c1">#&lt;Enumerator::Lazy: 1..Infinity&gt;</span></code></pre></figure>
 
 <p>Now we have an enumerator, upon which we can build additional abstractions. In
 fact, you can represent any countable set using abstractions on this
@@ -133,15 +133,15 @@ albeit inelegant, to circumvent by <code>#map</code>ing subsequent to a <code>#z
 instance, to get the sum of all adjacent numbers, the following never
 completes.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&gt;</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">inf</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="p">}</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="o">&gt;</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">inf</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="p">}</span></code></pre></figure>
 
 <p>But by simply interposing a <code>#map</code>, it becomes possible.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&gt;</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">inf</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="p">}</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="o">&gt;</span> <span class="n">adjacents</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">zip</span><span class="p">(</span><span class="n">inf</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="p">}</span>
 <span class="o">=&gt;</span> <span class="c1">#&lt;Enumerator::Lazy: #&lt;Enumerator::Lazy: #&lt;Enumerator::Lazy: 1..Infinity&gt;:zip(#&lt;Enumerator::Lazy: #&lt;Enumerator::Lazy: 1..Infinity&gt;:drop(1)&gt;)&gt;:map&gt;</span>
 
 <span class="o">&gt;</span> <span class="n">adjacents</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">force</span>
-<span class="o">=&gt;</span> <span class="o">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">21</span><span class="o">]</span></code></pre></div>
+<span class="o">=&gt;</span> <span class="o">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">21</span><span class="o">]</span></code></pre></figure>
 
 <p>Note that it is necessary to force the evaluation, otherwise Ruby continues to
 return lazy enumerators to allow chaining.</p>
@@ -157,7 +157,7 @@ defining a new infinite series, but does not read as cleanly.</p>
 <p>Regardless of how well it reads, functionally, the following example
 accomplishes the same as the Haskell version.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&gt;</span> <span class="n">fibs</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="o">&gt;</span> <span class="n">fibs</span> <span class="o">=</span> <span class="n">inf</span><span class="o">.</span><span class="n">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">3</span>
       <span class="mi">1</span>
     <span class="k">else</span>
@@ -167,7 +167,7 @@ accomplishes the same as the Haskell version.</p>
 <span class="o">=&gt;</span> <span class="c1">#&lt;Enumerator::Lazy: #&lt;Enumerator::Lazy: 1..Infinity&gt;:map&gt;</span>
 
 <span class="o">&gt;</span> <span class="n">fibs</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">force</span>
-<span class="o">=&gt;</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">55</span><span class="o">]</span></code></pre></div>
+<span class="o">=&gt;</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">55</span><span class="o">]</span></code></pre></figure>
 
 <h3>Fast &amp; Lazy Fibonacci</h3>
 
@@ -183,7 +183,7 @@ point and a general memoization strategy based on the y combinator. For this
 particular example, a simple caching strategy will do, but it is worth knowing
 about the more general solution.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&gt;</span> <span class="n">fibs</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="o">&gt;</span> <span class="n">fibs</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">{</span>
     <span class="n">cache</span> <span class="o">=</span> <span class="o">[]</span>
 
     <span class="n">inf</span><span class="o">.</span><span class="n">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
@@ -198,13 +198,13 @@ about the more general solution.</p>
                         <span class="n">last</span>
       <span class="k">end</span>
     <span class="k">end</span>
-  <span class="p">}</span><span class="o">.</span><span class="n">call</span></code></pre></div>
+  <span class="p">}</span><span class="o">.</span><span class="n">call</span></code></pre></figure>
 
 <p>This allows us to calculate much higher values of the fibonacci sequence in a
 reasonable amount of time. Retrieving the 200th number happens instantly.</p>
 
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="o">&gt;</span> <span class="n">fibs</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">force</span><span class="o">.</span><span class="n">last</span>
-<span class="o">=&gt;</span> <span class="mi">280571172992510140037611932413038677189525</span></code></pre></div>
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="o">&gt;</span> <span class="n">fibs</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">force</span><span class="o">.</span><span class="n">last</span>
+<span class="o">=&gt;</span> <span class="mi">280571172992510140037611932413038677189525</span></code></pre></figure>
 
 <p>Of course, this is not particularly idiomatic Ruby, since it uses a closure to
 bind the cache variable. It would be possible to rewrite this as a class (and
@@ -224,15 +224,6 @@ may as well abuse it functionally as well.</p>
       
         <li>
           <h3>
-            <a href="/2014/04/05/lazy-ruby/">
-              Lazy Ruby
-              <small>05 Apr 2014</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
             <a href="/2014/05/05/writing-game-of-life-in-elm/">
               Writing Game of Life in Elm
               <small>05 May 2014</small>
@@ -245,6 +236,15 @@ may as well abuse it functionally as well.</p>
             <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
               Hacking S-expressions into Ruby
               <small>26 Feb 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
+              Using Defined Properties for Better AngularJS Directives
+              <small>21 Jan 2015</small>
             </a>
           </h3>
         </li>

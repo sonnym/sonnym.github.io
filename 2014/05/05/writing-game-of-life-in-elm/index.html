@@ -47,20 +47,20 @@
         
           
             <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
+              <a href="/projects/">projects</a>
             </li>
-          
-        
-      
-        
           
         
       
         
           
             <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
+              <a href="/about/">about</a>
             </li>
+          
+        
+      
+        
           
         
       
@@ -74,7 +74,7 @@
       </li>
     </ul>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2017. All rights reserved.</p>
   </div>
 </div>
 
@@ -139,11 +139,11 @@ solid base and build on top of it. This first example will simply a grid of a
 predetermined size. It has support for cells being turned on and off, but they
 are all on to begin with.</p>
 
-<h4>static_grid.elm</h4>
+<h4>0.14</h4>
 
 <h5>Source</h5>
 
-<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">List</span>
+<figure class="highlight"><pre><code class="language-elm" data-lang="elm"><span></span><span class="kn">import </span><span class="nc">List</span>
 
 <span class="kn">import </span><span class="nc">Color</span> <span class="p">(</span><span class="nv">rgb</span><span class="p">)</span>
 <span class="kn">import </span><span class="nc">Graphics.Element</span> <span class="p">(</span><span class="kt">Element</span><span class="p">,</span> <span class="nv">flow</span><span class="p">,</span> <span class="nv">right</span><span class="p">,</span> <span class="nv">down</span><span class="p">,</span> <span class="nv">container</span><span class="p">,</span> <span class="nv">topLeft</span><span class="p">,</span> <span class="nv">spacer</span><span class="p">,</span> <span class="nv">color</span><span class="p">)</span>
@@ -171,11 +171,11 @@ are all on to begin with.</p>
 <span class="nv">renderCell</span> <span class="nf">:</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Element</span>
 <span class="nv">renderCell</span> <span class="nv">on</span> <span class="nf">=</span>
   <span class="nv">spacer</span> <span class="nv">cellSize</span> <span class="nv">cellSize</span>
-    <span class="nf">|&gt;</span> <span class="nv">color</span> <span class="p">(</span><span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></code></pre></div>
+    <span class="nf">|&gt;</span> <span class="nv">color</span> <span class="p">(</span><span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></code></pre></figure>
 
 <h5>Result</h5>
 
-<iframe src="/examples/elm/static_grid/" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
+<iframe src="/examples/elm/0.14/static_grid/" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
 
 <p>The crux of this program is that we want to turn a nested list of boolean
 values (<code>List (List Bool)</code>) into an <code>Element</code>, one of two possible types for
@@ -219,11 +219,11 @@ very few steps. These are as follows:</p>
 <li><code>map</code> our <code>seededGrid</code> function through our existing <code>renderGrid</code> function.</li>
 </ol>
 
-<h4>random_grid.elm</h4>
+<h4>0.14</h4>
 
 <h5>Source</h5>
 
-<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">Signal</span> <span class="p">(</span><span class="nf">(&lt;~)</span><span class="p">,</span> <span class="kt">Signal</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-elm" data-lang="elm"><span></span><span class="kn">import </span><span class="nc">Signal</span> <span class="p">(</span><span class="nf">(&lt;~)</span><span class="p">,</span> <span class="kt">Signal</span><span class="p">)</span>
 <span class="kn">import </span><span class="nc">Signal</span>
 
 <span class="kn">import </span><span class="nc">List</span> <span class="p">(</span><span class="nf">(::)</span><span class="p">)</span>
@@ -279,11 +279,11 @@ very few steps. These are as follows:</p>
   <span class="kr">in</span>
     <span class="kt">List</span><span class="nf">.</span><span class="nv">repeat</span> <span class="nv">groups</span> <span class="p">[]</span>
       <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">i</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
-          <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></div>
+          <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></figure>
 
 <h5>Result</h5>
 
-<iframe src="/examples/elm/random_grid/" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
+<iframe src="/examples/elm/0.14/random_grid/" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
 
 <p>We do write two other helper functions, <code>generateRow</code> and <code>groupInto</code>, but
 neither change is essential for the example. In fact, the rendering we wrote
@@ -312,11 +312,11 @@ process, consisting primarily of the following steps:</p>
 <li>Create an <code>evolve</code> function of type <code>List (List Bool) -&gt; List (List Bool)</code>.</li>
 </ol>
 
-<h4>game_of_life.elm</h4>
+<h4>0.14</h4>
 
 <h5>Source</h5>
 
-<div class="highlight"><pre><code class="language-elm" data-lang="elm"><span class="kn">import </span><span class="nc">Signal</span> <span class="p">(</span><span class="nf">(&lt;~)</span><span class="p">,</span> <span class="kt">Signal</span><span class="p">)</span>
+<figure class="highlight"><pre><code class="language-elm" data-lang="elm"><span></span><span class="kn">import </span><span class="nc">Signal</span> <span class="p">(</span><span class="nf">(&lt;~)</span><span class="p">,</span> <span class="kt">Signal</span><span class="p">)</span>
 <span class="kn">import </span><span class="nc">Signal</span>
 
 <span class="kn">import </span><span class="nc">List</span> <span class="p">(</span><span class="nf">(::)</span><span class="p">)</span>
@@ -400,11 +400,11 @@ process, consisting primarily of the following steps:</p>
   <span class="kr">in</span>
     <span class="kt">List</span><span class="nf">.</span><span class="nv">repeat</span> <span class="nv">groups</span> <span class="p">[]</span>
       <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">i</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
-          <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></div>
+          <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></figure>
 
 <h5>Result</h5>
 
-<iframe src="/examples/elm/game_of_life/" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
+<iframe src="/examples/elm/0.14/game_of_life/" frameBorder="0" onload="this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'"></iframe>
 
 <p>The only real nuance here is that we must <code>sampleOn seed (every second)</code>, which
 updates the signal with the constant initial value. We use an empty default to
@@ -450,15 +450,6 @@ improving upon it in the near future, so watch out for that update.</p>
       
         <li>
           <h3>
-            <a href="/2014/05/05/writing-game-of-life-in-elm/">
-              Writing Game of Life in Elm
-              <small>05 May 2014</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
             <a href="/2014/12/23/barebones-architecture-in-elm/">
               Barebones Architecture in Elm
               <small>23 Dec 2014</small>
@@ -471,6 +462,15 @@ improving upon it in the near future, so watch out for that update.</p>
             <a href="/2014/04/05/lazy-ruby/">
               Lazy Ruby
               <small>05 Apr 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
+              Using Defined Properties for Better AngularJS Directives
+              <small>21 Jan 2015</small>
             </a>
           </h3>
         </li>

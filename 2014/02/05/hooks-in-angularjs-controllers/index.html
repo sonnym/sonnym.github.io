@@ -47,20 +47,20 @@
         
           
             <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
+              <a href="/projects/">projects</a>
             </li>
-          
-        
-      
-        
           
         
       
         
           
             <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
+              <a href="/about/">about</a>
             </li>
+          
+        
+      
+        
           
         
       
@@ -74,7 +74,7 @@
       </li>
     </ul>
 
-    <p>&copy; 2015. All rights reserved.</p>
+    <p>&copy; 2017. All rights reserved.</p>
   </div>
 </div>
 
@@ -113,23 +113,23 @@ invalid if none is provided.</p>
 
 <p>What remains is, simply, to make it work.</p>
 
-<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;HookExample&quot;</span><span class="nt">&gt;</span>
-  <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;FormPageCtrl&quot;</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;p&gt;</span>Please enter some text below.<span class="nt">&lt;/p&gt;</span>
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">body</span> <span class="na">ng-app</span><span class="o">=</span><span class="s">&quot;HookExample&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">ng-controller</span><span class="o">=</span><span class="s">&quot;FormPageCtrl&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Please enter some text below.<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
 
-    <span class="nt">&lt;span</span> <span class="na">ng-controller=</span><span class="s">&quot;FormCheckboxCtrl&quot;</span><span class="nt">&gt;</span>
-      <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;checkbox&quot;</span> <span class="na">ng-model=</span><span class="s">&quot;checkbox&quot;</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;/span&gt;</span>
+    <span class="p">&lt;</span><span class="nt">span</span> <span class="na">ng-controller</span><span class="o">=</span><span class="s">&quot;FormCheckboxCtrl&quot;</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;checkbox&quot;</span> <span class="na">ng-model</span><span class="o">=</span><span class="s">&quot;checkbox&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
 
-    <span class="nt">&lt;span</span> <span class="na">ng-controller=</span><span class="s">&quot;FormTextInputCtrl&quot;</span><span class="nt">&gt;</span>
-      <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;text&quot;</span> <span class="na">ng-model=</span><span class="s">&quot;textInput&quot;</span> <span class="nt">/&gt;</span>
-    <span class="nt">&lt;/span&gt;</span>
+    <span class="p">&lt;</span><span class="nt">span</span> <span class="na">ng-controller</span><span class="o">=</span><span class="s">&quot;FormTextInputCtrl&quot;</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text&quot;</span> <span class="na">ng-model</span><span class="o">=</span><span class="s">&quot;textInput&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
 
-    <span class="nt">&lt;div</span> <span class="na">ng-show=</span><span class="s">&quot;showResults()&quot;</span><span class="nt">&gt;</span>{{ $scope.results() }}<span class="nt">&lt;/div&gt;</span>
-  <span class="nt">&lt;/div&gt;</span>
-<span class="nt">&lt;/body&gt;</span></code></pre></div>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">ng-show</span><span class="o">=</span><span class="s">&quot;showResults()&quot;</span><span class="p">&gt;</span>{{ $scope.results() }}<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span></code></pre></figure>
 
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">HookExample</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;HookExample&quot;</span><span class="p">,</span> <span class="p">[]);</span>
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="kd">var</span> <span class="nx">HookExample</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;HookExample&quot;</span><span class="p">,</span> <span class="p">[]);</span>
 
 <span class="nx">HookExample</span><span class="p">.</span><span class="nx">controller</span><span class="p">(</span><span class="s2">&quot;FormPageCtrl&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$scope</span><span class="p">,</span> <span class="nx">RegisterHook</span><span class="p">)</span> <span class="p">{</span>
   <span class="nx">$scope</span><span class="p">.</span><span class="nx">showResults</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
@@ -157,7 +157,7 @@ invalid if none is provided.</p>
   <span class="nx">$scope</span><span class="p">.</span><span class="nx">getResults</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
     <span class="k">return</span> <span class="nx">$scope</span><span class="p">.</span><span class="nx">checkbox</span> <span class="o">?</span> <span class="s2">&quot;Yes&quot;</span> <span class="o">:</span> <span class="s2">&quot;No&quot;</span><span class="p">;</span>
   <span class="p">};</span>
-<span class="p">});</span></code></pre></div>
+<span class="p">});</span></code></pre></figure>
 
 <h2>A Hook Implementation</h2>
 
@@ -166,7 +166,7 @@ the scope, we can give ask if any controller nested within the hierarchy wishes
 to respond to the hook, thereby influencing the life cycle of our parent
 controller.</p>
 
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
   <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">scope</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
     <span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="p">[];</span>
 
@@ -185,7 +185,7 @@ controller.</p>
 
     <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">results</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">});</span></code></pre></div>
+<span class="p">});</span></code></pre></figure>
 
 <p>This simple implemnation will look for and call the <code>name</code> function on any
 scope, starting from the <code>$$childHead</code> of the scope passed in. Once all the
@@ -238,15 +238,6 @@ default action.</p>
       
         <li>
           <h3>
-            <a href="/2014/02/05/hooks-in-angularjs-controllers/">
-              Hooks in AngularJS Controllers
-              <small>05 Feb 2014</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
             <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
               Using Defined Properties for Better AngularJS Directives
               <small>21 Jan 2015</small>
@@ -259,6 +250,15 @@ default action.</p>
             <a href="/2014/12/23/barebones-architecture-in-elm/">
               Barebones Architecture in Elm
               <small>23 Dec 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
+              Hacking S-expressions into Ruby
+              <small>26 Feb 2015</small>
             </a>
           </h3>
         </li>
