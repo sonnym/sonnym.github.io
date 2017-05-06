@@ -86,7 +86,7 @@
 
 <p>In Haskell, it is possible to construct infinite lists via recursive
 definition. This is only possible because Haskell uses
-<a href="https://en.wikipedia.org/wiki/Lazy_evaluation" target="_blank">lazy evaluation</a>
+<span> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation">lazy evaluation</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 rather than eager evaluation. Otherwise, the entire list would need to be
 calculated and the program would never terminate.</p>
 
@@ -105,16 +105,16 @@ the second. Pulling numbers off the list is as easy as the following.</p>
 <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">34</span><span class="p">,</span><span class="mi">55</span><span class="p">]</span></code></pre></figure>
 
 <p>I was originally exposed to this concept while reading the book
-<a href="http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/">Programming Languages: Application and Interpretation</a>
+<span> <a href="http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/">Programming Languages: Application and Interpretation</a> <span style="vertical-align: super"> <a href="http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 which provides a more thorough introduction to the topic of lazy evaluation.</p>
 
 <h2>Spurious Examples and Limitations in Ruby</h2>
 
 <p>Ruby 2 introduced lazy evaluation to its <code>Enumarable</code> module, accessible via
 <code>#lazy</code>. The
-<a href="http://www.ruby-doc.org/core-2.1.1/Enumerable.html#method-i-lazy" target="_blank">method</a>
+<span> <a href="http://www.ruby-doc.org/core-2.1.1/Enumerable.html#method-i-lazy">method</a> <span style="vertical-align: super"> <a href="http://www.ruby-doc.org/core-2.1.1/Enumerable.html#method-i-lazy" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 returns a new instance of a
-<a href="http://www.ruby-doc.org/core-2.1.1/Enumerator/Lazy.html" target="_blank">lazy enumerator</a>.</p>
+<span> <a href="http://www.ruby-doc.org/core-2.1.1/Enumerator/Lazy.html">lazy enumerator</a> <span style="vertical-align: super"> <a href="http://www.ruby-doc.org/core-2.1.1/Enumerator/Lazy.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span> .</p>
 
 <p>We can use these additions to create the same sort of infinite lists that are
 possible in Haskell. First, we start by generating a simple infinite series,
@@ -177,7 +177,7 @@ This is a canonical issue with the naive recursive definition of fibonacci
 number calculations.</p>
 
 <p>My original
-<a href="http://matt.might.net/articles/implementation-of-recursive-fixed-point-y-combinator-in-javascript-for-memoization/" target="_blank">exposure</a>
+<span> <a href="http://matt.might.net/articles/implementation-of-recursive-fixed-point-y-combinator-in-javascript-for-memoization/">exposure</a> <span style="vertical-align: super"> <a href="http://matt.might.net/articles/implementation-of-recursive-fixed-point-y-combinator-in-javascript-for-memoization/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 to the following approach manipulates the fibonacci function by using a fixed
 point and a general memoization strategy based on the y combinator. For this
 particular example, a simple caching strategy will do, but it is worth knowing
@@ -224,15 +224,6 @@ may as well abuse it functionally as well.</p>
       
         <li>
           <h3>
-            <a href="/2014/05/05/writing-game-of-life-in-elm/">
-              Writing Game of Life in Elm
-              <small>05 May 2014</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
             <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
               Hacking S-expressions into Ruby
               <small>26 Feb 2015</small>
@@ -245,6 +236,15 @@ may as well abuse it functionally as well.</p>
             <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
               Using Defined Properties for Better AngularJS Directives
               <small>21 Jan 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2014/05/05/writing-game-of-life-in-elm/">
+              Writing Game of Life in Elm
+              <small>05 May 2014</small>
             </a>
           </h3>
         </li>

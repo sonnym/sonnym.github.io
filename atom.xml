@@ -4,7 +4,7 @@
  <title>effluence</title>
  <link href="http://sonnym.github.io//atom.xml" rel="self"/>
  <link href="http://sonnym.github.io//"/>
- <updated>2017-05-04T00:05:30-04:00</updated>
+ <updated>2017-05-05T20:27:33-04:00</updated>
  <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
@@ -19,17 +19,17 @@
    <id>http://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby</id>
    <content type="html">&lt;h2&gt;Background&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot; target=&quot;_blank&quot;&gt;S-expressions&lt;/a&gt;
+&lt;p&gt;&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot;&gt;S-expressions&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 are a classic means of storing trees of data. Part of the original Lisp
 specification, they have been a part of software engineering since the very
 beginning. Other languages, notably Scheme and, more recently, Clojure, have
 helped maintain the relevancy of this very simple means for representing data.&lt;/p&gt;
 
 &lt;p&gt;In the spirit of
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule&quot; target=&quot;_blank&quot;&gt;Greenspun&amp;#39;s tenth rule&lt;/a&gt;,
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule&quot;&gt;Greenspun&amp;#39;s tenth rule&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
 we are going to attempt make first-class s-expressions in Ruby. There is
 already a
-&lt;a href=&quot;http://rosettacode.org/wiki/S-Expressions#Ruby&quot; target=&quot;_blank&quot;&gt;nice implementation&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://rosettacode.org/wiki/S-Expressions#Ruby&quot;&gt;nice implementation&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://rosettacode.org/wiki/S-Expressions#Ruby&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 of s-expressions in Ruby, for reference, but they are not first-class, which
 makes them less than ideal. As such, we are going to to see how far we can
 push (read: abuse) the dynamic nature of the Ruby language, and investigate
@@ -46,7 +46,7 @@ class. We will be able to skip most of the important details, and simply need
 to write a mechanism for calling an Array.&lt;/p&gt;
 
 &lt;p&gt;The following is a fairly trivial
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Monkey-patch&quot; target=&quot;_blank&quot;&gt;duck punch&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Monkey-patch&quot;&gt;duck punch&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Monkey-patch&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 on the &lt;code&gt;Array&lt;/code&gt; class that introduces a new &lt;code&gt;Array#call&lt;/code&gt; method. This method
 treats the first item in the array as an operation to be performed, and the
 second as the implicit receiver of that message. If the receiver responds to
@@ -221,7 +221,7 @@ live objects in the session, we do get slightly better results.&lt;/p&gt;
 multitude of noise. Maybe we can abuse something in &lt;code&gt;RubyToken&lt;/code&gt; to allow us to
 intercept (and own) the normal array instantiation process. Unfortunately, this
 has actually all been a red herring. The &lt;code&gt;RubyToken&lt;/code&gt; module is a part of
-&lt;a href=&quot;http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html&quot; target=&quot;_blank&quot;&gt;&lt;code&gt;irb&lt;/code&gt;&lt;/a&gt;,
+&lt;span&gt; &lt;a href=&quot;http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html&quot;&gt;&lt;code&gt;irb&lt;/code&gt;&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
 which we conveniently neglected to mention are using to test the various
 examples. We get no useful output trying the same hacks from within a ruby
 script, and get different ones when we use &lt;code&gt;pry&lt;/code&gt;. The one glimmer of hope was
@@ -282,7 +282,7 @@ messy business logic and expose a very clean, declarative interface to consumers
 of the API. As with most tools for constructing abstractions, however,
 directives have certain limitations that can lead to implementation details
 leaking through, resulting in code that less
-&lt;a href=&quot;https://en.wikipedia.org/wiki/DRY_principle&quot; target=&quot;_blank&quot;&gt;DRY&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/DRY_principle&quot;&gt;DRY&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/DRY_principle&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 and, consequently, less maintainable.&lt;/p&gt;
 
 &lt;p&gt;There are, however, ways to work around these shortcomings and to build
@@ -292,14 +292,14 @@ logic. This method is also well suited for building on top of third party
 directives with a complex API by abstracting the details into a business
 object. In doing so, our markup will become more in line with the ideal in
 AngularJS, which
-&lt;a href=&quot;https://docs.angularjs.org/guide/introduction&quot; target=&quot;_blank&quot;&gt;promotes declarative code&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://docs.angularjs.org/guide/introduction&quot;&gt;promotes declarative code&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://docs.angularjs.org/guide/introduction&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 over imperative. Without further ado, let us look at the current situation and
 how we can improve our directives.&lt;/p&gt;
 
 &lt;h2&gt;Motivation and Shortcomings&lt;/h2&gt;
 
 &lt;p&gt;The original motivation for this method arose when working with
-&lt;a href=&quot;https://angular-ui.github.io/bootstrap/#/tabs&quot; target=&quot;_blank&quot;&gt;tabs component&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://angular-ui.github.io/bootstrap/#/tabs&quot;&gt;tabs component&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://angular-ui.github.io/bootstrap/#/tabs&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 of AngularUI Bootstrap. Its &lt;code&gt;&amp;lt;tabset&amp;gt;&lt;/code&gt; directive provides three settings with
 clearly overlapping concerns: &lt;code&gt;active&lt;/code&gt;, &lt;code&gt;select()&lt;/code&gt;, and &lt;code&gt;deselect()&lt;/code&gt;. This
 redundancy forces users of the API to not only create functions in addition to
@@ -323,7 +323,7 @@ to set the attribute on our object &amp;mdash; something like the following:&lt;
 optimally should be. We could move this logic into our service layer, but that
 only deflects, not fundamentally solves, the issue.  One may surmise that,
 perhaps, instead we could supply a function, but the
-&lt;a href=&quot;https://code.angularjs.org/1.3.10/docs/api/ng/service/$compile#-scope-&quot; target=&quot;_blank&quot;&gt;two-way binding&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://code.angularjs.org/1.3.10/docs/api/ng/service/$compile#-scope-&quot;&gt;two-way binding&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://code.angularjs.org/1.3.10/docs/api/ng/service/$compile#-scope-&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 mechanism for directives requires that the property we specify be assignable.
 As such, we cannot use our function as is to pass the value through the&amp;#39;
 interface of the directive.&lt;/p&gt;
@@ -332,7 +332,7 @@ interface of the directive.&lt;/p&gt;
 
 &lt;p&gt;There is, however, a very simple way to circumvent both these issues with one
 fairly small change.  Introduce the
-&lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty&quot; target=&quot;_blank&quot;&gt;Object.defineProperty&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty&quot;&gt;Object.defineProperty&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 method, part of the ECMAScript-262 standard. This extremely powerful method
 gives us the ability to define custom properties on an object and control
 aspects of it otherwise not available, such as its enumerability and whether or
@@ -387,11 +387,11 @@ templates. So long as our services follow the simple interface defined by
 technique, but it works well enough for these purposes. For a comprehensive
 treatment on the subject of object composition and extension in JavaScript, I
 cannot recommend highly enough Reginald Braithwaite&amp;#39;s treatise on the topic:
-&lt;a href=&quot;https://leanpub.com/javascript-spessore/read&quot; target=&quot;_blank&quot;&gt;JavaScript Spessore&lt;/a&gt;.&lt;/p&gt;
+&lt;span&gt; &lt;a href=&quot;https://leanpub.com/javascript-spessore/read&quot;&gt;JavaScript Spessore&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://leanpub.com/javascript-spessore/read&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.&lt;/p&gt;
 
 &lt;h2&gt;An Example&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&quot;http://plnkr.co/edit/7X66uV?p=preview&quot; target=&quot;_blank&quot;&gt;Open in Plunkr&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt; &lt;a href=&quot;http://plnkr.co/edit/7X66uV?p=preview&quot;&gt;Open in Plunkr&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://plnkr.co/edit/7X66uV?p=preview&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;&lt;/p&gt;
 
 &lt;p&gt;Using the above service, we can construct a complete example of how this
 process works. This example underscores all of the advantages discussed above.&lt;/p&gt;
@@ -485,7 +485,7 @@ the long term viability of our AngularJS applications.&lt;/p&gt;
    <content type="html">&lt;h2&gt;Motivation and Background&lt;/h2&gt;
 
 &lt;p&gt;In the process of writing larger applications in
-&lt;a href=&quot;http://elm-lang.org/&quot; target=&quot;_blank&quot;&gt;Elm&lt;/a&gt;,
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/&quot;&gt;Elm&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 I find it far too easy to initially focus on one small part of the problem
 while losing perspective on the bigger picture. For instance, I will begin by
 rendering a simple scene, followed by splitting out components, and finally
@@ -495,16 +495,16 @@ I have already written.&lt;/p&gt;
 
 &lt;p&gt;There are some really excellent resources covering the architecture of applications
 in the Elm language. The
-&lt;a href=&quot;http://elm-lang.org/learn/Architecture.elm&quot; target=&quot;_blank&quot;&gt;canonical article&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/learn/Architecture.elm&quot;&gt;canonical article&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/learn/Architecture.elm&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt; &lt;a href=&quot;https://web.archive.org/web/20141223/http://elm-lang.org/learn/Architecture.elm&quot; target=&quot;_blank&quot; alt=&quot;Open on archive.org&quot; title=&quot;Open on archive.org&quot;&gt;&lt;svg class=&quot;octicon octicon-mirror&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M15.5 4.7L8.5 0l-7 4.7c-.3.19-.5.45-.5.8V16l7.5-4 7.5 4V5.5c0-.34-.2-.61-.5-.8zm-.5 9.8l-6-3.25V10H8v1.25L2 14.5v-9l6-4V6h1V1.5l6 4v9zM6 7h5V5l3 3-3 3V9H6v2L3 8l3-3v2z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt; &lt;/span&gt; &lt;/span&gt;
 on the subject can be found on the official Elm site and covers everything at
 a high level. The best example is likely
-&lt;a href=&quot;https://evancz.github.io/elm-todomvc/&quot; target=&quot;_blank&quot;&gt;TodoMVC&lt;/a&gt;
-(&lt;a href=&quot;https://github.com/evancz/elm-todomvc&quot; target=&quot;_blank&quot;&gt;source&lt;/a&gt;)
+&lt;span&gt; &lt;a href=&quot;https://evancz.github.io/elm-todomvc/&quot;&gt;TodoMVC&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://evancz.github.io/elm-todomvc/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+(&lt;span&gt; &lt;a href=&quot;https://github.com/evancz/elm-todomvc&quot;&gt;source&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://github.com/evancz/elm-todomvc&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;)
 ported to Elm which uses many the concepts from the article to create a rich
 and simple interface, showcasing just how powerful Elm is.  Another great and
 extremely polished example is
-&lt;a href=&quot;http://dreamwriter.io/&quot; target=&quot;_blank&quot;&gt;Dreamwriter&lt;/a&gt;
-(&lt;a href=&quot;https://github.com/rtfeldman/dreamwriter&quot; target=&quot;_blank&quot;&gt;source&lt;/a&gt;),
+&lt;span&gt; &lt;a href=&quot;http://dreamwriter.io/&quot;&gt;Dreamwriter&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://dreamwriter.io/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+(&lt;span&gt; &lt;a href=&quot;https://github.com/rtfeldman/dreamwriter&quot;&gt;source&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://github.com/rtfeldman/dreamwriter&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;),
 which also incorporates the separation of components as outlined in the original
 article.&lt;/p&gt;
 
@@ -521,7 +521,7 @@ trivial) user interface in Elm. It consists of nothing more that a button
 that increments a value, but this simple scene gives us the foundation  upon
 which we can build larger applications.&lt;/p&gt;
 
-&lt;h4&gt;0.14&lt;/h4&gt;
+&lt;h4&gt;barebones_architecture.elm&lt;/h4&gt;
 
 &lt;h5&gt;Source&lt;/h5&gt;
 
@@ -587,9 +587,9 @@ which we can build larger applications.&lt;/p&gt;
 
 &lt;p&gt;Most applications are not very interesting without user input. We choose to
 represent all user input as a
-&lt;a href=&quot;http://elm-lang.org/learn/Union-Types.elm&quot; target=&quot;_blank&quot;&gt;union type&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/learn/Union-Types.elm&quot;&gt;union type&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/learn/Union-Types.elm&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 This gives us the ability to easily
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Pattern_matching&quot; target=&quot;_blank&quot;&gt;pattern match&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Pattern_matching&quot;&gt;pattern match&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Pattern_matching&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 on the user action in a case statement, which will be useful very soon. In this
 particular example, the &lt;code&gt;Action&lt;/code&gt; type can only consist of either a &lt;code&gt;NoOp&lt;/code&gt; or
 &lt;code&gt;Increment&lt;/code&gt;.&lt;/p&gt;
@@ -597,7 +597,7 @@ particular example, the &lt;code&gt;Action&lt;/code&gt; type can only consist of
 &lt;h3&gt;Signal Channel for Message Passing&lt;/h3&gt;
 
 &lt;p&gt;We then create a
-&lt;a href=&quot;http://elm-lang.org/blog/announce/0.14.elm#signal-channels&quot; target=&quot;_blank&quot;&gt;signal channel&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/blog/announce/0.14.elm#signal-channels&quot;&gt;signal channel&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/blog/announce/0.14.elm#signal-channels&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 of actions. The &lt;code&gt;actions&lt;/code&gt; method creates a new channel that will default to the
 &lt;code&gt;NoOp&lt;/code&gt; value. The &lt;code&gt;incrementButton&lt;/code&gt; function creates a new button that will send
 the &lt;code&gt;Increment&lt;/code&gt; value to the channel.&lt;/p&gt;
@@ -641,7 +641,7 @@ to the &lt;code&gt;Action&lt;/code&gt; union type, extend the case statement in 
 more sources of input like &lt;code&gt;incrementButton&lt;/code&gt;. In reality, however, our
 applications will be much more maintainable if we create separate components
 and nested &lt;code&gt;Action&lt;/code&gt; and &lt;code&gt;State&lt;/code&gt; types (which the
-&lt;a href=&quot;http://elm-lang.org/learn/Architecture.elm#nesting&quot; target=&quot;_blank&quot;&gt;architecture article&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/learn/Architecture.elm#nesting&quot;&gt;architecture article&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/learn/Architecture.elm#nesting&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt; &lt;a href=&quot;https://web.archive.org/web/20141223/http://elm-lang.org/learn/Architecture.elm#nesting&quot; target=&quot;_blank&quot; alt=&quot;Open on archive.org&quot; title=&quot;Open on archive.org&quot;&gt;&lt;svg class=&quot;octicon octicon-mirror&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M15.5 4.7L8.5 0l-7 4.7c-.3.19-.5.45-.5.8V16l7.5-4 7.5 4V5.5c0-.34-.2-.61-.5-.8zm-.5 9.8l-6-3.25V10H8v1.25L2 14.5v-9l6-4V6h1V1.5l6 4v9zM6 7h5V5l3 3-3 3V9H6v2L3 8l3-3v2z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt; &lt;/span&gt; &lt;/span&gt;
 covers in detail).&lt;/p&gt;
 
 &lt;p&gt;In conclusion, the basic pattern that is being used in more complex and feature
@@ -686,15 +686,15 @@ invariant over time, and user input (e.g. &lt;code&gt;Mouse.clicks&lt;/code&gt;)
 signals can be combined and manipulated in various ways to achieve vastly
 complex results, clearly and concisely. It is this expressive power of Elm
 that I find especially interesting. The
-&lt;a href=&quot;http://elm-lang.org/learn/What-is-FRP.elm&quot; target=&quot;_blank&quot;&gt;overview of FRP&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/learn/What-is-FRP.elm&quot;&gt;overview of FRP&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/learn/What-is-FRP.elm&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 on the Elm site is excellent resource for these core concepts.&lt;/p&gt;
 
 &lt;p&gt;For this reason, I chose Elm to explore Conway&amp;#39;s Game of Life. Having seen that
 Life can be written concisely, to an almost absurd degree, in
-&lt;a href=&quot;http://youtu.be/a9xAKttWgP4&quot; target=&quot;_blank&quot;&gt;APL&lt;/a&gt;, it seems to me
-to be a very interesting problem by which to compare different languages. I
-have only dabbled with Elm in the past, writing a toy for
-&lt;a href=&quot;http://www.ludumdare.com/compo/ludum-dare-28/&quot; target=&quot;_blank&quot;&gt;LD 28&lt;/a&gt;,
+&lt;span&gt; &lt;a href=&quot;http://youtu.be/a9xAKttWgP4&quot;&gt;APL&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://youtu.be/a9xAKttWgP4&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+it seems to me to be a very interesting problem by which to compare different
+languages. I have only dabbled with Elm in the past, writing a toy for
+&lt;span&gt; &lt;a href=&quot;http://www.ludumdare.com/compo/ludum-dare-28/&quot;&gt;LD 28&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://www.ludumdare.com/compo/ludum-dare-28/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
 but have always wanted to spend some more time getting to know the language.&lt;/p&gt;
 
 &lt;p&gt;Without further ado, let us begin writing Conway&amp;#39;s Game of Life.&lt;/p&gt;
@@ -714,7 +714,7 @@ solid base and build on top of it. This first example will simply a grid of a
 predetermined size. It has support for cells being turned on and off, but they
 are all on to begin with.&lt;/p&gt;
 
-&lt;h4&gt;0.14&lt;/h4&gt;
+&lt;h4&gt;static_grid.elm&lt;/h4&gt;
 
 &lt;h5&gt;Source&lt;/h5&gt;
 
@@ -794,7 +794,7 @@ very few steps. These are as follows:&lt;/p&gt;
 &lt;li&gt;&lt;code&gt;map&lt;/code&gt; our &lt;code&gt;seededGrid&lt;/code&gt; function through our existing &lt;code&gt;renderGrid&lt;/code&gt; function.&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h4&gt;0.14&lt;/h4&gt;
+&lt;h4&gt;random_grid.elm&lt;/h4&gt;
 
 &lt;h5&gt;Source&lt;/h5&gt;
 
@@ -887,7 +887,7 @@ process, consisting primarily of the following steps:&lt;/p&gt;
 &lt;li&gt;Create an &lt;code&gt;evolve&lt;/code&gt; function of type &lt;code&gt;List (List Bool) -&amp;gt; List (List Bool)&lt;/code&gt;.&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h4&gt;0.14&lt;/h4&gt;
+&lt;h4&gt;game_of_life.elm&lt;/h4&gt;
 
 &lt;h5&gt;Source&lt;/h5&gt;
 
@@ -1026,7 +1026,7 @@ improving upon it in the near future, so watch out for that update.&lt;/p&gt;
 
 &lt;p&gt;In Haskell, it is possible to construct infinite lists via recursive
 definition. This is only possible because Haskell uses
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Lazy_evaluation&quot; target=&quot;_blank&quot;&gt;lazy evaluation&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Lazy_evaluation&quot;&gt;lazy evaluation&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Lazy_evaluation&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 rather than eager evaluation. Otherwise, the entire list would need to be
 calculated and the program would never terminate.&lt;/p&gt;
 
@@ -1045,16 +1045,16 @@ the second. Pulling numbers off the list is as easy as the following.&lt;/p&gt;
 &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;34&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;55&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;I was originally exposed to this concept while reading the book
-&lt;a href=&quot;http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/&quot;&gt;Programming Languages: Application and Interpretation&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/&quot;&gt;Programming Languages: Application and Interpretation&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://cs.brown.edu/~sk/Publications/Books/ProgLangs/2007-04-26/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 which provides a more thorough introduction to the topic of lazy evaluation.&lt;/p&gt;
 
 &lt;h2&gt;Spurious Examples and Limitations in Ruby&lt;/h2&gt;
 
 &lt;p&gt;Ruby 2 introduced lazy evaluation to its &lt;code&gt;Enumarable&lt;/code&gt; module, accessible via
 &lt;code&gt;#lazy&lt;/code&gt;. The
-&lt;a href=&quot;http://www.ruby-doc.org/core-2.1.1/Enumerable.html#method-i-lazy&quot; target=&quot;_blank&quot;&gt;method&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://www.ruby-doc.org/core-2.1.1/Enumerable.html#method-i-lazy&quot;&gt;method&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://www.ruby-doc.org/core-2.1.1/Enumerable.html#method-i-lazy&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 returns a new instance of a
-&lt;a href=&quot;http://www.ruby-doc.org/core-2.1.1/Enumerator/Lazy.html&quot; target=&quot;_blank&quot;&gt;lazy enumerator&lt;/a&gt;.&lt;/p&gt;
+&lt;span&gt; &lt;a href=&quot;http://www.ruby-doc.org/core-2.1.1/Enumerator/Lazy.html&quot;&gt;lazy enumerator&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://www.ruby-doc.org/core-2.1.1/Enumerator/Lazy.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt; .&lt;/p&gt;
 
 &lt;p&gt;We can use these additions to create the same sort of infinite lists that are
 possible in Haskell. First, we start by generating a simple infinite series,
@@ -1117,7 +1117,7 @@ This is a canonical issue with the naive recursive definition of fibonacci
 number calculations.&lt;/p&gt;
 
 &lt;p&gt;My original
-&lt;a href=&quot;http://matt.might.net/articles/implementation-of-recursive-fixed-point-y-combinator-in-javascript-for-memoization/&quot; target=&quot;_blank&quot;&gt;exposure&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://matt.might.net/articles/implementation-of-recursive-fixed-point-y-combinator-in-javascript-for-memoization/&quot;&gt;exposure&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://matt.might.net/articles/implementation-of-recursive-fixed-point-y-combinator-in-javascript-for-memoization/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 to the following approach manipulates the fibonacci function by using a fixed
 point and a general memoization strategy based on the y combinator. For this
 particular example, a simple caching strategy will do, but it is worth knowing
@@ -1178,12 +1178,12 @@ latter are able to be used modularly in more contexts.&lt;/p&gt;
 
 &lt;h2&gt;A Simple Example&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&quot;http://plnkr.co/edit/QKzZZq?p=preview&quot; target=&quot;_blank&quot;&gt;Open in Plunkr&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt; &lt;a href=&quot;http://plnkr.co/edit/QKzZZq?p=preview&quot;&gt;Open in Plunkr&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://plnkr.co/edit/QKzZZq?p=preview&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;&lt;/p&gt;
 
 &lt;p&gt;As the structure of the following example indicates, we have three controllers
 - one that coordinates and two that handle user input. We have taken the
 liberty of using
-&lt;a href=&quot;http://underscorejs.org/&quot; target=&quot;_blank&quot;&gt;underscore&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;http://underscorejs.org/&quot;&gt;underscore&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://underscorejs.org/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 to simplify checking if all conditions are met.&lt;/p&gt;
 
 &lt;p&gt;Here, the &lt;code&gt;FormCheckboxCtrl&lt;/code&gt; has no validation, but does coerce its results to

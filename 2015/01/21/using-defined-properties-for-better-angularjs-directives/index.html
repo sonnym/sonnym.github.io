@@ -90,7 +90,7 @@ messy business logic and expose a very clean, declarative interface to consumers
 of the API. As with most tools for constructing abstractions, however,
 directives have certain limitations that can lead to implementation details
 leaking through, resulting in code that less
-<a href="https://en.wikipedia.org/wiki/DRY_principle" target="_blank">DRY</a>
+<span> <a href="https://en.wikipedia.org/wiki/DRY_principle">DRY</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/DRY_principle" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 and, consequently, less maintainable.</p>
 
 <p>There are, however, ways to work around these shortcomings and to build
@@ -100,14 +100,14 @@ logic. This method is also well suited for building on top of third party
 directives with a complex API by abstracting the details into a business
 object. In doing so, our markup will become more in line with the ideal in
 AngularJS, which
-<a href="https://docs.angularjs.org/guide/introduction" target="_blank">promotes declarative code</a>
+<span> <a href="https://docs.angularjs.org/guide/introduction">promotes declarative code</a> <span style="vertical-align: super"> <a href="https://docs.angularjs.org/guide/introduction" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 over imperative. Without further ado, let us look at the current situation and
 how we can improve our directives.</p>
 
 <h2>Motivation and Shortcomings</h2>
 
 <p>The original motivation for this method arose when working with
-<a href="https://angular-ui.github.io/bootstrap/#/tabs" target="_blank">tabs component</a>
+<span> <a href="https://angular-ui.github.io/bootstrap/#/tabs">tabs component</a> <span style="vertical-align: super"> <a href="https://angular-ui.github.io/bootstrap/#/tabs" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 of AngularUI Bootstrap. Its <code>&lt;tabset&gt;</code> directive provides three settings with
 clearly overlapping concerns: <code>active</code>, <code>select()</code>, and <code>deselect()</code>. This
 redundancy forces users of the API to not only create functions in addition to
@@ -131,7 +131,7 @@ to set the attribute on our object &mdash; something like the following:</p>
 optimally should be. We could move this logic into our service layer, but that
 only deflects, not fundamentally solves, the issue.  One may surmise that,
 perhaps, instead we could supply a function, but the
-<a href="https://code.angularjs.org/1.3.10/docs/api/ng/service/$compile#-scope-" target="_blank">two-way binding</a>
+<span> <a href="https://code.angularjs.org/1.3.10/docs/api/ng/service/$compile#-scope-">two-way binding</a> <span style="vertical-align: super"> <a href="https://code.angularjs.org/1.3.10/docs/api/ng/service/$compile#-scope-" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 mechanism for directives requires that the property we specify be assignable.
 As such, we cannot use our function as is to pass the value through the&#39;
 interface of the directive.</p>
@@ -140,7 +140,7 @@ interface of the directive.</p>
 
 <p>There is, however, a very simple way to circumvent both these issues with one
 fairly small change.  Introduce the
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty" target="_blank">Object.defineProperty</a>
+<span> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty">Object.defineProperty</a> <span style="vertical-align: super"> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 method, part of the ECMAScript-262 standard. This extremely powerful method
 gives us the ability to define custom properties on an object and control
 aspects of it otherwise not available, such as its enumerability and whether or
@@ -195,11 +195,11 @@ templates. So long as our services follow the simple interface defined by
 technique, but it works well enough for these purposes. For a comprehensive
 treatment on the subject of object composition and extension in JavaScript, I
 cannot recommend highly enough Reginald Braithwaite&#39;s treatise on the topic:
-<a href="https://leanpub.com/javascript-spessore/read" target="_blank">JavaScript Spessore</a>.</p>
+<span> <a href="https://leanpub.com/javascript-spessore/read">JavaScript Spessore</a> <span style="vertical-align: super"> <a href="https://leanpub.com/javascript-spessore/read" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.</p>
 
 <h2>An Example</h2>
 
-<p><a href="http://plnkr.co/edit/7X66uV?p=preview" target="_blank">Open in Plunkr</a></p>
+<p><span> <a href="http://plnkr.co/edit/7X66uV?p=preview">Open in Plunkr</a> <span style="vertical-align: super"> <a href="http://plnkr.co/edit/7X66uV?p=preview" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span></p>
 
 <p>Using the above service, we can construct a complete example of how this
 process works. This example underscores all of the advantages discussed above.</p>
@@ -293,9 +293,9 @@ the long term viability of our AngularJS applications.</p>
       
         <li>
           <h3>
-            <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
-              Hacking S-expressions into Ruby
-              <small>26 Feb 2015</small>
+            <a href="/2014/02/05/hooks-in-angularjs-controllers/">
+              Hooks in AngularJS Controllers
+              <small>05 Feb 2014</small>
             </a>
           </h3>
         </li>
@@ -311,9 +311,9 @@ the long term viability of our AngularJS applications.</p>
       
         <li>
           <h3>
-            <a href="/2014/02/05/hooks-in-angularjs-controllers/">
-              Hooks in AngularJS Controllers
-              <small>05 Feb 2014</small>
+            <a href="/2014/04/05/lazy-ruby/">
+              Lazy Ruby
+              <small>05 Apr 2014</small>
             </a>
           </h3>
         </li>

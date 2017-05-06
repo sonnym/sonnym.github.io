@@ -85,7 +85,7 @@
   <h2>Motivation and Background</h2>
 
 <p>In the process of writing larger applications in
-<a href="http://elm-lang.org/" target="_blank">Elm</a>,
+<span> <a href="http://elm-lang.org/">Elm</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 I find it far too easy to initially focus on one small part of the problem
 while losing perspective on the bigger picture. For instance, I will begin by
 rendering a simple scene, followed by splitting out components, and finally
@@ -95,16 +95,16 @@ I have already written.</p>
 
 <p>There are some really excellent resources covering the architecture of applications
 in the Elm language. The
-<a href="http://elm-lang.org/learn/Architecture.elm" target="_blank">canonical article</a>
+<span> <a href="http://elm-lang.org/learn/Architecture.elm">canonical article</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/learn/Architecture.elm" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> <a href="https://web.archive.org/web/20141223/http://elm-lang.org/learn/Architecture.elm" target="_blank" alt="Open on archive.org" title="Open on archive.org"><svg class="octicon octicon-mirror" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M15.5 4.7L8.5 0l-7 4.7c-.3.19-.5.45-.5.8V16l7.5-4 7.5 4V5.5c0-.34-.2-.61-.5-.8zm-.5 9.8l-6-3.25V10H8v1.25L2 14.5v-9l6-4V6h1V1.5l6 4v9zM6 7h5V5l3 3-3 3V9H6v2L3 8l3-3v2z"/></svg></a> </span> </span>
 on the subject can be found on the official Elm site and covers everything at
 a high level. The best example is likely
-<a href="https://evancz.github.io/elm-todomvc/" target="_blank">TodoMVC</a>
-(<a href="https://github.com/evancz/elm-todomvc" target="_blank">source</a>)
+<span> <a href="https://evancz.github.io/elm-todomvc/">TodoMVC</a> <span style="vertical-align: super"> <a href="https://evancz.github.io/elm-todomvc/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+(<span> <a href="https://github.com/evancz/elm-todomvc">source</a> <span style="vertical-align: super"> <a href="https://github.com/evancz/elm-todomvc" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>)
 ported to Elm which uses many the concepts from the article to create a rich
 and simple interface, showcasing just how powerful Elm is.  Another great and
 extremely polished example is
-<a href="http://dreamwriter.io/" target="_blank">Dreamwriter</a>
-(<a href="https://github.com/rtfeldman/dreamwriter" target="_blank">source</a>),
+<span> <a href="http://dreamwriter.io/">Dreamwriter</a> <span style="vertical-align: super"> <a href="http://dreamwriter.io/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+(<span> <a href="https://github.com/rtfeldman/dreamwriter">source</a> <span style="vertical-align: super"> <a href="https://github.com/rtfeldman/dreamwriter" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>),
 which also incorporates the separation of components as outlined in the original
 article.</p>
 
@@ -121,7 +121,7 @@ trivial) user interface in Elm. It consists of nothing more that a button
 that increments a value, but this simple scene gives us the foundation  upon
 which we can build larger applications.</p>
 
-<h4>0.14</h4>
+<h4>barebones_architecture.elm</h4>
 
 <h5>Source</h5>
 
@@ -187,9 +187,9 @@ which we can build larger applications.</p>
 
 <p>Most applications are not very interesting without user input. We choose to
 represent all user input as a
-<a href="http://elm-lang.org/learn/Union-Types.elm" target="_blank">union type</a>
+<span> <a href="http://elm-lang.org/learn/Union-Types.elm">union type</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/learn/Union-Types.elm" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 This gives us the ability to easily
-<a href="https://en.wikipedia.org/wiki/Pattern_matching" target="_blank">pattern match</a>
+<span> <a href="https://en.wikipedia.org/wiki/Pattern_matching">pattern match</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Pattern_matching" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 on the user action in a case statement, which will be useful very soon. In this
 particular example, the <code>Action</code> type can only consist of either a <code>NoOp</code> or
 <code>Increment</code>.</p>
@@ -197,7 +197,7 @@ particular example, the <code>Action</code> type can only consist of either a <c
 <h3>Signal Channel for Message Passing</h3>
 
 <p>We then create a
-<a href="http://elm-lang.org/blog/announce/0.14.elm#signal-channels" target="_blank">signal channel</a>
+<span> <a href="http://elm-lang.org/blog/announce/0.14.elm#signal-channels">signal channel</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/blog/announce/0.14.elm#signal-channels" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 of actions. The <code>actions</code> method creates a new channel that will default to the
 <code>NoOp</code> value. The <code>incrementButton</code> function creates a new button that will send
 the <code>Increment</code> value to the channel.</p>
@@ -241,7 +241,7 @@ to the <code>Action</code> union type, extend the case statement in <code>step</
 more sources of input like <code>incrementButton</code>. In reality, however, our
 applications will be much more maintainable if we create separate components
 and nested <code>Action</code> and <code>State</code> types (which the
-<a href="http://elm-lang.org/learn/Architecture.elm#nesting" target="_blank">architecture article</a>
+<span> <a href="http://elm-lang.org/learn/Architecture.elm#nesting">architecture article</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/learn/Architecture.elm#nesting" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> <a href="https://web.archive.org/web/20141223/http://elm-lang.org/learn/Architecture.elm#nesting" target="_blank" alt="Open on archive.org" title="Open on archive.org"><svg class="octicon octicon-mirror" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M15.5 4.7L8.5 0l-7 4.7c-.3.19-.5.45-.5.8V16l7.5-4 7.5 4V5.5c0-.34-.2-.61-.5-.8zm-.5 9.8l-6-3.25V10H8v1.25L2 14.5v-9l6-4V6h1V1.5l6 4v9zM6 7h5V5l3 3-3 3V9H6v2L3 8l3-3v2z"/></svg></a> </span> </span>
 covers in detail).</p>
 
 <p>In conclusion, the basic pattern that is being used in more complex and feature
@@ -278,9 +278,9 @@ some trivial scene, when writing new applications.</p>
       
         <li>
           <h3>
-            <a href="/2014/02/05/hooks-in-angularjs-controllers/">
-              Hooks in AngularJS Controllers
-              <small>05 Feb 2014</small>
+            <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
+              Hacking S-expressions into Ruby
+              <small>26 Feb 2015</small>
             </a>
           </h3>
         </li>

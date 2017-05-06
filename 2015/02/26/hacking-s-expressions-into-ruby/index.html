@@ -84,17 +84,17 @@
   <h1 class="post-title">Hacking S-expressions into Ruby</h1>
   <h2>Background</h2>
 
-<p><a href="https://en.wikipedia.org/wiki/S-expression" target="_blank">S-expressions</a>
+<p><span> <a href="https://en.wikipedia.org/wiki/S-expression">S-expressions</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/S-expression" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 are a classic means of storing trees of data. Part of the original Lisp
 specification, they have been a part of software engineering since the very
 beginning. Other languages, notably Scheme and, more recently, Clojure, have
 helped maintain the relevancy of this very simple means for representing data.</p>
 
 <p>In the spirit of
-<a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule" target="_blank">Greenspun&#39;s tenth rule</a>,
+<span> <a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule">Greenspun&#39;s tenth rule</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
 we are going to attempt make first-class s-expressions in Ruby. There is
 already a
-<a href="http://rosettacode.org/wiki/S-Expressions#Ruby" target="_blank">nice implementation</a>
+<span> <a href="http://rosettacode.org/wiki/S-Expressions#Ruby">nice implementation</a> <span style="vertical-align: super"> <a href="http://rosettacode.org/wiki/S-Expressions#Ruby" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 of s-expressions in Ruby, for reference, but they are not first-class, which
 makes them less than ideal. As such, we are going to to see how far we can
 push (read: abuse) the dynamic nature of the Ruby language, and investigate
@@ -111,7 +111,7 @@ class. We will be able to skip most of the important details, and simply need
 to write a mechanism for calling an Array.</p>
 
 <p>The following is a fairly trivial
-<a href="https://en.wikipedia.org/wiki/Monkey-patch" target="_blank">duck punch</a>
+<span> <a href="https://en.wikipedia.org/wiki/Monkey-patch">duck punch</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Monkey-patch" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 on the <code>Array</code> class that introduces a new <code>Array#call</code> method. This method
 treats the first item in the array as an operation to be performed, and the
 second as the implicit receiver of that message. If the receiver responds to
@@ -286,7 +286,7 @@ live objects in the session, we do get slightly better results.</p>
 multitude of noise. Maybe we can abuse something in <code>RubyToken</code> to allow us to
 intercept (and own) the normal array instantiation process. Unfortunately, this
 has actually all been a red herring. The <code>RubyToken</code> module is a part of
-<a href="http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html" target="_blank"><code>irb</code></a>,
+<span> <a href="http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html"><code>irb</code></a> <span style="vertical-align: super"> <a href="http://ruby-doc.org/stdlib-2.2.0/libdoc/irb/rdoc/RubyToken.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
 which we conveniently neglected to mention are using to test the various
 examples. We get no useful output trying the same hacks from within a ruby
 script, and get different ones when we use <code>pry</code>. The one glimmer of hope was
@@ -342,18 +342,9 @@ language.</p>
       
         <li>
           <h3>
-            <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
-              Using Defined Properties for Better AngularJS Directives
-              <small>21 Jan 2015</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
-            <a href="/2014/05/05/writing-game-of-life-in-elm/">
-              Writing Game of Life in Elm
-              <small>05 May 2014</small>
+            <a href="/2014/02/05/hooks-in-angularjs-controllers/">
+              Hooks in AngularJS Controllers
+              <small>05 Feb 2014</small>
             </a>
           </h3>
         </li>
@@ -363,6 +354,15 @@ language.</p>
             <a href="/2014/04/05/lazy-ruby/">
               Lazy Ruby
               <small>05 Apr 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2014/05/05/writing-game-of-life-in-elm/">
+              Writing Game of Life in Elm
+              <small>05 May 2014</small>
             </a>
           </h3>
         </li>

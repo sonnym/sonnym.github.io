@@ -91,17 +91,17 @@
 
     <h2>Background</h2>
 
-<p><a href="https://en.wikipedia.org/wiki/S-expression" target="_blank">S-expressions</a>
+<p><span> <a href="https://en.wikipedia.org/wiki/S-expression">S-expressions</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/S-expression" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 are a classic means of storing trees of data. Part of the original Lisp
 specification, they have been a part of software engineering since the very
 beginning. Other languages, notably Scheme and, more recently, Clojure, have
 helped maintain the relevancy of this very simple means for representing data.</p>
 
 <p>In the spirit of
-<a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule" target="_blank">Greenspun&#39;s tenth rule</a>,
+<span> <a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule">Greenspun&#39;s tenth rule</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
 we are going to attempt make first-class s-expressions in Ruby. There is
 already a
-<a href="http://rosettacode.org/wiki/S-Expressions#Ruby" target="_blank">nice implementation</a>
+<span> <a href="http://rosettacode.org/wiki/S-Expressions#Ruby">nice implementation</a> <span style="vertical-align: super"> <a href="http://rosettacode.org/wiki/S-Expressions#Ruby" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 of s-expressions in Ruby, for reference, but they are not first-class, which
 makes them less than ideal. As such, we are going to to see how far we can
 push (read: abuse) the dynamic nature of the Ruby language, and investigate
@@ -130,7 +130,7 @@ messy business logic and expose a very clean, declarative interface to consumers
 of the API. As with most tools for constructing abstractions, however,
 directives have certain limitations that can lead to implementation details
 leaking through, resulting in code that less
-<a href="https://en.wikipedia.org/wiki/DRY_principle" target="_blank">DRY</a>
+<span> <a href="https://en.wikipedia.org/wiki/DRY_principle">DRY</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/DRY_principle" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 and, consequently, less maintainable.</p>
 
 <p>There are, however, ways to work around these shortcomings and to build
@@ -140,7 +140,7 @@ logic. This method is also well suited for building on top of third party
 directives with a complex API by abstracting the details into a business
 object. In doing so, our markup will become more in line with the ideal in
 AngularJS, which
-<a href="https://docs.angularjs.org/guide/introduction" target="_blank">promotes declarative code</a>
+<span> <a href="https://docs.angularjs.org/guide/introduction">promotes declarative code</a> <span style="vertical-align: super"> <a href="https://docs.angularjs.org/guide/introduction" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 over imperative. Without further ado, let us look at the current situation and
 how we can improve our directives.</p>
 
@@ -158,7 +158,7 @@ how we can improve our directives.</p>
     <h2>Motivation and Background</h2>
 
 <p>In the process of writing larger applications in
-<a href="http://elm-lang.org/" target="_blank">Elm</a>,
+<span> <a href="http://elm-lang.org/">Elm</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 I find it far too easy to initially focus on one small part of the problem
 while losing perspective on the bigger picture. For instance, I will begin by
 rendering a simple scene, followed by splitting out components, and finally
@@ -168,16 +168,16 @@ I have already written.</p>
 
 <p>There are some really excellent resources covering the architecture of applications
 in the Elm language. The
-<a href="http://elm-lang.org/learn/Architecture.elm" target="_blank">canonical article</a>
+<span> <a href="http://elm-lang.org/learn/Architecture.elm">canonical article</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/learn/Architecture.elm" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> <a href="https://web.archive.org/web/20141223/http://elm-lang.org/learn/Architecture.elm" target="_blank" alt="Open on archive.org" title="Open on archive.org"><svg class="octicon octicon-mirror" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M15.5 4.7L8.5 0l-7 4.7c-.3.19-.5.45-.5.8V16l7.5-4 7.5 4V5.5c0-.34-.2-.61-.5-.8zm-.5 9.8l-6-3.25V10H8v1.25L2 14.5v-9l6-4V6h1V1.5l6 4v9zM6 7h5V5l3 3-3 3V9H6v2L3 8l3-3v2z"/></svg></a> </span> </span>
 on the subject can be found on the official Elm site and covers everything at
 a high level. The best example is likely
-<a href="https://evancz.github.io/elm-todomvc/" target="_blank">TodoMVC</a>
-(<a href="https://github.com/evancz/elm-todomvc" target="_blank">source</a>)
+<span> <a href="https://evancz.github.io/elm-todomvc/">TodoMVC</a> <span style="vertical-align: super"> <a href="https://evancz.github.io/elm-todomvc/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+(<span> <a href="https://github.com/evancz/elm-todomvc">source</a> <span style="vertical-align: super"> <a href="https://github.com/evancz/elm-todomvc" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>)
 ported to Elm which uses many the concepts from the article to create a rich
 and simple interface, showcasing just how powerful Elm is.  Another great and
 extremely polished example is
-<a href="http://dreamwriter.io/" target="_blank">Dreamwriter</a>
-(<a href="https://github.com/rtfeldman/dreamwriter" target="_blank">source</a>),
+<span> <a href="http://dreamwriter.io/">Dreamwriter</a> <span style="vertical-align: super"> <a href="http://dreamwriter.io/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+(<span> <a href="https://github.com/rtfeldman/dreamwriter">source</a> <span style="vertical-align: super"> <a href="https://github.com/rtfeldman/dreamwriter" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>),
 which also incorporates the separation of components as outlined in the original
 article.</p>
 
@@ -227,7 +227,7 @@ fashion as a consequence of the core concept in Elm: signals.</p>
 
 <p>In Haskell, it is possible to construct infinite lists via recursive
 definition. This is only possible because Haskell uses
-<a href="https://en.wikipedia.org/wiki/Lazy_evaluation" target="_blank">lazy evaluation</a>
+<span> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation">lazy evaluation</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 rather than eager evaluation. Otherwise, the entire list would need to be
 calculated and the program would never terminate.</p>
 
