@@ -84,6 +84,29 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2014/04/05/lazy-ruby/">
+        Lazy Ruby
+      </a>
+    </h1>
+
+    <h2>Lazy Evaluation and Recursive Lists</h2>
+
+<p>In Haskell, it is possible to construct infinite lists via recursive
+definition. This is only possible because Haskell uses
+<span> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation">lazy evaluation</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+rather than eager evaluation. Otherwise, the entire list would need to be
+calculated and the program would never terminate.</p>
+
+<p>Because Haskell makes it easy to define lists and is lazy, the code for
+defining an infinite series is very simple. The following list represents
+the fibonacci sequence.</p>
+
+
+    <a href="/2014/04/05/lazy-ruby/">Continue reading</a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2014/02/05/hooks-in-angularjs-controllers/">
         Hooks in AngularJS Controllers
       </a>

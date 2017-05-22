@@ -84,6 +84,30 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2017/05/22/revisiting-the-game-of-life-in-elm/">
+        Revisiting the Game of Life in Elm
+      </a>
+    </h1>
+
+    <h2>Reflection</h2>
+
+<p>Over three years ago, I wrote an
+<a href="/2014/05/05/writing-game-of-life-in-elm/">article</a>
+exploring how to write Conway&#39;s Game of Life in the Elm programming language.
+That article was originally written for version 0.12.3 and later updated for
+0.14, but during the intervening span of time, Elm has matured significantly.
+In the process, Elm has
+<span> <a href="http://elm-lang.org/blog/farewell-to-frp">dropped its functional reactive roots</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/blog/farewell-to-frp" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+in favor of subscription-based concurrency.  Today, we will go through the same
+exercise of writing the game of life, as a means of exploring the basics of a
+simple modern Elm program.</p>
+
+
+    <a href="/2017/05/22/revisiting-the-game-of-life-in-elm/">Continue reading</a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
         Hacking S-expressions into Ruby
       </a>
@@ -196,9 +220,10 @@ article.</p>
 
 <p>In this article, we will walk through the steps for writing an implementation
 of
-<a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life" target="_blank">Conway&#39;s Game of Life</a>
+<span> <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Conway&#39;s Game of Life</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
 in the
-<a href="http://elm-lang.org/" target="_blank">Elm</a> programming language.</p>
+<span> <a href="http://elm-lang.org/">Elm</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+ programming language.</p>
 
 <p>In doing so, we will learn about the basic principles involved with writing
 programs in Elm, while grounding them in a concrete problem. We will be
@@ -207,36 +232,13 @@ between the examples, but it will be more clear to present each step in its
 entirety.</p>
 
 <p>I first became interested in Elm after seeing Evan Czaplicki&#39;s
-<a href="http://lanyrd.com/2013/mlocjs/sccwrp/" target="_blank">talk</a> from
-mloc.js 2013, where he presented an overview of Elm and the compelling example
+<span> <a href="http://lanyrd.com/2013/mlocjs/sccwrp/">talk</a> <span style="vertical-align: super"> <a href="http://lanyrd.com/2013/mlocjs/sccwrp/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+from mloc.js 2013, where he presented an overview of Elm and the compelling example
 of how one would write a simple side-scroller in an extremely straight forward
 fashion as a consequence of the core concept in Elm: signals.</p>
 
 
     <a href="/2014/05/05/writing-game-of-life-in-elm/">Continue reading</a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2014/04/05/lazy-ruby/">
-        Lazy Ruby
-      </a>
-    </h1>
-
-    <h2>Lazy Evaluation and Recursive Lists</h2>
-
-<p>In Haskell, it is possible to construct infinite lists via recursive
-definition. This is only possible because Haskell uses
-<span> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation">lazy evaluation</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Lazy_evaluation" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
-rather than eager evaluation. Otherwise, the entire list would need to be
-calculated and the program would never terminate.</p>
-
-<p>Because Haskell makes it easy to define lists and is lazy, the code for
-defining an infinite series is very simple. The following list represents
-the fibonacci sequence.</p>
-
-
-    <a href="/2014/04/05/lazy-ruby/">Continue reading</a>
   </div>
   
 </div>

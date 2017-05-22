@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
  <title>effluence</title>
- <link href="http://sonnym.github.io//atom.xml" rel="self"/>
- <link href="http://sonnym.github.io//"/>
- <updated>2017-05-05T20:27:33-04:00</updated>
- <id>http://sonnym.github.io/</id>
+ <link href="http://localhost:4000/atom.xml" rel="self"/>
+ <link href="http://localhost:4000/"/>
+ <updated>2017-05-21T23:44:01-04:00</updated>
+ <id>http://localhost:4000</id>
  <author>
    <name></name>
    <email></email>
@@ -13,10 +13,369 @@
 
  
  <entry>
+   <title>Revisiting the Game of Life in Elm</title>
+   <link href="http://localhost:4000/2017/05/22/revisiting-the-game-of-life-in-elm/"/>
+   <updated>2017-05-22T00:00:00-04:00</updated>
+   <id>http://localhost:4000/2017/05/22/revisiting-the-game-of-life-in-elm</id>
+   <content type="html">&lt;h2&gt;Reflection&lt;/h2&gt;
+
+&lt;p&gt;Over three years ago, I wrote an
+&lt;a href=&quot;/2014/05/05/writing-game-of-life-in-elm/&quot;&gt;article&lt;/a&gt;
+exploring how to write Conway&amp;#39;s Game of Life in the Elm programming language.
+That article was originally written for version 0.12.3 and later updated for
+0.14, but during the intervening span of time, Elm has matured significantly.
+In the process, Elm has
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/blog/farewell-to-frp&quot;&gt;dropped its functional reactive roots&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/blog/farewell-to-frp&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+in favor of subscription-based concurrency.  Today, we will go through the same
+exercise of writing the game of life, as a means of exploring the basics of a
+simple modern Elm program.&lt;/p&gt;
+
+&lt;p&gt;If you have worked with Elm in the past, but several versions in the past, some
+history may help frame some of the changes.  (N.B. While I was actively
+following the discussions leading up to the release of version 0.15, I was
+absent for some of the later versions, and, as such, this may not be a
+perfectly accurate retelling.)  While the unifying concept of all changes being
+a signal is very elegant, in practice, certain issues arose.  One such common
+obstacle was with the behavior of
+&lt;span&gt; &lt;a href=&quot;https://groups.google.com/d/msg/elm-discuss/z1g8EEkgOBU/3uPXAU8GAwAJ&quot;&gt;initial values in signals&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://groups.google.com/d/msg/elm-discuss/z1g8EEkgOBU/3uPXAU8GAwAJ&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+especially when that value could be &lt;code&gt;undefined&lt;/code&gt; coming from JavaScript.&lt;/p&gt;
+
+&lt;p&gt;Another major point of pain, at least in my experience, was the way in which
+channels worked.  Since one of the major overhauls of the language going to
+version 0.15 was the removal of this feature in favor of
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/blog/announce/0.15&quot;&gt;tasks, mailboxes, and addresses&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/blog/announce/0.15&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+it is safe to presume this was less than intuitive for many other users.  To
+avoid belaboring the point, suffice to say, today all these concepts &amp;mdash;
+signals, channels, tasks, mailboxes, addresses &amp;mdash; have been superceded by
+two simple, complementary concepts: commands and subscriptions.&lt;/p&gt;
+
+&lt;p&gt;While there have been numerous other changes, they are largely tangential to
+the conceptual core of Elm, so, let us begin, again.&lt;/p&gt;
+
+&lt;h2&gt;Rejuvenation&lt;/h2&gt;
+
+&lt;p&gt;As we began in the original article, so we shall here: we simply want to draw
+a static grid on the screen.  This will introduce us to a number of core
+aspects of the language, without, hopefully, being overwhelming.&lt;/p&gt;
+
+&lt;h4&gt;static_grid.elm&lt;/h4&gt;
+
+&lt;h5&gt;Source&lt;/h5&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-elm&quot; data-lang=&quot;elm&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html.Attributes&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;main &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;beginnerProgram&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;never&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;repeat&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;repeat&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;clear&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;both&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;background&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;black&amp;quot;&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;white&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;width&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;height&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;float&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;left&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h5&gt;Result&lt;/h5&gt;
+
+&lt;iframe src=&quot;/examples/elm/static_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+
+&lt;p&gt;Breaking this down, let us being with the declaration of the &lt;code&gt;main&lt;/code&gt; function.
+This is the function that is primarily responsible for producing the output we
+want to render on the page.  This example uses an &lt;code&gt;Html.beginngerProgram&lt;/code&gt;,
+intended for simple programs that do not require the use of commands and
+subscriptions.  In our particular case, we do not even need the use of the
+&lt;code&gt;update&lt;/code&gt;, since our model is predefined and never changes, so we simply set
+that property to
+&lt;span&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#Never&quot;&gt;&lt;code&gt;never&lt;/code&gt;&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#Never&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;, rather than supplying our own empty function.&lt;/p&gt;
+
+&lt;p&gt;To elaborate on the &lt;code&gt;beginngerProgram&lt;/code&gt; function somewhat, it is provided as
+part of the
+&lt;span&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/html/latest&quot;&gt;HTML package&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/html/latest&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;, takes a structure with the keys &lt;code&gt;model&lt;/code&gt;, &lt;code&gt;view&lt;/code&gt;, and
+&lt;code&gt;update&lt;/code&gt;.  The &lt;code&gt;view&lt;/code&gt; function is responsible for taking our &lt;code&gt;model&lt;/code&gt; and
+converting it into an &lt;code&gt;Html msg&lt;/code&gt;, the final markup we want to display on the
+page.&lt;/p&gt;
+
+&lt;p&gt;In this instance, it is worthwhile to point out, we have defined a &lt;code&gt;type alias
+Grid&lt;/code&gt; for our model.  We could simply refer to our model throughout the program
+as the &lt;code&gt;List (List Bool)&lt;/code&gt; it ultimately is, but using domain-specific aliases
+whenever possible is beneficial for the fluency and legibility of our code.
+Remember:
+&lt;span&gt; &lt;a href=&quot;https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/&quot;&gt;&amp;quot;It&amp;#39;s harder to read code than to write it.&amp;quot;&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally, we should discuss the content of our &lt;code&gt;model&lt;/code&gt; and &lt;code&gt;view&lt;/code&gt; functions.
+The former takes no arguments, and simply returns a nested list, fully
+populated with the value &lt;code&gt;True&lt;/code&gt;.  This represents a gird with every cell in an
+enabled state.  The &lt;code&gt;view&lt;/code&gt; function takes our model and, with the aid of some
+helper functions, produces some very simple HTML for displaying our grid.  One
+notable aspect of these helper functions is the way in which we use a straight
+forward, declarative syntax for declaring something we are already familiar
+with.&lt;/p&gt;
+
+&lt;h2&gt;Reification&lt;/h2&gt;
+
+&lt;p&gt;The major difference necessary for having the ability to randomly seed our grid
+with cells that are either enabled or disabled is switching out main function
+to use the &lt;code&gt;Html.program&lt;/code&gt; function.  This takes a structure, much like before,
+but the &lt;code&gt;model&lt;/code&gt; key has been substituted with the, significantly more powerful,
+&lt;code&gt;init&lt;/code&gt; key and adds a key for &lt;code&gt;subscriptions&lt;/code&gt;.  While this example will not
+make use of the &lt;code&gt;subscriptions&lt;/code&gt; key, besides setting it to &lt;code&gt;always Sub.none&lt;/code&gt;,
+the way the
+&lt;span&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random&quot;&gt;&lt;code&gt;Random&lt;/code&gt; library&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+work in Elm, we must make use of commands.  The resultant code follows:&lt;/p&gt;
+
+&lt;h4&gt;random_grid.elm&lt;/h4&gt;
+
+&lt;h5&gt;Source&lt;/h5&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-elm&quot; data-lang=&quot;elm&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Random&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html.Attributes&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;main &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;program&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;always&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sub&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;([[]],&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;generate&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;of&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;clear&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;both&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;background&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;black&amp;quot;&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;white&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;width&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;height&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;float&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;left&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;length&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h5&gt;Result&lt;/h5&gt;
+
+&lt;iframe src=&quot;/examples/elm/random_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+
+&lt;p&gt;To expand upon the need for the full-fledged &lt;code&gt;Html.program&lt;/code&gt; in this example, it
+is necessary to understand the interplay between the &lt;code&gt;init&lt;/code&gt; and &lt;code&gt;update&lt;/code&gt;
+functions, with the &lt;code&gt;Cmd Msg&lt;/code&gt; being, passed between them in light of how random
+number generation works.  Let us begin with that elucidation.  Since random
+values must be generated at runtime, it is not possible to define a model with
+random values in the same way we created a static one in the first example.  As
+such, we statically define our generator, and the &lt;code&gt;Random.generate&lt;/code&gt; call inside
+the &lt;code&gt;init&lt;/code&gt; function creates a &lt;code&gt;Cmd&lt;/code&gt; we can later respond to.&lt;/p&gt;
+
+&lt;p&gt;This command is of type &lt;code&gt;Msg&lt;/code&gt;, which only contains one possible value,
+&lt;code&gt;Initialize Grid&lt;/code&gt;.  When the &lt;code&gt;init&lt;/code&gt; method returns, the existence of this
+command will cause the &lt;code&gt;update&lt;/code&gt; method to be called, in this case with our
+&lt;code&gt;Msg Grid&lt;/code&gt;, where the grid is fully populated with  randomly generated values.
+The first argument to the &lt;code&gt;update&lt;/code&gt; function is the current version of the model,
+as kept track of by Elm, in this, the first item in the tuple returned by the
+&lt;code&gt;init&lt;/code&gt; function.&lt;/p&gt;
+
+&lt;p&gt;Since the &lt;code&gt;update&lt;/code&gt; function returns with a &lt;code&gt;Cmd.none&lt;/code&gt; as the second part of its
+tuple, after having pulled the initial grid from its message, and there are no
+further subscriptions, the program ends after one iteration of &lt;code&gt;update&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2&gt;Recurrence&lt;/h2&gt;
+
+&lt;p&gt;Finally, we have advanced to a point where adding generations is trivial.  This
+requires only three, fairly straightforward, changes:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Add a &lt;code&gt;Tick Time&lt;/code&gt; value to our &lt;code&gt;Msg&lt;/code&gt; type.&lt;/li&gt;
+&lt;li&gt;Respond to the &lt;code&gt;Tick&lt;/code&gt; message in our &lt;code&gt;update&lt;/code&gt; function.&lt;/li&gt;
+&lt;li&gt;Define &lt;code&gt;subscriptions&lt;/code&gt; creates &lt;code&gt;Tick&lt;/code&gt; messages.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The &lt;code&gt;subscriptions&lt;/code&gt; function ignores the &lt;code&gt;Grid&lt;/code&gt; passed to it, since the passage
+of time cares not about the current state of our simulation, and just emits a
+new &lt;code&gt;Tick&lt;/code&gt; message every second.  This is, in fact, perfectly legible from the
+code itself, so I will let it speak for itself.&lt;/p&gt;
+
+&lt;h4&gt;game_of_life.elm&lt;/h4&gt;
+
+&lt;h5&gt;Source&lt;/h5&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-elm&quot; data-lang=&quot;elm&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Random&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Time&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Tuple&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html.Attributes&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Tick&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;main &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;program&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;([[]],&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;generate&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;of&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;Tick&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;evolve&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sub&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;every&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Tick&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;clear&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;both&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;background&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;black&amp;quot;&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;white&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;width&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;height&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;float&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;left&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;length&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;evolve&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;evolve&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;generation&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nv&quot;&gt;descend&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;generation&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;generation&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;descend&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;descend&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;concatMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;m&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                   &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filter&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+                          &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+                          &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filter&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;False&lt;/span&gt;
+                            &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;length&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;False&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;head&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h5&gt;Result&lt;/h5&gt;
+
+&lt;iframe src=&quot;/examples/elm/game_of_life/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+
+&lt;h2&gt;Resolution&lt;/h2&gt;
+
+&lt;p&gt;As you can see in the final example, most  of the changes are in support of
+updating the state of the grid, not for wiring those updates themselves; that
+part was trivial.  The ease of adding new paths, without interfering with
+existing ones, is, I believe, one of the major improvements of the language.
+In the past, I always felt as though I were building some &lt;code&gt;foldp&lt;/code&gt; monstrosity,
+even though it could be decomposed into separate parts that acted similar in
+the ability to constrain changes.  Today, the pattern is explicit in the
+structure of the program, making it apparent even to new users.&lt;/p&gt;
+
+&lt;p&gt;While it may be more cumbersome in larger programs to have so few points of
+contact with the inner mechanisms that control dynamic elements, I can at least
+conceptualize ways in which components can be combined to ameliorate this
+potential issue.  In contrast, trying to expose signals from modules and hook
+them together with channels felt very kludgey and limited at times.&lt;/p&gt;
+
+&lt;p&gt;Another key change is that Elm has become renderer agnostic.  In these examples,
+I used the official HTML package, but I could have chosen SVG or the old
+Graphics packages if I preferred.  In the past, I always found this a confusing
+aspect of the platform.  Now that HTML is supported in this way, there is no
+longer any need to explain to new users about the graphics libraries, again,
+making it much easier for new users to get on boards.&lt;/p&gt;
+
+&lt;p&gt;I am, ultimately, happy I stepped away and let the language mature for some
+time.  Also included in the versions are numerous enhancements, particularly in
+the realms of tooling and error messages.  With the conceptual core conceivably
+cemented, and future improvements aimed primarily at improving user experience,
+if you have been reluctant to give Elm a try, I wholeheartedly recommend giving
+it a try today.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
    <title>Hacking S-expressions into Ruby</title>
-   <link href="http://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby/"/>
+   <link href="http://localhost:4000/2015/02/26/hacking-s-expressions-into-ruby/"/>
    <updated>2015-02-26T00:00:00-05:00</updated>
-   <id>http://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby</id>
+   <id>http://localhost:4000/2015/02/26/hacking-s-expressions-into-ruby</id>
    <content type="html">&lt;h2&gt;Background&lt;/h2&gt;
 
 &lt;p&gt;&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot;&gt;S-expressions&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
@@ -271,9 +630,9 @@ language.&lt;/p&gt;
  
  <entry>
    <title>Using Defined Properties for Better AngularJS Directives</title>
-   <link href="http://sonnym.github.io//2015/01/21/using-defined-properties-for-better-angularjs-directives/"/>
+   <link href="http://localhost:4000/2015/01/21/using-defined-properties-for-better-angularjs-directives/"/>
    <updated>2015-01-21T00:00:00-05:00</updated>
-   <id>http://sonnym.github.io//2015/01/21/using-defined-properties-for-better-angularjs-directives</id>
+   <id>http://localhost:4000/2015/01/21/using-defined-properties-for-better-angularjs-directives</id>
    <content type="html">&lt;h2&gt;On Directives&lt;/h2&gt;
 
 &lt;p&gt;Directives in AngularJS are an exemplary solution for writing reusable
@@ -479,9 +838,9 @@ the long term viability of our AngularJS applications.&lt;/p&gt;
  
  <entry>
    <title>Barebones Architecture in Elm</title>
-   <link href="http://sonnym.github.io//2014/12/23/barebones-architecture-in-elm/"/>
+   <link href="http://localhost:4000/2014/12/23/barebones-architecture-in-elm/"/>
    <updated>2014-12-23T00:00:00-05:00</updated>
-   <id>http://sonnym.github.io//2014/12/23/barebones-architecture-in-elm</id>
+   <id>http://localhost:4000/2014/12/23/barebones-architecture-in-elm</id>
    <content type="html">&lt;h2&gt;Motivation and Background&lt;/h2&gt;
 
 &lt;p&gt;In the process of writing larger applications in
@@ -654,16 +1013,17 @@ some trivial scene, when writing new applications.&lt;/p&gt;
  
  <entry>
    <title>Writing Game of Life in Elm</title>
-   <link href="http://sonnym.github.io//2014/05/05/writing-game-of-life-in-elm/"/>
+   <link href="http://localhost:4000/2014/05/05/writing-game-of-life-in-elm/"/>
    <updated>2014-05-05T00:00:00-04:00</updated>
-   <id>http://sonnym.github.io//2014/05/05/writing-game-of-life-in-elm</id>
+   <id>http://localhost:4000/2014/05/05/writing-game-of-life-in-elm</id>
    <content type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;In this article, we will walk through the steps for writing an implementation
 of
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life&quot; target=&quot;_blank&quot;&gt;Conway&amp;#39;s Game of Life&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life&quot;&gt;Conway&amp;#39;s Game of Life&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 in the
-&lt;a href=&quot;http://elm-lang.org/&quot; target=&quot;_blank&quot;&gt;Elm&lt;/a&gt; programming language.&lt;/p&gt;
+&lt;span&gt; &lt;a href=&quot;http://elm-lang.org/&quot;&gt;Elm&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://elm-lang.org/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+ programming language.&lt;/p&gt;
 
 &lt;p&gt;In doing so, we will learn about the basic principles involved with writing
 programs in Elm, while grounding them in a concrete problem. We will be
@@ -672,13 +1032,13 @@ between the examples, but it will be more clear to present each step in its
 entirety.&lt;/p&gt;
 
 &lt;p&gt;I first became interested in Elm after seeing Evan Czaplicki&amp;#39;s
-&lt;a href=&quot;http://lanyrd.com/2013/mlocjs/sccwrp/&quot; target=&quot;_blank&quot;&gt;talk&lt;/a&gt; from
-mloc.js 2013, where he presented an overview of Elm and the compelling example
+&lt;span&gt; &lt;a href=&quot;http://lanyrd.com/2013/mlocjs/sccwrp/&quot;&gt;talk&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://lanyrd.com/2013/mlocjs/sccwrp/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+from mloc.js 2013, where he presented an overview of Elm and the compelling example
 of how one would write a simple side-scroller in an extremely straight forward
 fashion as a consequence of the core concept in Elm: signals.&lt;/p&gt;
 
 &lt;p&gt;Elm is a
-&lt;a href=&quot;https://en.wikipedia.org/wiki/Functional_reactive_programming&quot; target=&quot;_blank&quot;&gt;functional reactive programming&lt;/a&gt;
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Functional_reactive_programming&quot;&gt;functional reactive programming&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Functional_reactive_programming&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
 language, a paradigm concerned with using an explicit model of time. Elm uses
 signals as its abstraction of time-varying values, including various time
 functions (e.g. &lt;code&gt;every second&lt;/code&gt;), constants (e.g. &lt;code&gt;constant True&lt;/code&gt;), which are
@@ -1019,9 +1379,9 @@ improving upon it in the near future, so watch out for that update.&lt;/p&gt;
  
  <entry>
    <title>Lazy Ruby</title>
-   <link href="http://sonnym.github.io//2014/04/05/lazy-ruby/"/>
+   <link href="http://localhost:4000/2014/04/05/lazy-ruby/"/>
    <updated>2014-04-05T00:00:00-04:00</updated>
-   <id>http://sonnym.github.io//2014/04/05/lazy-ruby</id>
+   <id>http://localhost:4000/2014/04/05/lazy-ruby</id>
    <content type="html">&lt;h2&gt;Lazy Evaluation and Recursive Lists&lt;/h2&gt;
 
 &lt;p&gt;In Haskell, it is possible to construct infinite lists via recursive
@@ -1158,9 +1518,9 @@ may as well abuse it functionally as well.&lt;/p&gt;
  
  <entry>
    <title>Hooks in AngularJS Controllers</title>
-   <link href="http://sonnym.github.io//2014/02/05/hooks-in-angularjs-controllers/"/>
+   <link href="http://localhost:4000/2014/02/05/hooks-in-angularjs-controllers/"/>
    <updated>2014-02-05T00:00:00-05:00</updated>
-   <id>http://sonnym.github.io//2014/02/05/hooks-in-angularjs-controllers</id>
+   <id>http://localhost:4000/2014/02/05/hooks-in-angularjs-controllers</id>
    <content type="html">&lt;h2&gt;The Situation&lt;/h2&gt;
 
 &lt;p&gt;Sometimes when working with nested scopes, you may encounter a situation in
