@@ -7,7 +7,9 @@ html {
   html {
     font-size: 16px;
   }
+}
 
+@media (min-width: 46rem) {
   div.content {
     max-width: 50%;
   }
