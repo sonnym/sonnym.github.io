@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
  <title>effluence</title>
- <link href="http://localhost:4000/atom.xml" rel="self"/>
- <link href="http://localhost:4000/"/>
- <updated>2017-05-21T23:44:01-04:00</updated>
- <id>http://localhost:4000</id>
+ <link href="http://sonnym.github.io//atom.xml" rel="self"/>
+ <link href="http://sonnym.github.io//"/>
+ <updated>2017-05-25T11:46:32-04:00</updated>
+ <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
    <email></email>
@@ -14,9 +14,9 @@
  
  <entry>
    <title>Revisiting the Game of Life in Elm</title>
-   <link href="http://localhost:4000/2017/05/22/revisiting-the-game-of-life-in-elm/"/>
+   <link href="http://sonnym.github.io//2017/05/22/revisiting-the-game-of-life-in-elm/"/>
    <updated>2017-05-22T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2017/05/22/revisiting-the-game-of-life-in-elm</id>
+   <id>http://sonnym.github.io//2017/05/22/revisiting-the-game-of-life-in-elm</id>
    <content type="html">&lt;h2&gt;Reflection&lt;/h2&gt;
 
 &lt;p&gt;Over three years ago, I wrote an
@@ -373,9 +373,9 @@ it a try today.&lt;/p&gt;
  
  <entry>
    <title>Hacking S-expressions into Ruby</title>
-   <link href="http://localhost:4000/2015/02/26/hacking-s-expressions-into-ruby/"/>
+   <link href="http://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby/"/>
    <updated>2015-02-26T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2015/02/26/hacking-s-expressions-into-ruby</id>
+   <id>http://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby</id>
    <content type="html">&lt;h2&gt;Background&lt;/h2&gt;
 
 &lt;p&gt;&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot;&gt;S-expressions&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
@@ -630,9 +630,9 @@ language.&lt;/p&gt;
  
  <entry>
    <title>Using Defined Properties for Better AngularJS Directives</title>
-   <link href="http://localhost:4000/2015/01/21/using-defined-properties-for-better-angularjs-directives/"/>
+   <link href="http://sonnym.github.io//2015/01/21/using-defined-properties-for-better-angularjs-directives/"/>
    <updated>2015-01-21T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2015/01/21/using-defined-properties-for-better-angularjs-directives</id>
+   <id>http://sonnym.github.io//2015/01/21/using-defined-properties-for-better-angularjs-directives</id>
    <content type="html">&lt;h2&gt;On Directives&lt;/h2&gt;
 
 &lt;p&gt;Directives in AngularJS are an exemplary solution for writing reusable
@@ -838,9 +838,9 @@ the long term viability of our AngularJS applications.&lt;/p&gt;
  
  <entry>
    <title>Barebones Architecture in Elm</title>
-   <link href="http://localhost:4000/2014/12/23/barebones-architecture-in-elm/"/>
+   <link href="http://sonnym.github.io//2014/12/23/barebones-architecture-in-elm/"/>
    <updated>2014-12-23T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2014/12/23/barebones-architecture-in-elm</id>
+   <id>http://sonnym.github.io//2014/12/23/barebones-architecture-in-elm</id>
    <content type="html">&lt;h2&gt;Motivation and Background&lt;/h2&gt;
 
 &lt;p&gt;In the process of writing larger applications in
@@ -1013,9 +1013,9 @@ some trivial scene, when writing new applications.&lt;/p&gt;
  
  <entry>
    <title>Writing Game of Life in Elm</title>
-   <link href="http://localhost:4000/2014/05/05/writing-game-of-life-in-elm/"/>
+   <link href="http://sonnym.github.io//2014/05/05/writing-game-of-life-in-elm/"/>
    <updated>2014-05-05T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2014/05/05/writing-game-of-life-in-elm</id>
+   <id>http://sonnym.github.io//2014/05/05/writing-game-of-life-in-elm</id>
    <content type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;In this article, we will walk through the steps for writing an implementation
@@ -1379,9 +1379,9 @@ improving upon it in the near future, so watch out for that update.&lt;/p&gt;
  
  <entry>
    <title>Lazy Ruby</title>
-   <link href="http://localhost:4000/2014/04/05/lazy-ruby/"/>
+   <link href="http://sonnym.github.io//2014/04/05/lazy-ruby/"/>
    <updated>2014-04-05T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2014/04/05/lazy-ruby</id>
+   <id>http://sonnym.github.io//2014/04/05/lazy-ruby</id>
    <content type="html">&lt;h2&gt;Lazy Evaluation and Recursive Lists&lt;/h2&gt;
 
 &lt;p&gt;In Haskell, it is possible to construct infinite lists via recursive
@@ -1518,9 +1518,9 @@ may as well abuse it functionally as well.&lt;/p&gt;
  
  <entry>
    <title>Hooks in AngularJS Controllers</title>
-   <link href="http://localhost:4000/2014/02/05/hooks-in-angularjs-controllers/"/>
+   <link href="http://sonnym.github.io//2014/02/05/hooks-in-angularjs-controllers/"/>
    <updated>2014-02-05T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2014/02/05/hooks-in-angularjs-controllers</id>
+   <id>http://sonnym.github.io//2014/02/05/hooks-in-angularjs-controllers</id>
    <content type="html">&lt;h2&gt;The Situation&lt;/h2&gt;
 
 &lt;p&gt;Sometimes when working with nested scopes, you may encounter a situation in
