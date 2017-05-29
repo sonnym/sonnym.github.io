@@ -28,3 +28,12 @@ html {
 .clearfix {
   clear: both
 }
+
+.bitcoin {
+  opacity: 80;
+  font-size: .9rem;
+}
+
+.bitcoin:before {
+  content: "bitcoin:12QbLqYE6m43R2ACdNkqHFwGZn6UTc6kJa";
+}
