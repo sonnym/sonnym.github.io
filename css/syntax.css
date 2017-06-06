@@ -13,7 +13,7 @@
 .gr { color: #FF0000 } /* Generic.Error */
 .gh { color: #003300; } /* Generic.Heading */
 .gi { background-color: #CCFFCC; border: 1px solid #00CC00 } /* Generic.Inserted */
-.go { color: #AAAAAA } /* Generic.Output */
+.go { color: #777777 } /* Generic.Output */
 .gp { color: #000099; } /* Generic.Prompt */
 .gs { } /* Generic.Strong */
 .gu { color: #003300; } /* Generic.Subheading */
