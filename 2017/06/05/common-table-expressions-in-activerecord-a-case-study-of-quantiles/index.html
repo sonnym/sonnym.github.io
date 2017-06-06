@@ -494,15 +494,15 @@ we will someday return to this, but, for now, that is enough implementation.</p>
 <p>Instead, the path upon which we have trod during this exercise gives us a
 contextual vantage point from which to discuss software construction,
 methodology, and practice more generally.  We started as &quot;close to the metal&quot;
-as necessary &emdash; inside PostgreSQL &emdash; but not at a layer so far away
-from our problem domain that we would lose sight of goal.  In doing so, we
-learned about and utilized some less common features of the database in an
-environment that was conducive to exploring this fundamentals.  Had we started
-from ActiveRecord, or worse AREL, our feedback loop would have been much slower
-as we coped with extraneous details.  Instead, we did the simplest thing we
-could, found the points at which it broke down, and iterated our implementation
-before even attempting to integrate it.  And when we did so, we had to step
-back, and reiterate the process, given our new set of constraints.</p>
+as necessary—inside PostgreSQL—but not at a layer so far away from our
+problem domain that we would lose sight of goal.  In doing so, we learned about
+and utilized some less common features of the database in an environment that
+was conducive to exploring this fundamentals.  Had we started from ActiveRecord,
+or worse AREL, our feedback loop would have been much slower as we coped with
+extraneous details.  Instead, we did the simplest thing we could, found the
+points at which it broke down, and iterated our implementation before even
+attempting to integrate it.  And when we did so, we had to step back, and
+reiterate the process, given our new set of constraints.</p>
 
 <p>Often times, a problem will appear intractable when approached at too high a
 level, without enough granular control, or without enough understanding of the
