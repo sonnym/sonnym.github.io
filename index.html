@@ -84,6 +84,32 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/">
+        Common Table Expressions in ActiveRecord: A Case Study of Quantiles
+      </a>
+    </h1>
+
+    <p>Today, we are going to look at a straightforward real-world problem, and build a
+comprehensive solution.  In doing so, we will start with some various naive
+approaches as we increase our understanding of the underlying mechanics,
+encounter some pitfalls, and, ultimately, approach a reasonable level of
+sophistication and abstraction.  The stack we will be using for this case study
+is
+<span> <a href="http://rubyonrails.org/">Ruby on Rails 5.1</a> <span style="vertical-align: super"> <a href="http://rubyonrails.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+with
+<span> <a href="https://www.postgresql.org/">PostgreSQL 9.6</a> <span style="vertical-align: super"> <a href="https://www.postgresql.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+for the database.</p>
+
+<p>Now, let me present to you the problem through which we will frame this
+discussion:  given a number of student records, when displaying a single
+student, also display the quintile into which their grade falls.</p>
+
+
+    <a href="/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/">Continue reading</a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2017/05/29/continuations-in-ruby-part-1-first-class-objects/">
         Continuations in Ruby - Part 1: First Class Objects
       </a>
@@ -208,43 +234,6 @@ how we can improve our directives.</p>
 
 
     <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">Continue reading</a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2014/12/23/barebones-architecture-in-elm/">
-        Barebones Architecture in Elm
-      </a>
-    </h1>
-
-    <h2>Motivation and Background</h2>
-
-<p>In the process of writing larger applications in
-<span> <a href="http://elm-lang.org/">Elm</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
-I find it far too easy to initially focus on one small part of the problem
-while losing perspective on the bigger picture. For instance, I will begin by
-rendering a simple scene, followed by splitting out components, and finally
-adding in signals.  While this is generally a good approach, in my mind,
-it is sometimes difficult to retrofit patterns onto the basis of the application
-I have already written.</p>
-
-<p>There are some really excellent resources covering the architecture of applications
-in the Elm language. The
-<span> <a href="http://elm-lang.org/learn/Architecture.elm">canonical article</a> <span style="vertical-align: super"> <a href="http://elm-lang.org/learn/Architecture.elm" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> <a href="https://web.archive.org/web/20141223/http://elm-lang.org/learn/Architecture.elm" target="_blank" alt="Open on archive.org" title="Open on archive.org"><svg class="octicon octicon-mirror" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M15.5 4.7L8.5 0l-7 4.7c-.3.19-.5.45-.5.8V16l7.5-4 7.5 4V5.5c0-.34-.2-.61-.5-.8zm-.5 9.8l-6-3.25V10H8v1.25L2 14.5v-9l6-4V6h1V1.5l6 4v9zM6 7h5V5l3 3-3 3V9H6v2L3 8l3-3v2z"/></svg></a> </span> </span>
-on the subject can be found on the official Elm site and covers everything at
-a high level. The best example is likely
-<span> <a href="https://evancz.github.io/elm-todomvc/">TodoMVC</a> <span style="vertical-align: super"> <a href="https://evancz.github.io/elm-todomvc/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
-(<span> <a href="https://github.com/evancz/elm-todomvc">source</a> <span style="vertical-align: super"> <a href="https://github.com/evancz/elm-todomvc" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>)
-ported to Elm which uses many the concepts from the article to create a rich
-and simple interface, showcasing just how powerful Elm is.  Another great and
-extremely polished example is
-<span> <a href="http://dreamwriter.io/">Dreamwriter</a> <span style="vertical-align: super"> <a href="http://dreamwriter.io/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
-(<span> <a href="https://github.com/rtfeldman/dreamwriter">source</a> <span style="vertical-align: super"> <a href="https://github.com/rtfeldman/dreamwriter" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>),
-which also incorporates the separation of components as outlined in the original
-article.</p>
-
-
-    <a href="/2014/12/23/barebones-architecture-in-elm/">Continue reading</a>
   </div>
   
 </div>

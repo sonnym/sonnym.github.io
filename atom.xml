@@ -4,13 +4,464 @@
  <title>effluence</title>
  <link href="http://sonnym.github.io//atom.xml" rel="self"/>
  <link href="http://sonnym.github.io//"/>
- <updated>2017-05-29T13:18:27-04:00</updated>
+ <updated>2017-06-05T22:34:32-04:00</updated>
  <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Common Table Expressions in ActiveRecord: A Case Study of Quantiles</title>
+   <link href="http://sonnym.github.io//2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/"/>
+   <updated>2017-06-05T00:00:00-04:00</updated>
+   <id>http://sonnym.github.io//2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles</id>
+   <content type="html">&lt;p&gt;Today, we are going to look at a straightforward real-world problem, and build a
+comprehensive solution.  In doing so, we will start with some various naive
+approaches as we increase our understanding of the underlying mechanics,
+encounter some pitfalls, and, ultimately, approach a reasonable level of
+sophistication and abstraction.  The stack we will be using for this case study
+is
+&lt;span&gt; &lt;a href=&quot;http://rubyonrails.org/&quot;&gt;Ruby on Rails 5.1&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://rubyonrails.org/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+with
+&lt;span&gt; &lt;a href=&quot;https://www.postgresql.org/&quot;&gt;PostgreSQL 9.6&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://www.postgresql.org/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+for the database.&lt;/p&gt;
+
+&lt;p&gt;Now, let me present to you the problem through which we will frame this
+discussion:  given a number of student records, when displaying a single
+student, also display the quintile into which their grade falls.&lt;/p&gt;
+
+&lt;h1&gt;Calculating Quantiles in PostgreSQL&lt;/h1&gt;
+
+&lt;p&gt;Let us begin by looking at the structure of our &lt;code&gt;students&lt;/code&gt; table.  The
+following was generated with a simple Rails migration, the details of which are
+outside the scope of this article.  The table, intentionally simple for the
+purpose of illustration, only has columns for an &lt;code&gt;id&lt;/code&gt;, a &lt;code&gt;name&lt;/code&gt;, and a &lt;code&gt;grade&lt;/code&gt;.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;\d&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;students&lt;/span&gt;
+                              &lt;span class=&quot;k&quot;&gt;Table&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;public.students&amp;quot;&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;Column&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;k&quot;&gt;Type&lt;/span&gt;        &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                       &lt;span class=&quot;n&quot;&gt;Modifiers&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;--------+-------------------+-------------------------------------------------------&lt;/span&gt;
+ &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;bigint&lt;/span&gt;            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nextval&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;students_id_seq&amp;#39;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;regclass&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;name&lt;/span&gt;   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;character&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;varying&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;
+ &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;integer&lt;/span&gt;           &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;Indexes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;students_pkey&amp;quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;PRIMARY&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;KEY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;btree&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;In order to have some data to work with, we want to generate some at random.  We
+use the following command to create a million records with grades between 0 and
+100.  As you can see from the subsequent queries, we now have a corpus upon
+which to operate.  Since we are working with a million rows, we know each
+quintile contains 200,000 records, and we can safely assume that they will be
+split fairly close to multiples of 20.  We will soon be able to confirm this
+assumption.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;insert&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;into&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;md5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;text&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;generate_series&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1000000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;INSERT 0 1000000&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  count&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  ---------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   1000000&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   (1 row)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;limit&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; id |    name    | grade&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;----+------------+-------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  1 | c4ca4238a0 |    29&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  2 | c81e728d9d |    87&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  3 | eccbc87e4b |    26&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  4 | a87ff679a2 |    43&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  5 | e4da3b7fbb |    59&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  6 | 1679091c5a |    44&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  7 | 8f14e45fce |    53&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  8 | c9f0f895fb |     4&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  9 | 45c48cce2e |    81&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; 10 | d3d9446802 |    12&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(10 rows)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;In order to calculate quantiles, we will be making use of a PostgreSQL feature
+called
+&lt;span&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/tutorial-window.html&quot;&gt;window functions&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/tutorial-window.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.
+Using the
+&lt;span&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/functions-window.html&quot;&gt;&lt;code&gt;ntile()&lt;/code&gt;&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/functions-window.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+function, it is actually fairly trivial to calculate the quintile for a row.  As
+can be seen in the following query, this is the case so long as we use a &lt;code&gt;limit&lt;/code&gt;
+clause to only return one row. Using the
+&lt;span&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS&quot;&gt;window function call syntax&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;, we define a computed column &lt;code&gt;quintile&lt;/code&gt; using &lt;code&gt;ntile(5)&lt;/code&gt; over
+the grade column, ordered.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;limit&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  id |    name    | grade | quintile&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; ----+------------+-------+----------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   1 | c4ca4238a0 |    29 |        2&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   (1 row)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;But something interesting happens when we try to use a &lt;code&gt;where&lt;/code&gt; clause to get the
+same result:  we get a different, incorrect, result.  This is because window
+functions operate over the set of records returned by the &lt;code&gt;from/where&lt;/code&gt; clause,
+so, in this next case, only sees one record.  This makes our current query
+useless, since we are under the constraint of needing to display the quintile
+for a specific record.&lt;/p&gt;
+
+&lt;p&gt;At this point, it would also be nice to confirm that our data has the expected
+shape, but we run into another interesting limitation: namely, that we cannot
+use window functions inside the &lt;code&gt;group by&lt;/code&gt; clause.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; id |    name    | grade | quintile&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;----+------------+-------+----------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  1 | c4ca4238a0 |    29 |        1&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(1 row)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;group&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;gs&quot;&gt;ERROR:&lt;/span&gt;&lt;span class=&quot;gr&quot;&gt;  window functions are not allowed in GROUP BY&lt;/span&gt;
+&lt;span class=&quot;gs&quot;&gt;LINE 1:&lt;/span&gt;&lt;span class=&quot;gr&quot;&gt; select count(*), ntile(5) over (order by grade) as quintile ...&lt;/span&gt;
+&lt;span class=&quot;gr&quot;&gt;                         ^&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Luckily, SQL queries, generally speaking, can often be reshaped into a form that
+is sufficient for our needs.  In particular, we can use another feature of
+PostgreSQL to work around these early teething problems:
+&lt;span&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/queries-with.html&quot;&gt;common table expressions, aka &lt;code&gt;with&lt;/code&gt; queries&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://www.postgresql.org/docs/9.6/static/queries-with.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.&lt;/p&gt;
+
+&lt;p&gt;Using a common table expression, we generate a temporary table for the duration
+of this query.  This table will contain our quintile value, and we will pull the
+data from it.  For now, we will just call it &lt;code&gt;quintile_table&lt;/code&gt;.  As an aside, it
+is worthwhile to note that common table expressions are also capable of
+significantly more advanced features, including iteration (albeit invoked using
+the &lt;code&gt;recursive&lt;/code&gt; keyword), but we need not concern ourselves with those details
+here.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; id |    name    | grade | quintile&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;----+------------+-------+----------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  1 | c4ca4238a0 |    29 |        2&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(1 row)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;That query gave us exactly the output we desire.  The current shape of the query
+also conveys upon us the ability to cheat the restriction of not being able to
+use window functions in a &lt;code&gt;group by&lt;/code&gt; clause, since we are now grouping on a
+column from the temporary table, and PostgreSQL treats this like any other
+column.  As evidenced in the following query, the data looks exactly how we
+expected.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;min&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;min&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;group&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; count  | min | max | quintile&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;--------+-----+-----+----------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; 200000 |   0 |  20 |        1&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; 200000 |  20 |  40 |        2&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; 200000 |  40 |  60 |        3&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; 200000 |  60 |  80 |        4&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; 200000 |  80 | 100 |        5&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(5 rows)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The added layer of complexity, necessary to allow us to filter on an arbitrary
+&lt;code&gt;where&lt;/code&gt; clause should be expected to increase the computational cost of the
+query, but that is actually not the case in a substantial way.  The start-up
+cost for the query using common table expressions is less (by 5000) than that of
+the naive query using a &lt;code&gt;limit&lt;/code&gt; clause, which means the output phase should be
+expected to actually begin earlier.  True, the total cost is more by 17499.99,
+but that seems like a slight cost to pay in order to get the desired result
+from amongst a million records.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;explain&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;limit&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                                        QUERY PLAN&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;-------------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; Limit  (cost=159037.84..159037.85 rows=1 width=27)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   -&amp;gt;  Sort  (cost=159037.84..161537.84 rows=1000000 width=27)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;         Sort Key: id&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;         -&amp;gt;  WindowAgg  (cost=136537.84..154037.84 rows=1000000 width=27)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;               -&amp;gt;  Sort  (cost=136537.84..139037.84 rows=1000000 width=23)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                     Sort Key: grade&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                     -&amp;gt;  Seq Scan on students  (cost=0.00..16370.00 rows=1000000 width=23)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(7 rows)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;explain&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;students&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                                      QUERY PLAN&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;---------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; CTE Scan on quintile_table  (cost=154037.84..176537.84 rows=5000 width=48)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   Filter: (id = 1)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   CTE quintile_table&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;     -&amp;gt;  WindowAgg  (cost=136537.84..154037.84 rows=1000000 width=27)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;           -&amp;gt;  Sort  (cost=136537.84..139037.84 rows=1000000 width=23)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                 Sort Key: students.grade&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                 -&amp;gt;  Seq Scan on students  (cost=0.00..16370.00 rows=1000000 width=23)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(7 rows)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It is worthwhile to note, before going any further, that this method would not
+be sufficiently performant in a production environment for a data set of this
+size; some caching or precomputation layer would be necessary, but that is
+outside the scope of this article.&lt;/p&gt;
+
+&lt;h2&gt;Integrating into Rails&lt;/h2&gt;
+
+&lt;p&gt;At this point, we have a query that can handle arbitrary filtering, but we want
+to use it within an &lt;code&gt;ActiveRecord&lt;/code&gt; model.  The first thought may be that we can
+simply use
+&lt;span&gt; &lt;a href=&quot;http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-select&quot;&gt;ActiveRecord::QueryMethods#select&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-select&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+but we are about to take a step backwards.&lt;/p&gt;
+
+&lt;p&gt;(N.B. We break down the long SQL string into separate clauses using an array
+and joining it back into a string for the query; while this may not be the best
+practice, it is a sufficient way to break up long chunks of SQL when
+prototyping.)&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-irb&quot; data-lang=&quot;irb&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Student&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;  &lt;span class=&quot;s1&quot;&gt;&amp;#39;with quintile_table&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;  &lt;span class=&quot;s1&quot;&gt;&amp;#39;as (select *, ntile(5) over (order by grade)&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;  &lt;span class=&quot;s1&quot;&gt;&amp;#39;as quintile from students)&amp;#39;&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39; &amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to_sql&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;SELECT with quintile_table as (select *, ntile(5) over (order by grade) as quintile from students) FROM &amp;quot;students&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The result is, again, not what we desire, and we must step back.  Actually
+reading the documentation for the &lt;code&gt;select&lt;/code&gt; method, we see it takes a list of
+fields we wish to select, but does not overwrite the entire &lt;code&gt;select&lt;/code&gt; clause, as
+we (with intentional naivete) assumed.  Instead, we will have to again reshape
+the query into a way that will allow for composability within the constraints of
+an &lt;code&gt;ActiveRecord&lt;/code&gt; model.&lt;/p&gt;
+
+&lt;p&gt;Thinking in terms of how we compose queries using scopes in Rails, it may be
+best to define our optimal interface before going forward.  In this case, a
+standalone &lt;code&gt;with_quintile&lt;/code&gt; scope would be optimal, and we would want to be able
+to use it just like any other scope, with its internals abstracted.  Consider
+the following: &lt;code&gt;Student.with_quintile.where(id: 1).first.quintile&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;In order to achieve this result, we will need to abandon our attempts to
+manipulate the &lt;code&gt;select&lt;/code&gt; clause to our ends and, instead, focus on the &lt;code&gt;from&lt;/code&gt;
+clause.  Very simply, we can alias our original &lt;code&gt;quintile_table&lt;/code&gt; as &lt;code&gt;students&lt;/code&gt;,
+the &lt;code&gt;table_name&lt;/code&gt; of our table, thereby tricking all other normal scopes into
+being well behaved in its presence.  As far as they are concerned, the
+&lt;code&gt;students&lt;/code&gt; table has the &lt;code&gt;quintile&lt;/code&gt; column there at all times.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-irb&quot; data-lang=&quot;irb&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Student&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;from&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;(with &amp;quot;quintile_table&amp;quot;&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;as (select *, ntile(5) over (order by grade)&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;as quintile from &amp;quot;students&amp;quot;) select * from &amp;quot;quintile_table&amp;quot;)&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;as &amp;quot;students&amp;quot;&amp;#39;&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39; &amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;where&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;first&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;?&amp;gt; &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;  Student Load (672.7ms)  SELECT  &amp;quot;students&amp;quot;.* FROM (with &amp;quot;quintile_table&amp;quot; as (select *, ntile(5) over (order by grade) as quintile from &amp;quot;students&amp;quot;) select * from &amp;quot;quintile_table&amp;quot;) as &amp;quot;students&amp;quot; WHERE &amp;quot;students&amp;quot;.&amp;quot;id&amp;quot; = $1 ORDER BY &amp;quot;students&amp;quot;.&amp;quot;id&amp;quot; ASC LIMIT $2  [[&amp;quot;id&amp;quot;, 1], [&amp;quot;LIMIT&amp;quot;, 1]]&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;=&amp;gt; 2&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It would, again, be reasonable to believe additional misdirection such as this
+would increase the cost of the query, but the &lt;code&gt;limit&lt;/code&gt; clause added by the call
+to &lt;code&gt;ActiveRecord::FinderMethods#first&lt;/code&gt; effectively reduces the total cost back
+to the initial value.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-psql&quot; data-lang=&quot;psql&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;explain&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;students&amp;quot;&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;quintile_table&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ntile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;over&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;grade&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;students&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;quintile_table&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;students&amp;quot;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;where&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;students&amp;quot;&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;order&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;students&amp;quot;&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;s s-Name&quot;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;asc&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;limit&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                                         QUERY PLAN&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;---------------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt; Limit  (cost=154037.84..154042.35 rows=1 width=48)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   -&amp;gt;  CTE Scan on quintile_table  (cost=154037.84..176537.84 rows=5000 width=48)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;         Filter: (id = 1)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;         CTE quintile_table&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;           -&amp;gt;  WindowAgg  (cost=136537.84..154037.84 rows=1000000 width=27)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                 -&amp;gt;  Sort  (cost=136537.84..139037.84 rows=1000000 width=23)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                       Sort Key: students.grade&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;                       -&amp;gt;  Seq Scan on students  (cost=0.00..16370.00 rows=1000000 width=23)&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;(8 rows)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Achieving Modularity Using AREL&lt;/h2&gt;
+
+&lt;p&gt;We can now say that we have gotten to a point where we can simply wrap what we
+have in a scope, and call it good.  Were this a feature for a client on a time
+sensitive project, I would probably agree; but we can certainly do better than
+the following.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Student&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ApplicationRecord&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;scope&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:with_quintile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;from&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+      &lt;span class=&quot;s1&quot;&gt;&amp;#39;(with &amp;quot;quintile_table&amp;quot; as (select *, ntile(5)&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;s1&quot;&gt;&amp;#39;over (order by grade) as quintile from &amp;quot;students&amp;quot;)&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;s1&quot;&gt;&amp;#39;select * from &amp;quot;quintile_table&amp;quot;) as &amp;quot;students&amp;quot;&amp;#39;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39; &amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Normally, it is
+&lt;span&gt; &lt;a href=&quot;https://gist.github.com/ryanb/4172391&quot;&gt;considered bad practice&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://gist.github.com/ryanb/4172391&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+to hide complexity within modules, so the following is not inherently a
+recommendation, so much as an elaboration on how we would approach generalizing
+what we already have.  On the other hand, having worked on large, long-lived
+projects, I cannot stress enough the maintenance issues caused by having pieces
+of hard-coded SQL strewn within model classes.  As such, the conversion to use
+&lt;span&gt; &lt;a href=&quot;https://github.com/rails/arel&quot;&gt;AREL&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://github.com/rails/arel&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+is an explicit recommendation.&lt;/p&gt;
+
+&lt;p&gt;Here, we create a new &lt;code&gt;ActiveSupport::Concern&lt;/code&gt; module in
+&lt;code&gt;app/models/concerns/quintile.rb&lt;/code&gt;, which we will include in any class we want
+to be able to call our scope on.  In this case, we have removed any explicit to
+both the table name or the column we are using as our calculation.
+Consequently, this module can already be included any &lt;code&gt;ActiveRecord&lt;/code&gt; model,
+its &lt;code&gt;quintile_on&lt;/code&gt; class macro used, and that is all that is necessary to add
+a scope for calculating a quintile on a given column.  In this particular case,
+we could have simply defined all the methods within the &lt;code&gt;class_methods&lt;/code&gt; block
+in the module within the &lt;code&gt;Student&lt;/code&gt; class itself, thereby obviating the
+extraneous module.&lt;/p&gt;
+
+&lt;p&gt;Ultimately, the version written with AREL produces the exact same output, but
+with a lot of the hard-coded aspects stripped away.  While it is more difficult
+to write up front, and more difficult to follow, each method returns an object
+that is an &lt;code&gt;Arel::Node&lt;/code&gt;, which has a &lt;code&gt;to_sql&lt;/code&gt; method.  When composing queries in
+this way for a real production application, this makes it possible to very
+easily test the SQL generated, helping with long-term maintenance.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;Quintile&lt;/span&gt;
+  &lt;span class=&quot;kp&quot;&gt;extend&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ActiveSupport&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Concern&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;class_methods&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quintile_on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;scope&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;with_quintile_on_&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to_sym&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;from&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wrapped_quintile_query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;kp&quot;&gt;private&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;wrapped_quintile_query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;As&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;quintile_query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;arel_table&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to_sql&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quintile_query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;table&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_table&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;project&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SqlLiteral&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;quintile_cte&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quintile_table&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Table&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;quintile_table_for_&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table_name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SecureRandom&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quintile_cte&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;As&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tap&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;framing&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;quintile_cte_select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quintile_cte_select&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SelectCore&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tap&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;select&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;select&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;projections&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+          &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SqlLiteral&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+
+          &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;As&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;quintile_cte_over&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+            &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SqlLiteral&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;quintile&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;select&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;arel_table&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;quintile_cte_over&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Over&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+        &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SqlLiteral&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;ntile(5)&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+        &lt;span class=&quot;no&quot;&gt;Arel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Nodes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Window&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;order&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Student&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ApplicationRecord&lt;/span&gt;
+  &lt;span class=&quot;kp&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Quintile&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;quintile_on&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:grade&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;As can be seen in our usage of the &lt;code&gt;Student&lt;/code&gt; below, the named scope generated by
+our class macro have a more fluent name than we had used previously, namely
+stating on which column the quintile is being processed.  Another point of
+interest for the query generated is our choice to define the &lt;code&gt;quintile_table&lt;/code&gt;
+method, such that it includes a random value in the name, with the intent of
+making name collisions less likely when working with other scopes that require
+table aliases.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-irb&quot; data-lang=&quot;irb&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Student&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;with_quintile_on_grade&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;first&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;   Student Load (928.2ms)  SELECT  &amp;quot;students&amp;quot;.* FROM (WITH &amp;quot;quintile_table_for_students_b886c9319a75c9eb&amp;quot; AS (SELECT *, ntile(5) OVER (ORDER BY grade) AS quintile FROM &amp;quot;students&amp;quot;) SELECT * FROM &amp;quot;quintile_table_for_students_b886c9319a75c9eb&amp;quot;) AS &amp;quot;students&amp;quot; ORDER BY &amp;quot;students&amp;quot;.&amp;quot;id&amp;quot; ASC LIMIT $1  [[&amp;quot;LIMIT&amp;quot;, 1]]&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;=&amp;gt; #&amp;lt;Student:0x0055d3e736a518 id: 1, name: &amp;quot;c4ca4238a0&amp;quot;, grade: 29&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Toward a Robust DSL&lt;/h2&gt;
+
+&lt;p&gt;While this is a perfectly reasonable stopping point for this project, having
+gotten exactly what we need from the database within the confines of a Rails
+application, there is a lot more we could do.  It is easy to imagine, from atop
+our module specific to quintiles for columns, writing a much more robust system
+for defining these sorts of calculations.  The next logical steps are fairly
+clear:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Abstract out the &lt;code&gt;quintile&lt;/code&gt; aspect of the library, for the ability to have any quantile.&lt;/li&gt;
+&lt;li&gt;Create an class to encapsulate information about the &lt;code&gt;table&lt;/code&gt; and &lt;code&gt;column&lt;/code&gt;, to prevent the constant use as parameters.&lt;/li&gt;
+&lt;li&gt;Implement higher order class macros that can handle multiple definitions at once.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Now, &lt;code&gt;ActiveSUpport::Inflector&lt;/code&gt; may not deal in quantiles, but it would be easy
+enough to possess our own mapping between integers and words.  But all of this
+is mere speculation, for we have accomplished what we set out to do.  Perhaps
+we will someday return to this, but, for now, that is enough implementation.&lt;/p&gt;
+
+&lt;h2&gt;Ruminations&lt;/h2&gt;
+
+&lt;p&gt;Instead, the path upon which we have trod during this exercise gives us a
+contextual vantage point from which to discuss software construction,
+methodology, and practice more generally.  We started as &amp;quot;close to the metal&amp;quot;
+as necessary &amp;emdash; inside PostgreSQL &amp;emdash; but not at a layer so far away
+from our problem domain that we would lose sight of goal.  In doing so, we
+learned about and utilized some less common features of the database in an
+environment that was conducive to exploring this fundamentals.  Had we started
+from ActiveRecord, or worse AREL, our feedback loop would have been much slower
+as we coped with extraneous details.  Instead, we did the simplest thing we
+could, found the points at which it broke down, and iterated our implementation
+before even attempting to integrate it.  And when we did so, we had to step
+back, and reiterate the process, given our new set of constraints.&lt;/p&gt;
+
+&lt;p&gt;Often times, a problem will appear intractable when approached at too high a
+level, without enough granular control, or without enough understanding of the
+underlying architecture.  Stepping down helps in these cases, but does not
+produce a satisfactory result.  After having gleaned what we could from the
+database itself, we had to climb back up the
+&lt;span&gt; &lt;a href=&quot;http://worrydream.com/LadderOfAbstraction/&quot;&gt;ladder of abstraction&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://worrydream.com/LadderOfAbstraction/&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.
+In doing so, we went marginally further than necessary, but showed how we could
+remove a lot of the hard-coded details and make our software more robust.  We
+had the opportunity to stop, but favored the more complete approach.  In
+languages with code generation deeply ingrained, our solutions will often grow
+to involve a level of abstraction that makes reuse trivial.  When it is
+overkill and when it is ideal is a much more subjective question, based more on
+the exigencies of the real world rather than what would be considered optimal
+from a software implementation perspective.&lt;/p&gt;
+
+&lt;p&gt;And, finally, to get to the meta and talk about this last section from within
+itself; it is always important to step back after an exercise that touches many
+different pieces, contrived or experienced in practice, and ponder about what
+can be gleaned from the process.  Just as higher order abstractions in
+programming come from the recognition of patterns, so does it arise in higher
+order thinking about programming.&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Continuations in Ruby - Part 1: First Class Objects</title>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    Common Table Expressions in ActiveRecord: A Case Study of Quantiles &middot; effluence
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/poole.css">
+  <link rel="stylesheet" href="/css/syntax.css">
+  <link rel="stylesheet" href="/css/hyde.css">
+  <link rel="stylesheet" href="/css/custom.css">
+
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body class="layout-reverse">
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>effluence</h1>
+      <p class="lead"></p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+        <a href="/">home</a>
+      </li>
+
+      
+
+      
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/projects/">projects</a>
+            </li>
+          
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/about/">about</a>
+            </li>
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+
+      <li class="sidebar-nav-item">
+        <a href="/atom.xml" target="_blank">rss</a>
+      </li>
+    </ul>
+
+    <p>&copy; 2017. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Common Table Expressions in ActiveRecord: A Case Study of Quantiles</h1>
+  <p>Today, we are going to look at a straightforward real-world problem, and build a
+comprehensive solution.  In doing so, we will start with some various naive
+approaches as we increase our understanding of the underlying mechanics,
+encounter some pitfalls, and, ultimately, approach a reasonable level of
+sophistication and abstraction.  The stack we will be using for this case study
+is
+<span> <a href="http://rubyonrails.org/">Ruby on Rails 5.1</a> <span style="vertical-align: super"> <a href="http://rubyonrails.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+with
+<span> <a href="https://www.postgresql.org/">PostgreSQL 9.6</a> <span style="vertical-align: super"> <a href="https://www.postgresql.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+for the database.</p>
+
+<p>Now, let me present to you the problem through which we will frame this
+discussion:  given a number of student records, when displaying a single
+student, also display the quintile into which their grade falls.</p>
+
+<h1>Calculating Quantiles in PostgreSQL</h1>
+
+<p>Let us begin by looking at the structure of our <code>students</code> table.  The
+following was generated with a simple Rails migration, the details of which are
+outside the scope of this article.  The table, intentionally simple for the
+purpose of illustration, only has columns for an <code>id</code>, a <code>name</code>, and a <code>grade</code>.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="kp">\d</span> <span class="ss">students</span>
+                              <span class="k">Table</span> <span class="s s-Name">&quot;public.students&quot;</span>
+ <span class="k">Column</span> <span class="o">|</span>       <span class="k">Type</span>        <span class="o">|</span>                       <span class="n">Modifiers</span>
+<span class="c1">--------+-------------------+-------------------------------------------------------</span>
+ <span class="n">id</span>     <span class="o">|</span> <span class="nb">bigint</span>            <span class="o">|</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="n">nextval</span><span class="p">(</span><span class="s1">&#39;students_id_seq&#39;</span><span class="o">::</span><span class="n">regclass</span><span class="p">)</span>
+ <span class="k">name</span>   <span class="o">|</span> <span class="nb">character</span> <span class="k">varying</span> <span class="o">|</span> <span class="k">not</span> <span class="k">null</span>
+ <span class="n">grade</span>  <span class="o">|</span> <span class="nb">integer</span>           <span class="o">|</span> <span class="k">not</span> <span class="k">null</span>
+<span class="k">Indexes</span><span class="p">:</span>
+    <span class="s s-Name">&quot;students_pkey&quot;</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> <span class="n">btree</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span></code></pre></figure>
+
+<p>In order to have some data to work with, we want to generate some at random.  We
+use the following command to create a million records with grades between 0 and
+100.  As you can see from the subsequent queries, we now have a corpus upon
+which to operate.  Since we are working with a million rows, we know each
+quintile contains 200,000 records, and we can safely assume that they will be
+split fairly close to multiples of 20.  We will soon be able to confirm this
+assumption.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">students</span> <span class="p">(</span><span class="k">name</span><span class="p">,</span> <span class="n">grade</span><span class="p">)</span>
+<span class="k">select</span>
+  <span class="k">left</span><span class="p">(</span><span class="n">md5</span><span class="p">(</span><span class="n">i</span><span class="o">::</span><span class="nb">text</span><span class="p">),</span> <span class="mf">10</span><span class="p">),</span>
+  <span class="p">(</span><span class="n">random</span><span class="p">()</span><span class="o">*</span><span class="mf">100</span><span class="p">)</span><span class="o">::</span><span class="nb">int</span>
+<span class="k">from</span> <span class="n">generate_series</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="mf">1000000</span><span class="p">)</span> <span class="n">s</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="go">INSERT 0 1000000</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">select</span> <span class="n">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">from</span> <span class="n">students</span><span class="p">;</span>
+<span class="go">  count</span>
+<span class="go">  ---------</span>
+<span class="go">   1000000</span>
+<span class="go">   (1 row)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">students</span> <span class="k">limit</span> <span class="mf">10</span><span class="p">;</span>
+<span class="go"> id |    name    | grade</span>
+<span class="go">----+------------+-------</span>
+<span class="go">  1 | c4ca4238a0 |    29</span>
+<span class="go">  2 | c81e728d9d |    87</span>
+<span class="go">  3 | eccbc87e4b |    26</span>
+<span class="go">  4 | a87ff679a2 |    43</span>
+<span class="go">  5 | e4da3b7fbb |    59</span>
+<span class="go">  6 | 1679091c5a |    44</span>
+<span class="go">  7 | 8f14e45fce |    53</span>
+<span class="go">  8 | c9f0f895fb |     4</span>
+<span class="go">  9 | 45c48cce2e |    81</span>
+<span class="go"> 10 | d3d9446802 |    12</span>
+<span class="go">(10 rows)</span></code></pre></figure>
+
+<p>In order to calculate quantiles, we will be making use of a PostgreSQL feature
+called
+<span> <a href="https://www.postgresql.org/docs/9.6/static/tutorial-window.html">window functions</a> <span style="vertical-align: super"> <a href="https://www.postgresql.org/docs/9.6/static/tutorial-window.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.
+Using the
+<span> <a href="https://www.postgresql.org/docs/9.6/static/functions-window.html"><code>ntile()</code></a> <span style="vertical-align: super"> <a href="https://www.postgresql.org/docs/9.6/static/functions-window.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+function, it is actually fairly trivial to calculate the quintile for a row.  As
+can be seen in the following query, this is the case so long as we use a <code>limit</code>
+clause to only return one row. Using the
+<span> <a href="https://www.postgresql.org/docs/9.6/static/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS">window function call syntax</a> <span style="vertical-align: super"> <a href="https://www.postgresql.org/docs/9.6/static/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>, we define a computed column <code>quintile</code> using <code>ntile(5)</code> over
+the grade column, ordered.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span> <span class="k">order</span> <span class="k">by</span> <span class="n">id</span> <span class="k">limit</span> <span class="mf">1</span><span class="p">;</span>
+<span class="go">  id |    name    | grade | quintile</span>
+<span class="go"> ----+------------+-------+----------</span>
+<span class="go">   1 | c4ca4238a0 |    29 |        2</span>
+<span class="go">   (1 row)</span></code></pre></figure>
+
+<p>But something interesting happens when we try to use a <code>where</code> clause to get the
+same result:  we get a different, incorrect, result.  This is because window
+functions operate over the set of records returned by the <code>from/where</code> clause,
+so, in this next case, only sees one record.  This makes our current query
+useless, since we are under the constraint of needing to display the quintile
+for a specific record.</p>
+
+<p>At this point, it would also be nice to confirm that our data has the expected
+shape, but we run into another interesting limitation: namely, that we cannot
+use window functions inside the <code>group by</code> clause.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mf">1</span><span class="p">;</span>
+<span class="go"> id |    name    | grade | quintile</span>
+<span class="go">----+------------+-------+----------</span>
+<span class="go">  1 | c4ca4238a0 |    29 |        1</span>
+<span class="go">(1 row)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">select</span> <span class="n">count</span><span class="p">(</span><span class="o">*</span><span class="p">),</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span> <span class="k">group</span> <span class="k">by</span> <span class="n">quintile</span><span class="p">;</span>
+<span class="gs">ERROR:</span><span class="gr">  window functions are not allowed in GROUP BY</span>
+<span class="gs">LINE 1:</span><span class="gr"> select count(*), ntile(5) over (order by grade) as quintile ...</span>
+<span class="gr">                         ^</span></code></pre></figure>
+
+<p>Luckily, SQL queries, generally speaking, can often be reshaped into a form that
+is sufficient for our needs.  In particular, we can use another feature of
+PostgreSQL to work around these early teething problems:
+<span> <a href="https://www.postgresql.org/docs/9.6/static/queries-with.html">common table expressions, aka <code>with</code> queries</a> <span style="vertical-align: super"> <a href="https://www.postgresql.org/docs/9.6/static/queries-with.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.</p>
+
+<p>Using a common table expression, we generate a temporary table for the duration
+of this query.  This table will contain our quintile value, and we will pull the
+data from it.  For now, we will just call it <code>quintile_table</code>.  As an aside, it
+is worthwhile to note that common table expressions are also capable of
+significantly more advanced features, including iteration (albeit invoked using
+the <code>recursive</code> keyword), but we need not concern ourselves with those details
+here.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">with</span> <span class="n">quintile_table</span> <span class="k">as</span> <span class="p">(</span><span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span><span class="p">)</span>
+    <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">quintile_table</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mf">1</span><span class="p">;</span>
+<span class="go"> id |    name    | grade | quintile</span>
+<span class="go">----+------------+-------+----------</span>
+<span class="go">  1 | c4ca4238a0 |    29 |        2</span>
+<span class="go">(1 row)</span></code></pre></figure>
+
+<p>That query gave us exactly the output we desire.  The current shape of the query
+also conveys upon us the ability to cheat the restriction of not being able to
+use window functions in a <code>group by</code> clause, since we are now grouping on a
+column from the temporary table, and PostgreSQL treats this like any other
+column.  As evidenced in the following query, the data looks exactly how we
+expected.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">with</span> <span class="n">quintile_table</span> <span class="k">as</span> <span class="p">(</span><span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span><span class="p">)</span>
+    <span class="k">select</span> <span class="n">count</span><span class="p">(</span><span class="o">*</span><span class="p">),</span> <span class="n">min</span><span class="p">(</span><span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">min</span><span class="p">,</span> <span class="n">max</span><span class="p">(</span><span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">max</span><span class="p">,</span> <span class="n">quintile</span>
+    <span class="k">from</span> <span class="n">quintile_table</span> <span class="k">group</span> <span class="k">by</span> <span class="n">quintile</span> <span class="k">order</span> <span class="k">by</span> <span class="n">quintile</span><span class="p">;</span>
+<span class="go"> count  | min | max | quintile</span>
+<span class="go">--------+-----+-----+----------</span>
+<span class="go"> 200000 |   0 |  20 |        1</span>
+<span class="go"> 200000 |  20 |  40 |        2</span>
+<span class="go"> 200000 |  40 |  60 |        3</span>
+<span class="go"> 200000 |  60 |  80 |        4</span>
+<span class="go"> 200000 |  80 | 100 |        5</span>
+<span class="go">(5 rows)</span></code></pre></figure>
+
+<p>The added layer of complexity, necessary to allow us to filter on an arbitrary
+<code>where</code> clause should be expected to increase the computational cost of the
+query, but that is actually not the case in a substantial way.  The start-up
+cost for the query using common table expressions is less (by 5000) than that of
+the naive query using a <code>limit</code> clause, which means the output phase should be
+expected to actually begin earlier.  True, the total cost is more by 17499.99,
+but that seems like a slight cost to pay in order to get the desired result
+from amongst a million records.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span> <span class="k">order</span> <span class="k">by</span> <span class="n">id</span> <span class="k">limit</span> <span class="mf">1</span><span class="p">;</span>
+<span class="go">                                        QUERY PLAN</span>
+<span class="go">-------------------------------------------------------------------------------------------</span>
+<span class="go"> Limit  (cost=159037.84..159037.85 rows=1 width=27)</span>
+<span class="go">   -&gt;  Sort  (cost=159037.84..161537.84 rows=1000000 width=27)</span>
+<span class="go">         Sort Key: id</span>
+<span class="go">         -&gt;  WindowAgg  (cost=136537.84..154037.84 rows=1000000 width=27)</span>
+<span class="go">               -&gt;  Sort  (cost=136537.84..139037.84 rows=1000000 width=23)</span>
+<span class="go">                     Sort Key: grade</span>
+<span class="go">                     -&gt;  Seq Scan on students  (cost=0.00..16370.00 rows=1000000 width=23)</span>
+<span class="go">(7 rows)</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">explain</span> <span class="k">with</span> <span class="n">quintile_table</span> <span class="k">as</span> <span class="p">(</span><span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span> <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span> <span class="k">from</span> <span class="n">students</span><span class="p">)</span>
+  <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">quintile_table</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mf">1</span><span class="p">;</span>
+<span class="go">                                      QUERY PLAN</span>
+<span class="go">---------------------------------------------------------------------------------------</span>
+<span class="go"> CTE Scan on quintile_table  (cost=154037.84..176537.84 rows=5000 width=48)</span>
+<span class="go">   Filter: (id = 1)</span>
+<span class="go">   CTE quintile_table</span>
+<span class="go">     -&gt;  WindowAgg  (cost=136537.84..154037.84 rows=1000000 width=27)</span>
+<span class="go">           -&gt;  Sort  (cost=136537.84..139037.84 rows=1000000 width=23)</span>
+<span class="go">                 Sort Key: students.grade</span>
+<span class="go">                 -&gt;  Seq Scan on students  (cost=0.00..16370.00 rows=1000000 width=23)</span>
+<span class="go">(7 rows)</span></code></pre></figure>
+
+<p>It is worthwhile to note, before going any further, that this method would not
+be sufficiently performant in a production environment for a data set of this
+size; some caching or precomputation layer would be necessary, but that is
+outside the scope of this article.</p>
+
+<h2>Integrating into Rails</h2>
+
+<p>At this point, we have a query that can handle arbitrary filtering, but we want
+to use it within an <code>ActiveRecord</code> model.  The first thought may be that we can
+simply use
+<span> <a href="http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-select">ActiveRecord::QueryMethods#select</a> <span style="vertical-align: super"> <a href="http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-select" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
+but we are about to take a step backwards.</p>
+
+<p>(N.B. We break down the long SQL string into separate clauses using an array
+and joining it back into a string for the query; while this may not be the best
+practice, it is a sufficient way to break up long chunks of SQL when
+prototyping.)</p>
+
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="nb">puts</span> <span class="no">Student</span><span class="o">.</span>
+<span class="gp">?&gt; </span><span class="nb">select</span><span class="p">(</span><span class="o">[</span>
+<span class="gp">?&gt; </span>  <span class="s1">&#39;with quintile_table&#39;</span><span class="p">,</span>
+<span class="gp">?&gt; </span>  <span class="s1">&#39;as (select *, ntile(5) over (order by grade)&#39;</span><span class="p">,</span>
+<span class="gp">?&gt; </span>  <span class="s1">&#39;as quintile from students)&#39;</span>
+<span class="gp">?&gt; </span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">))</span><span class="o">.</span>
+<span class="gp">?&gt; </span><span class="n">to_sql</span>
+<span class="go">SELECT with quintile_table as (select *, ntile(5) over (order by grade) as quintile from students) FROM &quot;students&quot;</span></code></pre></figure>
+
+<p>The result is, again, not what we desire, and we must step back.  Actually
+reading the documentation for the <code>select</code> method, we see it takes a list of
+fields we wish to select, but does not overwrite the entire <code>select</code> clause, as
+we (with intentional naivete) assumed.  Instead, we will have to again reshape
+the query into a way that will allow for composability within the constraints of
+an <code>ActiveRecord</code> model.</p>
+
+<p>Thinking in terms of how we compose queries using scopes in Rails, it may be
+best to define our optimal interface before going forward.  In this case, a
+standalone <code>with_quintile</code> scope would be optimal, and we would want to be able
+to use it just like any other scope, with its internals abstracted.  Consider
+the following: <code>Student.with_quintile.where(id: 1).first.quintile</code></p>
+
+<p>In order to achieve this result, we will need to abandon our attempts to
+manipulate the <code>select</code> clause to our ends and, instead, focus on the <code>from</code>
+clause.  Very simply, we can alias our original <code>quintile_table</code> as <code>students</code>,
+the <code>table_name</code> of our table, thereby tricking all other normal scopes into
+being well behaved in its presence.  As far as they are concerned, the
+<code>students</code> table has the <code>quintile</code> column there at all times.</p>
+
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="no">Student</span><span class="o">.</span>
+<span class="gp">?&gt; </span><span class="n">from</span><span class="p">(</span><span class="o">[</span>
+<span class="gp">?&gt; </span> <span class="s1">&#39;(with &quot;quintile_table&quot;&#39;</span><span class="p">,</span>
+<span class="gp">?&gt; </span> <span class="s1">&#39;as (select *, ntile(5) over (order by grade)&#39;</span><span class="p">,</span>
+<span class="gp">?&gt; </span> <span class="s1">&#39;as quintile from &quot;students&quot;) select * from &quot;quintile_table&quot;)&#39;</span><span class="p">,</span>
+<span class="gp">?&gt; </span> <span class="s1">&#39;as &quot;students&quot;&#39;</span>
+<span class="gp">?&gt; </span><span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">))</span><span class="o">.</span>
+<span class="gp">?&gt; </span><span class="n">where</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span>
+<span class="gp">?&gt; </span><span class="n">first</span><span class="o">.</span>
+<span class="gp">?&gt; </span><span class="n">quintile</span>
+<span class="go">  Student Load (672.7ms)  SELECT  &quot;students&quot;.* FROM (with &quot;quintile_table&quot; as (select *, ntile(5) over (order by grade) as quintile from &quot;students&quot;) select * from &quot;quintile_table&quot;) as &quot;students&quot; WHERE &quot;students&quot;.&quot;id&quot; = $1 ORDER BY &quot;students&quot;.&quot;id&quot; ASC LIMIT $2  [[&quot;id&quot;, 1], [&quot;LIMIT&quot;, 1]]</span>
+<span class="go">=&gt; 2</span></code></pre></figure>
+
+<p>It would, again, be reasonable to believe additional misdirection such as this
+would increase the cost of the query, but the <code>limit</code> clause added by the call
+to <code>ActiveRecord::FinderMethods#first</code> effectively reduces the total cost back
+to the initial value.</p>
+
+<figure class="highlight"><pre><code class="language-psql" data-lang="psql"><span></span><span class="o">#</span> <span class="k">explain</span>
+  <span class="k">select</span> <span class="s s-Name">&quot;students&quot;</span><span class="mf">.</span><span class="o">*</span>
+  <span class="k">from</span> <span class="p">(</span><span class="k">with</span> <span class="s s-Name">&quot;quintile_table&quot;</span>
+        <span class="k">as</span> <span class="p">(</span><span class="k">select</span> <span class="o">*</span><span class="p">,</span> <span class="n">ntile</span><span class="p">(</span><span class="mf">5</span><span class="p">)</span>
+        <span class="k">over</span> <span class="p">(</span><span class="k">order</span> <span class="k">by</span> <span class="n">grade</span><span class="p">)</span> <span class="k">as</span> <span class="n">quintile</span>
+        <span class="k">from</span> <span class="s s-Name">&quot;students&quot;</span><span class="p">)</span>
+    <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="s s-Name">&quot;quintile_table&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="s s-Name">&quot;students&quot;</span>
+  <span class="k">where</span> <span class="s s-Name">&quot;students&quot;</span><span class="mf">.</span><span class="s s-Name">&quot;id&quot;</span> <span class="o">=</span> <span class="mf">1</span>
+  <span class="k">order</span> <span class="k">by</span> <span class="s s-Name">&quot;students&quot;</span><span class="mf">.</span><span class="s s-Name">&quot;id&quot;</span> <span class="k">asc</span>
+  <span class="k">limit</span> <span class="mf">1</span><span class="p">;</span>
+<span class="go">                                         QUERY PLAN</span>
+<span class="go">---------------------------------------------------------------------------------------------</span>
+<span class="go"> Limit  (cost=154037.84..154042.35 rows=1 width=48)</span>
+<span class="go">   -&gt;  CTE Scan on quintile_table  (cost=154037.84..176537.84 rows=5000 width=48)</span>
+<span class="go">         Filter: (id = 1)</span>
+<span class="go">         CTE quintile_table</span>
+<span class="go">           -&gt;  WindowAgg  (cost=136537.84..154037.84 rows=1000000 width=27)</span>
+<span class="go">                 -&gt;  Sort  (cost=136537.84..139037.84 rows=1000000 width=23)</span>
+<span class="go">                       Sort Key: students.grade</span>
+<span class="go">                       -&gt;  Seq Scan on students  (cost=0.00..16370.00 rows=1000000 width=23)</span>
+<span class="go">(8 rows)</span></code></pre></figure>
+
+<h2>Achieving Modularity Using AREL</h2>
+
+<p>We can now say that we have gotten to a point where we can simply wrap what we
+have in a scope, and call it good.  Were this a feature for a client on a time
+sensitive project, I would probably agree; but we can certainly do better than
+the following.</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="no">ApplicationRecord</span>
+  <span class="n">scope</span> <span class="ss">:with_quintile</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+    <span class="n">from</span><span class="p">(</span><span class="o">[</span>
+      <span class="s1">&#39;(with &quot;quintile_table&quot; as (select *, ntile(5)&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;over (order by grade) as quintile from &quot;students&quot;)&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;select * from &quot;quintile_table&quot;) as &quot;students&quot;&#39;</span>
+    <span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">))</span>
+  <span class="p">}</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>Normally, it is
+<span> <a href="https://gist.github.com/ryanb/4172391">considered bad practice</a> <span style="vertical-align: super"> <a href="https://gist.github.com/ryanb/4172391" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+to hide complexity within modules, so the following is not inherently a
+recommendation, so much as an elaboration on how we would approach generalizing
+what we already have.  On the other hand, having worked on large, long-lived
+projects, I cannot stress enough the maintenance issues caused by having pieces
+of hard-coded SQL strewn within model classes.  As such, the conversion to use
+<span> <a href="https://github.com/rails/arel">AREL</a> <span style="vertical-align: super"> <a href="https://github.com/rails/arel" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+is an explicit recommendation.</p>
+
+<p>Here, we create a new <code>ActiveSupport::Concern</code> module in
+<code>app/models/concerns/quintile.rb</code>, which we will include in any class we want
+to be able to call our scope on.  In this case, we have removed any explicit to
+both the table name or the column we are using as our calculation.
+Consequently, this module can already be included any <code>ActiveRecord</code> model,
+its <code>quintile_on</code> class macro used, and that is all that is necessary to add
+a scope for calculating a quintile on a given column.  In this particular case,
+we could have simply defined all the methods within the <code>class_methods</code> block
+in the module within the <code>Student</code> class itself, thereby obviating the
+extraneous module.</p>
+
+<p>Ultimately, the version written with AREL produces the exact same output, but
+with a lot of the hard-coded aspects stripped away.  While it is more difficult
+to write up front, and more difficult to follow, each method returns an object
+that is an <code>Arel::Node</code>, which has a <code>to_sql</code> method.  When composing queries in
+this way for a real production application, this makes it possible to very
+easily test the SQL generated, helping with long-term maintenance.</p>
+
+<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">module</span> <span class="nn">Quintile</span>
+  <span class="kp">extend</span> <span class="no">ActiveSupport</span><span class="o">::</span><span class="no">Concern</span>
+
+  <span class="n">class_methods</span> <span class="k">do</span>
+    <span class="k">def</span> <span class="nf">quintile_on</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+      <span class="n">scope</span> <span class="s2">&quot;with_quintile_on_</span><span class="si">#{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">to_sym</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+        <span class="n">from</span><span class="p">(</span><span class="n">wrapped_quintile_query</span><span class="p">(</span><span class="n">column</span><span class="p">))</span>
+      <span class="p">}</span>
+    <span class="k">end</span>
+
+    <span class="kp">private</span>
+
+    <span class="k">def</span> <span class="nf">wrapped_quintile_query</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+      <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">As</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">quintile_query</span><span class="p">(</span><span class="n">column</span><span class="p">),</span> <span class="n">arel_table</span><span class="p">)</span><span class="o">.</span><span class="n">to_sql</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">quintile_query</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+      <span class="n">table</span> <span class="o">=</span> <span class="n">quintile_table</span>
+
+      <span class="n">table</span><span class="o">.</span>
+        <span class="n">project</span><span class="p">(</span><span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">SqlLiteral</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">))</span><span class="o">.</span>
+        <span class="n">with</span><span class="p">(</span><span class="n">quintile_cte</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">column</span><span class="p">))</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">quintile_table</span>
+      <span class="no">Arel</span><span class="o">::</span><span class="no">Table</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;quintile_table_for_</span><span class="si">#{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">_</span><span class="si">#{</span><span class="no">SecureRandom</span><span class="o">.</span><span class="n">hex</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">quintile_cte</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span>
+      <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">As</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">Window</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">tap</span> <span class="k">do</span> <span class="o">|</span><span class="n">window</span><span class="o">|</span>
+        <span class="n">window</span><span class="o">.</span><span class="n">framing</span> <span class="o">=</span> <span class="n">quintile_cte_select</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span>
+      <span class="k">end</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">quintile_cte_select</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span>
+      <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">SelectCore</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">tap</span> <span class="k">do</span> <span class="o">|</span><span class="nb">select</span><span class="o">|</span>
+        <span class="nb">select</span><span class="o">.</span><span class="n">projections</span> <span class="o">=</span> <span class="o">[</span>
+          <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">SqlLiteral</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">),</span>
+
+          <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">As</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+            <span class="n">quintile_cte_over</span><span class="p">(</span><span class="n">column</span><span class="p">),</span>
+            <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">SqlLiteral</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;quintile&#39;</span><span class="p">)</span>
+          <span class="p">)</span>
+        <span class="o">]</span>
+        <span class="nb">select</span><span class="o">.</span><span class="n">from</span> <span class="o">=</span> <span class="n">arel_table</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">quintile_cte_over</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+      <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">Over</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+        <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">SqlLiteral</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;ntile(5)&#39;</span><span class="p">),</span>
+        <span class="no">Arel</span><span class="o">::</span><span class="no">Nodes</span><span class="o">::</span><span class="no">Window</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+      <span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Student</span> <span class="o">&lt;</span> <span class="no">ApplicationRecord</span>
+  <span class="kp">include</span> <span class="no">Quintile</span>
+
+  <span class="n">quintile_on</span> <span class="ss">:grade</span>
+<span class="k">end</span></code></pre></figure>
+
+<p>As can be seen in our usage of the <code>Student</code> below, the named scope generated by
+our class macro have a more fluent name than we had used previously, namely
+stating on which column the quintile is being processed.  Another point of
+interest for the query generated is our choice to define the <code>quintile_table</code>
+method, such that it includes a random value in the name, with the intent of
+making name collisions less likely when working with other scopes that require
+table aliases.</p>
+
+<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="no">Student</span><span class="o">.</span><span class="n">with_quintile_on_grade</span><span class="o">.</span><span class="n">first</span>
+<span class="go">   Student Load (928.2ms)  SELECT  &quot;students&quot;.* FROM (WITH &quot;quintile_table_for_students_b886c9319a75c9eb&quot; AS (SELECT *, ntile(5) OVER (ORDER BY grade) AS quintile FROM &quot;students&quot;) SELECT * FROM &quot;quintile_table_for_students_b886c9319a75c9eb&quot;) AS &quot;students&quot; ORDER BY &quot;students&quot;.&quot;id&quot; ASC LIMIT $1  [[&quot;LIMIT&quot;, 1]]</span>
+<span class="go">=&gt; #&lt;Student:0x0055d3e736a518 id: 1, name: &quot;c4ca4238a0&quot;, grade: 29&gt;</span></code></pre></figure>
+
+<h2>Toward a Robust DSL</h2>
+
+<p>While this is a perfectly reasonable stopping point for this project, having
+gotten exactly what we need from the database within the confines of a Rails
+application, there is a lot more we could do.  It is easy to imagine, from atop
+our module specific to quintiles for columns, writing a much more robust system
+for defining these sorts of calculations.  The next logical steps are fairly
+clear:</p>
+
+<ol>
+<li>Abstract out the <code>quintile</code> aspect of the library, for the ability to have any quantile.</li>
+<li>Create an class to encapsulate information about the <code>table</code> and <code>column</code>, to prevent the constant use as parameters.</li>
+<li>Implement higher order class macros that can handle multiple definitions at once.</li>
+</ol>
+
+<p>Now, <code>ActiveSUpport::Inflector</code> may not deal in quantiles, but it would be easy
+enough to possess our own mapping between integers and words.  But all of this
+is mere speculation, for we have accomplished what we set out to do.  Perhaps
+we will someday return to this, but, for now, that is enough implementation.</p>
+
+<h2>Ruminations</h2>
+
+<p>Instead, the path upon which we have trod during this exercise gives us a
+contextual vantage point from which to discuss software construction,
+methodology, and practice more generally.  We started as &quot;close to the metal&quot;
+as necessary &emdash; inside PostgreSQL &emdash; but not at a layer so far away
+from our problem domain that we would lose sight of goal.  In doing so, we
+learned about and utilized some less common features of the database in an
+environment that was conducive to exploring this fundamentals.  Had we started
+from ActiveRecord, or worse AREL, our feedback loop would have been much slower
+as we coped with extraneous details.  Instead, we did the simplest thing we
+could, found the points at which it broke down, and iterated our implementation
+before even attempting to integrate it.  And when we did so, we had to step
+back, and reiterate the process, given our new set of constraints.</p>
+
+<p>Often times, a problem will appear intractable when approached at too high a
+level, without enough granular control, or without enough understanding of the
+underlying architecture.  Stepping down helps in these cases, but does not
+produce a satisfactory result.  After having gleaned what we could from the
+database itself, we had to climb back up the
+<span> <a href="http://worrydream.com/LadderOfAbstraction/">ladder of abstraction</a> <span style="vertical-align: super"> <a href="http://worrydream.com/LadderOfAbstraction/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.
+In doing so, we went marginally further than necessary, but showed how we could
+remove a lot of the hard-coded details and make our software more robust.  We
+had the opportunity to stop, but favored the more complete approach.  In
+languages with code generation deeply ingrained, our solutions will often grow
+to involve a level of abstraction that makes reuse trivial.  When it is
+overkill and when it is ideal is a much more subjective question, based more on
+the exigencies of the real world rather than what would be considered optimal
+from a software implementation perspective.</p>
+
+<p>And, finally, to get to the meta and talk about this last section from within
+itself; it is always important to step back after an exercise that touches many
+different pieces, contrived or experienced in practice, and ponder about what
+can be gleaned from the process.  Just as higher order abstractions in
+programming come from the recognition of patterns, so does it arise in higher
+order thinking about programming.</p>
+
+  <span class="post-date">05 Jun 2017</span>
+</div>
+
+
+  <div class="related">
+    <h2>Related Posts</h2>
+    <ul class="related-posts">
+      
+        <li>
+          <h3>
+            <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
+              Hacking S-expressions into Ruby
+              <small>26 Feb 2015</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2017/05/22/revisiting-the-game-of-life-in-elm/">
+              Revisiting the Game of Life in Elm
+              <small>22 May 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2014/05/05/writing-game-of-life-in-elm/">
+              Writing Game of Life in Elm
+              <small>05 May 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+    </ul>
+  </div>
+
+
+<p class="bitcoin"></p>
+
+    </div>
+
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-47296801-1', 'sonnym.github.io');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
