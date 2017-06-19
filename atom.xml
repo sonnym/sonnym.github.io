@@ -4,7 +4,7 @@
  <title>effluence</title>
  <link href="http://sonnym.github.io//atom.xml" rel="self"/>
  <link href="http://sonnym.github.io//"/>
- <updated>2017-06-18T13:43:24-04:00</updated>
+ <updated>2017-06-18T23:28:57-04:00</updated>
  <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
@@ -17,7 +17,7 @@
    <link href="http://sonnym.github.io//2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/"/>
    <updated>2017-06-05T00:00:00-04:00</updated>
    <id>http://sonnym.github.io//2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles</id>
-   <content type="html">&lt;h1&gt;Framing&lt;/h1&gt;
+   <content type="html">&lt;h2&gt;Framing&lt;/h2&gt;
 
 &lt;p&gt;Today, we are going to look at a straightforward real-world problem, and build a
 comprehensive solution.  In doing so, we will start with some various naive
@@ -926,7 +926,7 @@ code itself, so I will let it speak for itself.&lt;/p&gt;
 &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
   &lt;span class=&quot;p&quot;&gt;([[]],&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;generate&lt;/span&gt;
     &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
 
 &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
