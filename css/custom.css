@@ -15,6 +15,11 @@ html {
   }
 }
 
+figure.highlight pre {
+  overflow-x: auto;
+  white-space: pre;
+}
+
 .contributions img {
   margin: 20px 5px;
   float: left;
