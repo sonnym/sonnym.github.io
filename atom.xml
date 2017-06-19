@@ -4,13 +4,964 @@
  <title>effluence</title>
  <link href="http://sonnym.github.io//atom.xml" rel="self"/>
  <link href="http://sonnym.github.io//"/>
- <updated>2017-06-18T23:28:57-04:00</updated>
+ <updated>2017-06-19T01:28:20-04:00</updated>
  <id>http://sonnym.github.io/</id>
  <author>
    <name></name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>On Maintainability: Gold Plating the Game of Life in Elm</title>
+   <link href="http://sonnym.github.io//2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/"/>
+   <updated>2017-06-18T00:00:00-04:00</updated>
+   <id>http://sonnym.github.io//2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm</id>
+   <content type="html">&lt;h2&gt;Launch Pad&lt;/h2&gt;
+
+&lt;p&gt;In a previous
+&lt;a href=&quot;/2017/05/22/revisiting-the-game-of-life-in-elm/&quot;&gt;article&lt;/a&gt;,
+we explored how to write Conway&amp;#39;s Game of Life in the Elm programming language.
+This example was predicated on one from several years before and compared the
+differences in Elm over the intervening period of time.  Today, we will add some
+entirely unnecessary features to the simple version of the program.&lt;/p&gt;
+
+&lt;p&gt;This exercise in
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Gold_plating_(software_engineering)&quot;&gt;gold plating&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Gold_plating_(software_engineering)&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+will serve as a means of probing what it feels like to add new features to an
+already established Elm program; these microcosmic changes will, hopefully, be
+reflective of maintaining larger applications in Elm.  Throughout the course of
+this article, we will consider successive diffs, starting from the original
+implementation, while moving toward the final version.&lt;/p&gt;
+
+&lt;p&gt;If you would like to see the full source code during any step of the process,
+please refer to this
+&lt;span&gt; &lt;a href=&quot;https://gist.github.com/sonnym/ddb7ef3d9d458d2d2e40bf4ef91b2da8&quot;&gt;gist&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://gist.github.com/sonnym/ddb7ef3d9d458d2d2e40bf4ef91b2da8&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.&lt;/p&gt;
+
+&lt;h2&gt;Unifying the Model&lt;/h2&gt;
+
+&lt;p&gt;The first step we must undertake is collapsing the various top level variables,
+namely &lt;code&gt;cellSize&lt;/code&gt;, &lt;code&gt;columns&lt;/code&gt;, and &lt;code&gt;rows&lt;/code&gt;, into a single &lt;code&gt;Model&lt;/code&gt;.  We also
+incorporate the (previously hardcoded) empty &lt;code&gt;Grid&lt;/code&gt; into our initial &lt;code&gt;model&lt;/code&gt;
+value.  This entire step would be unnecessary, were it not (conveniently)
+omitted from the original implementation.  Generally speaking, it is safer to
+include extra items in the &lt;code&gt;Model&lt;/code&gt; structure, in the off chance they become
+variable in the future, rather than having global variables.  This would be
+substantially more important when working with modular code but would also vie
+against common API considerations (i.e. in deciding what to keep private within
+a module, as opposed to exposing through a public data structure).&lt;/p&gt;
+
+&lt;p&gt;Unifying the model is a somewhat messy operation, since it involves changing
+several type annotations, but this is also very illustrative.  We can see how
+higher level functions deal with the &lt;code&gt;Model&lt;/code&gt; type, which flows down to lower
+level functions, where it is decomposed piecemeal for functions that only need,
+for instance, &lt;code&gt;grid&lt;/code&gt; or &lt;code&gt;cellSize&lt;/code&gt; fields.  This makes the flow of data through
+our functions explicitly visible, from top to bottom.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gh&quot;&gt;diff --git 1/_examples/elm/game_of_life.elm 2/_examples/elm/game_of_life_gold_plated_step1.elm&lt;/span&gt;
+&lt;span class=&quot;gh&quot;&gt;index 8e9e4c6..58db25f 100644&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;--- 1/_examples/elm/game_of_life.elm&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ 2/_examples/elm/game_of_life_gold_plated_step1.elm&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -9,10 +9,21 @@ import Html exposing (Html, Attribute, div, text)&lt;/span&gt;
+ import Html.Attributes exposing (style)
+ 
+ type alias Grid = List (List Bool)
+&lt;span class=&quot;gi&quot;&gt;+type alias Model =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  { grid : Grid&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  , rows : Int&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  , columns : Int&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  , cellSize : Int&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  }&lt;/span&gt;
+ type Msg = Initialize Grid | Tick Time
+ 
+&lt;span class=&quot;gd&quot;&gt;-cellSize = 5&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-(columns, rows) = (35, 35)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+model : Model&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+model =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  { grid = [[]]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  , cellSize = 5&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  , columns = 35&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  , rows = 35&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  }&lt;/span&gt;
+ 
+ main =
+   Html.program
+&lt;span class=&quot;gu&quot;&gt;@@ -22,33 +33,38 @@ main =&lt;/span&gt;
+     , subscriptions = subscriptions
+     }
+ 
+&lt;span class=&quot;gd&quot;&gt;-init : (Grid, Cmd Msg)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+init : (Model, Cmd Msg)&lt;/span&gt;
+ init =
+&lt;span class=&quot;gd&quot;&gt;-  ([[]], Random.generate&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    Initialize&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    (Random.map (groupInto columns) (Random.list (rows * columns) Random.bool)))&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  (model, Random.generate&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     Initialize&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     (Random.map&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+       (groupInto model.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+       (Random.list (model.rows * model.columns) Random.bool)))&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-view : Grid -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-view grid = div [ ] (List.map row grid)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+view : Model -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+view model = div [ ] (List.map (row model.cellSize) model.grid)&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-update : Msg -&amp;gt; Grid -&amp;gt; (Grid, Cmd Msg)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+update : Msg -&amp;gt; Model -&amp;gt; (Model, Cmd Msg)&lt;/span&gt;
+ update msg state =
+   case msg of
+&lt;span class=&quot;gd&quot;&gt;-    Initialize initial -&amp;gt; (initial, Cmd.none)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    Initialize initial -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ({ state | grid = initial }, Cmd.none)&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-    Tick _ -&amp;gt; (evolve state, Cmd.none)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    Tick _ -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ({ state | grid = evolve state }, Cmd.none)&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-subscriptions : Grid -&amp;gt; Sub Msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+subscriptions : Model -&amp;gt; Sub Msg&lt;/span&gt;
+ subscriptions _ = Time.every Time.second Tick
+ 
+&lt;span class=&quot;gd&quot;&gt;-row : List Bool -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-row row = div [ style [ (&amp;quot;clear&amp;quot;, &amp;quot;both&amp;quot;) ] ] (List.map cell row)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+row : Int -&amp;gt; List Bool -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+row size row =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  div [ style [ (&amp;quot;clear&amp;quot;, &amp;quot;both&amp;quot;) ] ] (List.map (cell size) row)&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-cell : Bool -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-cell on = div [ cellStyle on ] [ text &amp;quot; &amp;quot; ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+cell : Int -&amp;gt; Bool -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+cell size on = div [ cellStyle size on ] [ text &amp;quot; &amp;quot; ]&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-cellStyle : Bool -&amp;gt; Attribute msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-cellStyle on =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+cellStyle : Int -&amp;gt; Bool -&amp;gt; Attribute msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+cellStyle cellSize on =&lt;/span&gt;
+   style
+     [ (&amp;quot;background&amp;quot;, if on then &amp;quot;black&amp;quot; else &amp;quot;white&amp;quot;)
+     , (&amp;quot;width&amp;quot;, toString cellSize ++ &amp;quot;px&amp;quot;)
+&lt;span class=&quot;gu&quot;&gt;@@ -63,14 +79,14 @@ groupInto n lst =&lt;/span&gt;
+   else
+     (List.take n lst) :: (groupInto n (List.drop n lst))
+ 
+&lt;span class=&quot;gd&quot;&gt;-evolve : Grid -&amp;gt; Grid&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-evolve generation =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+evolve : Model -&amp;gt; Grid&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+evolve ({grid} as model) =&lt;/span&gt;
+   List.indexedMap (\y row -&amp;gt;
+     List.indexedMap (\x _ -&amp;gt;
+&lt;span class=&quot;gd&quot;&gt;-      descend generation x y) row) generation&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      descend model x y) row) grid&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-descend : Grid -&amp;gt; Int -&amp;gt; Int -&amp;gt; Bool&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-descend grid x y =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+descend : Model -&amp;gt; Int -&amp;gt; Int -&amp;gt; Bool&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+descend {grid, rows, columns} x y =&lt;/span&gt;
+   List.concatMap (\n -&amp;gt; List.map (\m -&amp;gt; (x + n, y + m))
+                    [-1, 0, 1]) [-1, 0, 1]
+     |&amp;gt; List.filter (\p -&amp;gt; (first p) &amp;gt; -1 &amp;amp;&amp;amp; (first p) &amp;lt; columns &amp;amp;&amp;amp;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Restarting the Simulation&lt;/h2&gt;
+
+&lt;p&gt;The first feature we will add is the ability to restart the simulation.  This
+is a fairly straightforward modification, and is the first illustration of the
+ease with which new features can be added.  This is preformed in a few simple
+steps:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Add a new &lt;code&gt;Restart&lt;/code&gt; type case to our &lt;code&gt;Msg&lt;/code&gt; union type.&lt;/li&gt;
+&lt;li&gt;Draw the button in our &lt;code&gt;view&lt;/code&gt; functions, configured to generate our &lt;code&gt;Restart&lt;/code&gt; message when clicked.&lt;/li&gt;
+&lt;li&gt;Handle the &lt;code&gt;Restart&lt;/code&gt; case in the &lt;code&gt;update&lt;/code&gt; function.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This latter point did require the factoring of a separate &lt;code&gt;seed&lt;/code&gt; function for
+generating the command to repopulate the &lt;code&gt;grid&lt;/code&gt; from the &lt;code&gt;init&lt;/code&gt; function, but
+that is more corollary than an integral aspect of adding this feature.  We also
+needed to import some additional modules (and expose some additional functions
+on those already imported).&lt;/p&gt;
+
+&lt;p&gt;(N.B. A cursory search regarding the terminology for particular concrete cases
+of a union type appears to be
+&lt;span&gt; &lt;a href=&quot;http://web.cs.ucla.edu/~palsberg/tba/papers/turbak-dimock-muller-wells-tic97.pdf&quot;&gt;virtual variant&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://web.cs.ucla.edu/~palsberg/tba/papers/turbak-dimock-muller-wells-tic97.pdf&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+though this is not part of the Elm vernacular.)&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gh&quot;&gt;diff --git 1/_examples/elm/game_of_life_gold_plated_step1.elm 2/_examples/elm/game_of_life_gold_plated_step2.elm&lt;/span&gt;
+&lt;span class=&quot;gh&quot;&gt;index 58db25f..f2874ec 100644&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;--- 1/_examples/elm/game_of_life_gold_plated_step1.elm&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ 2/_examples/elm/game_of_life_gold_plated_step2.elm&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -5,7 +5,8 @@ import Random&lt;/span&gt;
+ import Time exposing (Time)
+ import Tuple exposing (first, second)
+ 
+&lt;span class=&quot;gd&quot;&gt;-import Html exposing (Html, Attribute, div, text)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Html exposing (Html, Attribute, div, label, button, text)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Html.Events exposing (onClick)&lt;/span&gt;
+ import Html.Attributes exposing (style)
+ 
+ type alias Grid = List (List Bool)
+&lt;span class=&quot;gu&quot;&gt;@@ -15,7 +16,10 @@ type alias Model =&lt;/span&gt;
+   , columns : Int
+   , cellSize : Int
+   }
+&lt;span class=&quot;gd&quot;&gt;-type Msg = Initialize Grid | Tick Time&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+type Msg = Initialize Grid&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+         | Tick Time&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+         | Restart&lt;/span&gt;
+ 
+ model : Model
+ model =
+&lt;span class=&quot;gu&quot;&gt;@@ -34,15 +38,14 @@ main =&lt;/span&gt;
+     }
+ 
+ init : (Model, Cmd Msg)
+&lt;span class=&quot;gd&quot;&gt;-init =&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-  (model, Random.generate&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-     Initialize&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-     (Random.map&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-       (groupInto model.columns)&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-       (Random.list (model.rows * model.columns) Random.bool)))&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+init = (model, seed model.rows model.columns)&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-view : Model -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-view model = div [ ] (List.map (row model.cellSize) model.grid)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+view : Model -&amp;gt; Html Msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+view model =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  div [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    [ div [ ] [ button [ onClick Restart ] [ text &amp;quot;Restart Simulation&amp;quot; ] ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    , div [ ] (List.map (row model.cellSize) model.grid)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    ]&lt;/span&gt;
+ 
+ update : Msg -&amp;gt; Model -&amp;gt; (Model, Cmd Msg)
+ update msg state =
+&lt;span class=&quot;gu&quot;&gt;@@ -53,9 +56,19 @@ update msg state =&lt;/span&gt;
+     Tick _ -&amp;gt;
+       ({ state | grid = evolve state }, Cmd.none)
+ 
+&lt;span class=&quot;gi&quot;&gt;+    Restart -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      (state, seed state.rows state.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+ subscriptions : Model -&amp;gt; Sub Msg
+ subscriptions _ = Time.every Time.second Tick
+ 
+&lt;span class=&quot;gi&quot;&gt;+seed : Int -&amp;gt; Int -&amp;gt; Cmd Msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+seed rows columns =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  Random.generate Initialize&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     (Random.map&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+       (groupInto columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+       (Random.list (rows * columns) Random.bool))&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+ row : Int -&amp;gt; List Bool -&amp;gt; Html msg
+ row size row =
+   div [ style [ (&amp;quot;clear&amp;quot;, &amp;quot;both&amp;quot;) ] ] (List.map (cell size) row)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Controlling Grid Dimensions&lt;/h2&gt;
+
+&lt;p&gt;Now, we come to the point where the initial step of unifying the model will
+actually pay off.  Adding this feature, again, requires changes to the imports
+section of the program, but otherwise simply adds code &lt;em&gt;without changing any
+that has already been written&lt;/em&gt;.  This point demands emphasis:  we are able to
+add entirely new functionality without touching any of the pre-existing code,
+making our program much more robust to change than many other languages (think
+about how horrendous adding sliders for controlling the dimensions of the grid
+in JavaScript could look).&lt;/p&gt;
+
+&lt;p&gt;Our additions, much like with the restart button, are of a very particular sort
+(expect to see this pattern again):  update the &lt;code&gt;Msg&lt;/code&gt; union type, write HTML to
+send the new message, and handle the message in the &lt;code&gt;update&lt;/code&gt; function.&lt;/p&gt;
+
+&lt;p&gt;This particular feature requires an &lt;code&gt;onChange&lt;/code&gt; helper method, which is not
+supplied by the Elm HTML library.  This is a consequence of the indeterminacy
+in the type of values produced by the change event.  In this case, we want an
+integer, but defer handling of parsing the value ourselves until the update
+cycle—we could perform this type conversion during the initial event handler,
+but this would be an issue for two reasons.  The first of which being the
+inability to reuse the function easily; we would need a new one if we ever
+wanted to handle floats.  Additionally, if our type conversion fails, for any
+reason, we are unable to supply a reasonable default value (e.g. the current
+value in the state of our application).&lt;/p&gt;
+
+&lt;p&gt;Another point of interest in the implementation of this simple feature is the
+use of an additional &lt;code&gt;Dimension&lt;/code&gt; union type.  A significant feature of Elm, as
+fas as I am concerned, is this ability to combine union types in such a way
+that promotes composability.  While not inherently obvious from this example, it
+would be possible to extract a separate &lt;code&gt;Dimension&lt;/code&gt; module, exposing this type,
+and handling various responsibilities related to dimensions of the grid.  In
+the &lt;code&gt;update&lt;/code&gt; function, we could, instead of having a nested &lt;code&gt;case&lt;/code&gt; statement on
+the &lt;code&gt;Dimension&lt;/code&gt;, call out to a function in our library, thereby reducing the
+verbosity of the primary update cycle and encapsulating the detailed knowledge
+of dimensionality.&lt;/p&gt;
+
+&lt;p&gt;It is also worth noting that the &lt;code&gt;update&lt;/code&gt; function for the &lt;code&gt;UpdateSize&lt;/code&gt; branch
+makes use of the new &lt;code&gt;seed&lt;/code&gt; function introduced to handle restarting the
+simulation.  This is done to prevent a mismatch between the values of &lt;code&gt;rows&lt;/code&gt;
+and &lt;code&gt;columns&lt;/code&gt;, as compared to the size of our &lt;code&gt;grid&lt;/code&gt;, in the internal instance
+of the &lt;code&gt;Model&lt;/code&gt; structure that Elm passes around.  For clarity, imagine a
+situation where the number of rows is updated, but not the contents of the
+nested list structure:  this would have potential to yield nonsensical results,
+especially in the case where the rows are decreased below their initial value.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gh&quot;&gt;diff --git 1/_examples/elm/game_of_life_gold_plated_step2.elm 2/_examples/elm/game_of_life_gold_plated_step3.elm&lt;/span&gt;
+&lt;span class=&quot;gh&quot;&gt;index f2874ec..07ff1c3 100644&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;--- 1/_examples/elm/game_of_life_gold_plated_step2.elm&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ 2/_examples/elm/game_of_life_gold_plated_step3.elm&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -5,9 +5,11 @@ import Random&lt;/span&gt;
+ import Time exposing (Time)
+ import Tuple exposing (first, second)
+ 
+&lt;span class=&quot;gd&quot;&gt;-import Html exposing (Html, Attribute, div, label, button, text)&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-import Html.Events exposing (onClick)&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-import Html.Attributes exposing (style)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Json.Decode as Json&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Html exposing (Html, Attribute, div, label, button, input, text)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Html.Events exposing (onClick, on, targetValue)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Html.Attributes as Attr exposing (style)&lt;/span&gt;
+ 
+ type alias Grid = List (List Bool)
+ type alias Model =
+&lt;span class=&quot;gu&quot;&gt;@@ -20,6 +22,9 @@ type alias Model =&lt;/span&gt;
+ type Msg = Initialize Grid
+          | Tick Time
+          | Restart
+&lt;span class=&quot;gi&quot;&gt;+         | UpdateSize Dimension String&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+type Dimension = Rows | Columns&lt;/span&gt;
+ 
+ model : Model
+ model =
+&lt;span class=&quot;gu&quot;&gt;@@ -44,6 +49,29 @@ view : Model -&amp;gt; Html Msg&lt;/span&gt;
+ view model =
+   div [ ]
+     [ div [ ] [ button [ onClick Restart ] [ text &amp;quot;Restart Simulation&amp;quot; ] ]
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    , div [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      [ label [ ] [ text (&amp;quot;Grid Rows (&amp;quot; ++ toString model.rows ++ &amp;quot;)&amp;quot;) ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      , input&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        [ Attr.type_ &amp;quot;range&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.value (toString model.rows)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.min &amp;quot;10&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.max &amp;quot;200&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , onChange (UpdateSize Rows)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        ] [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    , div [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      [ label [ ] [ text (&amp;quot;Grid Columns (&amp;quot; ++ toString model.columns ++ &amp;quot;)&amp;quot;) ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      , input&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        [ Attr.type_ &amp;quot;range&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.value (toString model.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.min &amp;quot;10&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.max &amp;quot;200&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , onChange (UpdateSize Columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        ] [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+     , div [ ] (List.map (row model.cellSize) model.grid)
+     ]
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -59,6 +87,20 @@ update msg state =&lt;/span&gt;
+     Restart -&amp;gt;
+       (state, seed state.rows state.columns)
+ 
+&lt;span class=&quot;gi&quot;&gt;+    UpdateSize dim size -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      case dim of&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        Rows -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+          let&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+            rows = Result.withDefault state.rows (String.toInt size)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+          in&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+            ({ state | rows = rows }, seed rows state.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        Columns -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+          let&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+            columns = Result.withDefault state.columns (String.toInt size)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+          in&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+            ({ state | columns = columns }, seed state.rows columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+ subscriptions : Model -&amp;gt; Sub Msg
+ subscriptions _ = Time.every Time.second Tick
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -85,6 +127,10 @@ cellStyle cellSize on =&lt;/span&gt;
+     , (&amp;quot;float&amp;quot;, &amp;quot;left&amp;quot;)
+     ]
+ 
+&lt;span class=&quot;gi&quot;&gt;+onChange : (String -&amp;gt; msg) -&amp;gt; Attribute msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+onChange tagger =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  on &amp;quot;change&amp;quot; (Json.map tagger targetValue)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+ groupInto : Int -&amp;gt; List a -&amp;gt; List (List a)
+ groupInto n lst =
+   if List.length lst == 0 then&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Population Density&lt;/h2&gt;
+
+&lt;p&gt;The ability to change the density of cells in the active state when reseeding
+the grid fits perfectly within the purview of gold plating, so we should add
+that feature, as well.  The basic pattern, as seen in the previous two
+examples, remains the same and will not be elaborated upon.&lt;/p&gt;
+
+&lt;p&gt;Instead, we should consider how our earlier decision to keep the &lt;code&gt;onChange&lt;/code&gt;
+function generic has allowed its reuse in this implementation.  Our new feature,
+however, does have a much larger footprint than others, since the &lt;code&gt;density&lt;/code&gt;
+field must be propagated through any call to the &lt;code&gt;seed&lt;/code&gt; function.  An
+alternative function signature would simply take the model, rather than three
+fields therefrom, but that is a point which could be argued either way and
+would not decrease the footprint of this change.&lt;/p&gt;
+
+&lt;p&gt;We also rewrite the &lt;code&gt;seed&lt;/code&gt; function, in light of its additional complexity,
+using
+&lt;span&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#|%3E&quot;&gt;forward function application&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#|%3E&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+for improved legibility.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gh&quot;&gt;diff --git 1/_examples/elm/game_of_life_gold_plated_step3.elm 2/_examples/elm/game_of_life_gold_plated_step4.elm&lt;/span&gt;
+&lt;span class=&quot;gh&quot;&gt;index 07ff1c3..944ed9e 100644&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;--- 1/_examples/elm/game_of_life_gold_plated_step3.elm&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ 2/_examples/elm/game_of_life_gold_plated_step4.elm&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -17,12 +17,14 @@ type alias Model =&lt;/span&gt;
+   , rows : Int
+   , columns : Int
+   , cellSize : Int
+&lt;span class=&quot;gi&quot;&gt;+  , density : Float&lt;/span&gt;
+   }
+ 
+ type Msg = Initialize Grid
+          | Tick Time
+          | Restart
+          | UpdateSize Dimension String
+&lt;span class=&quot;gi&quot;&gt;+         | UpdateDensity String&lt;/span&gt;
+ 
+ type Dimension = Rows | Columns
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -32,6 +34,7 @@ model =&lt;/span&gt;
+   , cellSize = 5
+   , columns = 35
+   , rows = 35
+&lt;span class=&quot;gi&quot;&gt;+  , density = 0.5&lt;/span&gt;
+   }
+ 
+ main =
+&lt;span class=&quot;gu&quot;&gt;@@ -43,7 +46,7 @@ main =&lt;/span&gt;
+     }
+ 
+ init : (Model, Cmd Msg)
+&lt;span class=&quot;gd&quot;&gt;-init = (model, seed model.rows model.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+init = (model, seed model.rows model.columns model.density)&lt;/span&gt;
+ 
+ view : Model -&amp;gt; Html Msg
+ view model =
+&lt;span class=&quot;gu&quot;&gt;@@ -72,6 +75,18 @@ view model =&lt;/span&gt;
+         ] [ ]
+       ]
+ 
+&lt;span class=&quot;gi&quot;&gt;+    , div [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      [ label [ ] [ text (&amp;quot;Population Density (&amp;quot; ++ toString model.density ++ &amp;quot;)&amp;quot;) ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      , input&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        [ Attr.type_ &amp;quot;range&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.value (toString model.density)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.min &amp;quot;0&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.max &amp;quot;1&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.step &amp;quot;.01&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , onChange UpdateDensity&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        ] [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+     , div [ ] (List.map (row model.cellSize) model.grid)
+     ]
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -85,7 +100,7 @@ update msg state =&lt;/span&gt;
+       ({ state | grid = evolve state }, Cmd.none)
+ 
+     Restart -&amp;gt;
+&lt;span class=&quot;gd&quot;&gt;-      (state, seed state.rows state.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      (state, seed state.rows state.columns state.density)&lt;/span&gt;
+ 
+     UpdateSize dim size -&amp;gt;
+       case dim of
+&lt;span class=&quot;gu&quot;&gt;@@ -93,23 +108,29 @@ update msg state =&lt;/span&gt;
+           let
+             rows = Result.withDefault state.rows (String.toInt size)
+           in
+&lt;span class=&quot;gd&quot;&gt;-            ({ state | rows = rows }, seed rows state.columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+            ({ state | rows = rows }, seed rows state.columns state.density)&lt;/span&gt;
+ 
+         Columns -&amp;gt;
+           let
+             columns = Result.withDefault state.columns (String.toInt size)
+           in
+&lt;span class=&quot;gd&quot;&gt;-            ({ state | columns = columns }, seed state.rows columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+            ({ state | columns = columns }, seed state.rows columns state.density)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    UpdateDensity val -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      let&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        density = Result.withDefault state.density (String.toFloat val)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      in&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        ({ state | density = density }, seed state.rows state.columns density)&lt;/span&gt;
+ 
+ subscriptions : Model -&amp;gt; Sub Msg
+ subscriptions _ = Time.every Time.second Tick
+ 
+&lt;span class=&quot;gd&quot;&gt;-seed : Int -&amp;gt; Int -&amp;gt; Cmd Msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-seed rows columns =&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-  Random.generate Initialize&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-     (Random.map&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-       (groupInto columns)&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-       (Random.list (rows * columns) Random.bool))&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+seed : Int -&amp;gt; Int -&amp;gt; Float -&amp;gt; Cmd Msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+seed rows columns density =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  Random.map (\n -&amp;gt; n &amp;lt; density) (Random.float 0 1)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    |&amp;gt; Random.list (rows * columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    |&amp;gt; Random.map (groupInto columns)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    |&amp;gt; Random.generate Initialize&lt;/span&gt;
+ 
+ row : Int -&amp;gt; List Bool -&amp;gt; Html msg
+ row size row =&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Controlling Tick Rate&lt;/h2&gt;
+
+&lt;p&gt;Changing the speed at which the simulation runs is as simple as can be.
+Following the, by now, well established pattern, we can do so in just a few
+short lines.  If anything, the use of additional functions from the &lt;code&gt;Time&lt;/code&gt;
+module are interesting.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gh&quot;&gt;diff --git 1/_examples/elm/game_of_life_gold_plated_step4.elm 2/_examples/elm/game_of_life_gold_plated_step5.elm&lt;/span&gt;
+&lt;span class=&quot;gh&quot;&gt;index 944ed9e..3ff7ae6 100644&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;--- 1/_examples/elm/game_of_life_gold_plated_step4.elm&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ 2/_examples/elm/game_of_life_gold_plated_step5.elm&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -18,6 +18,7 @@ type alias Model =&lt;/span&gt;
+   , columns : Int
+   , cellSize : Int
+   , density : Float
+&lt;span class=&quot;gi&quot;&gt;+  , tickRate : Int&lt;/span&gt;
+   }
+ 
+ type Msg = Initialize Grid
+&lt;span class=&quot;gu&quot;&gt;@@ -25,6 +26,7 @@ type Msg = Initialize Grid&lt;/span&gt;
+          | Restart
+          | UpdateSize Dimension String
+          | UpdateDensity String
+&lt;span class=&quot;gi&quot;&gt;+         | UpdateTickRate String&lt;/span&gt;
+ 
+ type Dimension = Rows | Columns
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -35,6 +37,7 @@ model =&lt;/span&gt;
+   , columns = 35
+   , rows = 35
+   , density = 0.5
+&lt;span class=&quot;gi&quot;&gt;+  , tickRate = 1&lt;/span&gt;
+   }
+ 
+ main =
+&lt;span class=&quot;gu&quot;&gt;@@ -87,6 +90,18 @@ view model =&lt;/span&gt;
+         ] [ ]
+       ]
+ 
+&lt;span class=&quot;gi&quot;&gt;+    , div [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      [ label [ ] [ text (&amp;quot;Tick Rate (&amp;quot; ++ toString model.tickRate ++ &amp;quot; hz)&amp;quot;) ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      , input&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        [ Attr.type_ &amp;quot;range&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.value (toString model.tickRate)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.min &amp;quot;1&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.max &amp;quot;10&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , Attr.step &amp;quot;1&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        , onChange UpdateTickRate&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        ] [ ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+     , div [ ] (List.map (row model.cellSize) model.grid)
+     ]
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -122,8 +137,15 @@ update msg state =&lt;/span&gt;
+       in
+         ({ state | density = density }, seed state.rows state.columns density)
+ 
+&lt;span class=&quot;gi&quot;&gt;+    UpdateTickRate val -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      let&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        tickRate = Result.withDefault state.tickRate (String.toInt val)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      in&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+        ({ state | tickRate = tickRate }, Cmd.none)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+ subscriptions : Model -&amp;gt; Sub Msg
+&lt;span class=&quot;gd&quot;&gt;-subscriptions _ = Time.every Time.second Tick&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+subscriptions state =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  Time.every (Time.millisecond * (1000 / (toFloat state.tickRate))) Tick&lt;/span&gt;
+ 
+ seed : Int -&amp;gt; Int -&amp;gt; Float -&amp;gt; Cmd Msg
+ seed rows columns density =&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Mouse Reactivity&lt;/h2&gt;
+
+&lt;p&gt;Having reached a point where new functionality, of a kind, is as trivial to add
+as possible, we will now move on to adding a slightly different feature.  In
+this case, we will set any cell moused over to the on state.&lt;/p&gt;
+
+&lt;p&gt;This change affects a larger footprint, but is still fairly well contained.  We
+need to pass &lt;code&gt;Int&lt;/code&gt; values for row and column through the &lt;code&gt;row&lt;/code&gt; and &lt;code&gt;cell&lt;/code&gt;
+functions, such that the latter is able to add them to the &lt;code&gt;onMouseOver&lt;/code&gt;
+attribute for the divs of individual cells.&lt;/p&gt;
+
+&lt;p&gt;We also need to write a, rather kludgy &lt;code&gt;setAt&lt;/code&gt; helper function, for updating an
+item at an arbitrary point in our nested list.  We will discuss some
+implications revealed by this, seemingly tangential aspect, shortly&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;gh&quot;&gt;diff --git 1/_examples/elm/game_of_life_gold_plated_step5.elm 2/_examples/elm/game_of_life_gold_plated.elm&lt;/span&gt;
+&lt;span class=&quot;gh&quot;&gt;index 3ff7ae6..8689a89 100644&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;--- 1/_examples/elm/game_of_life_gold_plated_step5.elm&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ 2/_examples/elm/game_of_life_gold_plated.elm&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -8,7 +8,7 @@ import Tuple exposing (first, second)&lt;/span&gt;
+ import Json.Decode as Json
+ 
+ import Html exposing (Html, Attribute, div, label, button, input, text)
+&lt;span class=&quot;gd&quot;&gt;-import Html.Events exposing (onClick, on, targetValue)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+import Html.Events exposing (onClick, onMouseOut, on, targetValue)&lt;/span&gt;
+ import Html.Attributes as Attr exposing (style)
+ 
+ type alias Grid = List (List Bool)
+&lt;span class=&quot;gu&quot;&gt;@@ -27,6 +27,7 @@ type Msg = Initialize Grid&lt;/span&gt;
+          | UpdateSize Dimension String
+          | UpdateDensity String
+          | UpdateTickRate String
+&lt;span class=&quot;gi&quot;&gt;+         | ToggleCell Int Int&lt;/span&gt;
+ 
+ type Dimension = Rows | Columns
+ 
+&lt;span class=&quot;gu&quot;&gt;@@ -102,7 +103,7 @@ view model =&lt;/span&gt;
+         ] [ ]
+       ]
+ 
+&lt;span class=&quot;gd&quot;&gt;-    , div [ ] (List.map (row model.cellSize) model.grid)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    , div [ ] (List.indexedMap (row model.cellSize) model.grid)&lt;/span&gt;
+     ]
+ 
+ update : Msg -&amp;gt; Model -&amp;gt; (Model, Cmd Msg)
+&lt;span class=&quot;gu&quot;&gt;@@ -143,6 +144,9 @@ update msg state =&lt;/span&gt;
+       in
+         ({ state | tickRate = tickRate }, Cmd.none)
+ 
+&lt;span class=&quot;gi&quot;&gt;+    ToggleCell x y -&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      ({ state | grid = setAt x y True state.grid }, Cmd.none)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+ subscriptions : Model -&amp;gt; Sub Msg
+ subscriptions state =
+   Time.every (Time.millisecond * (1000 / (toFloat state.tickRate))) Tick
+&lt;span class=&quot;gu&quot;&gt;@@ -154,12 +158,19 @@ seed rows columns density =&lt;/span&gt;
+     |&amp;gt; Random.map (groupInto columns)
+     |&amp;gt; Random.generate Initialize
+ 
+&lt;span class=&quot;gd&quot;&gt;-row : Int -&amp;gt; List Bool -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-row size row =&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-  div [ style [ (&amp;quot;clear&amp;quot;, &amp;quot;both&amp;quot;) ] ] (List.map (cell size) row)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+row : Int -&amp;gt; Int -&amp;gt; List Bool -&amp;gt; Html Msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+row size column row =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  div&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    [ style [ (&amp;quot;clear&amp;quot;, &amp;quot;both&amp;quot;) ] ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    (List.indexedMap (cell size column) row)&lt;/span&gt;
+ 
+&lt;span class=&quot;gd&quot;&gt;-cell : Int -&amp;gt; Bool -&amp;gt; Html msg&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-cell size on = div [ cellStyle size on ] [ text &amp;quot; &amp;quot; ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+cell : Int -&amp;gt; Int -&amp;gt; Int -&amp;gt; Bool -&amp;gt; Html Msg&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+cell size x y on =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  div&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    [ cellStyle size on&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    , onMouseOut (ToggleCell x y)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    ]&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    [ text &amp;quot; &amp;quot; ]&lt;/span&gt;
+ 
+ cellStyle : Int -&amp;gt; Bool -&amp;gt; Attribute msg
+ cellStyle cellSize on =
+&lt;span class=&quot;gu&quot;&gt;@@ -203,3 +214,11 @@ descend {grid, rows, columns} x y =&lt;/span&gt;
+ valueAt : Int -&amp;gt; a -&amp;gt; List a -&amp;gt; a
+ valueAt i default lst =
+   Maybe.withDefault default (List.head (List.drop i lst))
+&lt;span class=&quot;gi&quot;&gt;+&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+setAt : Int -&amp;gt; Int -&amp;gt; a -&amp;gt; List (List a) -&amp;gt; List (List a)&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+setAt x y val lst =&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  let&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    inner = valueAt x [] lst&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    updated = (List.take y inner) ++ (val :: (List.drop (y + 1) inner))&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+  in&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    (List.take x lst) ++ (updated :: List.drop (x + 1) lst)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt;Discussion&lt;/h2&gt;
+
+&lt;p&gt;At long last, behold the full example before we discuss it in more detail:&lt;/p&gt;
+
+&lt;h4&gt;game_of_life_gold_plated.elm&lt;/h4&gt;
+
+&lt;h5&gt;Source&lt;/h5&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-elm&quot; data-lang=&quot;elm&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Random&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Time&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Tuple&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Json.Decode&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Json&lt;/span&gt;
+
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;label&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;button&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;input&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html.Events&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;onClick&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onMouseOut&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;targetValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Html.Attributes&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;exposing&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Float&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Tick&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Restart&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UpdateSize&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Dimension&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UpdateDensity&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UpdateTickRate&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ToggleCell&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Dimension&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Columns&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[[]]&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;35&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kr&quot;&gt;main &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;program&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;init&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;view&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;button&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onClick&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Restart&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Restart Simulation&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Grid Rows (&amp;quot;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;)&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;input&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;type_&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;range&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;min&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;10&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;max&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;200&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onChange&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;UpdateSize&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Grid Columns (&amp;quot;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;)&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;input&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;type_&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;range&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;min&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;10&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;max&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;200&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onChange&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;UpdateSize&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Population Density (&amp;quot;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;)&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;input&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;type_&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;range&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;min&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;0&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;max&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;1&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;step&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;.01&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onChange&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UpdateDensity&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Tick Rate (&amp;quot;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; hz)&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;input&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;type_&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;range&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;min&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;1&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;max&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;10&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attr&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;step&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;1&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onChange&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UpdateTickRate&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;update&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;of&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;Tick&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;evolve&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;Restart&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;UpdateSize&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;dim&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;kr&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;dim&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;of&lt;/span&gt;
+        &lt;span class=&quot;kt&quot;&gt;Rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;kr&quot;&gt;let&lt;/span&gt;
+            &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Result&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toInt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;kr&quot;&gt;in&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+        &lt;span class=&quot;kt&quot;&gt;Columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;kr&quot;&gt;let&lt;/span&gt;
+            &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Result&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toInt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;kr&quot;&gt;in&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;UpdateDensity&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;kr&quot;&gt;let&lt;/span&gt;
+        &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Result&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toFloat&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;val&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;kr&quot;&gt;in&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;UpdateTickRate&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;kr&quot;&gt;let&lt;/span&gt;
+        &lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Result&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toInt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;val&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;kr&quot;&gt;in&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;kt&quot;&gt;ToggleCell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;setAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;True&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;none&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Sub&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;subscriptions&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;every&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Time&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;millisecond&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;toFloat&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;tickRate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Tick&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Cmd&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;seed&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;density&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;list&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;generate&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Initialize&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;column&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;clear&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;both&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;column&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Html&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;div&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;onMouseOut&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;ToggleCell&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;cellStyle&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;style&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;background&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;black&amp;quot;&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;white&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;width&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;height&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;toString&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;px&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;float&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;left&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;onChange&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Attribute&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;msg&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;onChange&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tagger&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;change&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Json&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;tagger&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;targetValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;length&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;evolve&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Grid&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;evolve&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;({&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nv&quot;&gt;descend&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;descend&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Model&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Bool&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;descend&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;concatMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;map&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;m&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                   &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filter&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;columns&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+                          &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+                          &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filter&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;first&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;False&lt;/span&gt;
+                            &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;second&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;length&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;False&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;grid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;head&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;setAt&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;setAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;let&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;inner&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;updated&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;inner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;y&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;inner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+  &lt;span class=&quot;kr&quot;&gt;in&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;++&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;updated&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/game_of_life_gold_plated/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
+
+&lt;p&gt;This is, unfortunately, somewhat of a mess — not for any fault of Elm.  The
+main problem is having kept everything in a single file in an attempt to make
+the example self-contained.  Imagine separating out the &lt;code&gt;view&lt;/code&gt; function (in
+conjunction with subordinates) and the &lt;code&gt;update&lt;/code&gt; (with its helpers) into separate
+modules, leaving only the core logic in main file.  Elm, in fact, is designed in
+such a way to facilitate (and even encourage) this sort of structure.
+Additionally, we should have also created a function for generating the range
+inputs in the &lt;code&gt;view&lt;/code&gt; function, but that was also skipped in favor of making each
+diff atomic.&lt;/p&gt;
+
+&lt;p&gt;Now, we return to the earlier point about the &lt;code&gt;setAt&lt;/code&gt; helper function.  This
+little nuisance points to a structural issue with this program.  Specifically,
+the use of lists for this implementation is, most likely, suboptimal.  Since we
+often make use of non-sequential access (via &lt;code&gt;valueAt&lt;/code&gt;) and, in the final form,
+updates, we should have instead used Elm&amp;#39;s
+&lt;span&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Array&quot;&gt;Array module&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Array&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.
+This should be expected to increase performance, based on the way in which the
+two different data structures are
+&lt;span&gt; &lt;a href=&quot;https://stackoverflow.com/a/37707812&quot;&gt;implemented internally&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://stackoverflow.com/a/37707812&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.
+That said, having to be aware of the implementation details of the standard
+library of a language is never optimal, but, at a certain point, abstractions
+at face value can only go so far.  Preference for lists over arrays has been
+&lt;span&gt; &lt;a href=&quot;https://github.com/elm-lang/elm-plans/issues/13&quot;&gt;discussed&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://github.com/elm-lang/elm-plans/issues/13&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+before, but the proposal was dropped for lack of actual benchmarks pointing
+toward their universal superiority, and, as such, this potential optimization is
+naught but conjecture without further investigation.&lt;/p&gt;
+
+&lt;p&gt;One last potential optimization worth exploring is the use of the
+&lt;span&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Lazy&quot;&gt;&lt;code&gt;HTML.Lazy&lt;/code&gt;&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Lazy&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+module.  In some cursory experiments, excluded from this article, the inclusion
+of lazy declarations in the various &lt;code&gt;view&lt;/code&gt;, &lt;code&gt;row&lt;/code&gt;, and &lt;code&gt;cell&lt;/code&gt; functions did not
+noticeably improve performance under strenuous configurations.&lt;/p&gt;
+
+&lt;p&gt;Overall, this example has admirably performed its task of giving us context
+within which to modify an Elm program.  As evidenced by the increasingly
+trivial, practically repetitive, nature of the modifications, it is fair to
+presume changes will normally follow the same simple pattern of updating union
+types, dispatching messages via the user interface, and handling these new
+cases in the update cycle.  Some larger changes will necessitate changes to the
+flow of data through the application (as seen during model unification and the
+addition of mouse reactivity), but even these changes are mostly local in
+scope.  As a consequence of strong type checking, Elm also ensures, at compile
+time, that any such cascading change is handled by the developer.  From a
+maintainability perspective, this makes a very compelling case for the Elm
+programming language.&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Common Table Expressions in ActiveRecord: A Case Study of Quantiles</title>
@@ -747,9 +1698,7 @@ aspects of the language, without, hopefully, being overwhelming.&lt;/p&gt;
     &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;float&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;left&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
     &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/static_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/static_grid/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;p&gt;Breaking this down, let us being with the declaration of the &lt;code&gt;main&lt;/code&gt; function.
 This is the function that is primarily responsible for producing the output we
@@ -855,9 +1804,7 @@ work in Elm, we must make use of commands.  The resultant code follows:&lt;/p&gt
   &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt;
     &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;groupInto&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/random_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/random_grid/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;p&gt;To expand upon the need for the full-fledged &lt;code&gt;Html.program&lt;/code&gt; in this example, it
 is necessary to understand the interplay between the &lt;code&gt;init&lt;/code&gt; and &lt;code&gt;update&lt;/code&gt;
@@ -986,9 +1933,7 @@ code itself, so I will let it speak for itself.&lt;/p&gt;
 &lt;span class=&quot;nv&quot;&gt;valueAt&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
   &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;withDefault&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;head&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;lst&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/game_of_life/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/game_of_life/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;h2&gt;Resolution&lt;/h2&gt;
 
@@ -1577,9 +2522,7 @@ which we can build larger applications.&lt;/p&gt;
 &lt;span class=&quot;nv&quot;&gt;incrementButton&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;=&lt;/span&gt;
   &lt;span class=&quot;kt&quot;&gt;Input&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;button&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Signal&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;send&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;actions&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Increment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;Increment&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/0.14/barebones_architecture/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/0.14/barebones_architecture/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;h2&gt;The Moving Parts&lt;/h2&gt;
 
@@ -1760,9 +2703,7 @@ are all on to begin with.&lt;/p&gt;
   &lt;span class=&quot;nv&quot;&gt;spacer&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cellSize&lt;/span&gt;
     &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;color&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;then&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rgb&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;rgb&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/0.14/static_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/0.14/static_grid/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;p&gt;The crux of this program is that we want to turn a nested list of boolean
 values (&lt;code&gt;List (List Bool)&lt;/code&gt;) into an &lt;code&gt;Element&lt;/code&gt;, one of two possible types for
@@ -1868,9 +2809,7 @@ very few steps. These are as follows:&lt;/p&gt;
       &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
           &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/0.14/random_grid/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/0.14/random_grid/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;p&gt;We do write two other helper functions, &lt;code&gt;generateRow&lt;/code&gt; and &lt;code&gt;groupInto&lt;/code&gt;, but
 neither change is essential for the example. In fact, the rendering we wrote
@@ -1989,9 +2928,7 @@ process, consisting primarily of the following steps:&lt;/p&gt;
       &lt;span class=&quot;nf&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;indexedMap&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;-&amp;gt;&lt;/span&gt;
           &lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;take&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;drop&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;initial&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h5&gt;Result&lt;/h5&gt;
-
-&lt;iframe src=&quot;/examples/elm/0.14/game_of_life/&quot; frameBorder=&quot;0&quot; onload=&quot;this.height = this.contentWindow.document.body.scrollHeight + 'px';this.width = this.contentWindow.document.body.scrollWidth + 'px'&quot;&gt;&lt;/iframe&gt;
+&lt;h5&gt;&lt;a href=&quot;/examples/elm/0.14/game_of_life/&quot; target=&quot;_new&quot;&gt;Pop Out Result&lt;/a&gt;&lt;/h5&gt;
 
 &lt;p&gt;The only real nuance here is that we must &lt;code&gt;sampleOn seed (every second)&lt;/code&gt;, which
 updates the signal with the constant initial value. We use an empty default to

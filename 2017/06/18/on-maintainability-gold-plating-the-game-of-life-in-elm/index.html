@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    On Maintainability: Gold Plating the Game of Life in Elm &middot; effluence
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/poole.css">
+  <link rel="stylesheet" href="/css/syntax.css">
+  <link rel="stylesheet" href="/css/hyde.css">
+  <link rel="stylesheet" href="/css/custom.css">
+
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body class="layout-reverse">
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>effluence</h1>
+      <p class="lead"></p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+        <a href="/">home</a>
+      </li>
+
+      
+
+      
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/projects/">projects</a>
+            </li>
+          
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/about/">about</a>
+            </li>
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+
+      <li class="sidebar-nav-item">
+        <a href="/atom.xml" target="_blank">rss</a>
+      </li>
+    </ul>
+
+    <p>&copy; 2017. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">On Maintainability: Gold Plating the Game of Life in Elm</h1>
+  <h2>Launch Pad</h2>
+
+<p>In a previous
+<a href="/2017/05/22/revisiting-the-game-of-life-in-elm/">article</a>,
+we explored how to write Conway&#39;s Game of Life in the Elm programming language.
+This example was predicated on one from several years before and compared the
+differences in Elm over the intervening period of time.  Today, we will add some
+entirely unnecessary features to the simple version of the program.</p>
+
+<p>This exercise in
+<span> <a href="https://en.wikipedia.org/wiki/Gold_plating_(software_engineering)">gold plating</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Gold_plating_(software_engineering)" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+will serve as a means of probing what it feels like to add new features to an
+already established Elm program; these microcosmic changes will, hopefully, be
+reflective of maintaining larger applications in Elm.  Throughout the course of
+this article, we will consider successive diffs, starting from the original
+implementation, while moving toward the final version.</p>
+
+<p>If you would like to see the full source code during any step of the process,
+please refer to this
+<span> <a href="https://gist.github.com/sonnym/ddb7ef3d9d458d2d2e40bf4ef91b2da8">gist</a> <span style="vertical-align: super"> <a href="https://gist.github.com/sonnym/ddb7ef3d9d458d2d2e40bf4ef91b2da8" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.</p>
+
+<h2>Unifying the Model</h2>
+
+<p>The first step we must undertake is collapsing the various top level variables,
+namely <code>cellSize</code>, <code>columns</code>, and <code>rows</code>, into a single <code>Model</code>.  We also
+incorporate the (previously hardcoded) empty <code>Grid</code> into our initial <code>model</code>
+value.  This entire step would be unnecessary, were it not (conveniently)
+omitted from the original implementation.  Generally speaking, it is safer to
+include extra items in the <code>Model</code> structure, in the off chance they become
+variable in the future, rather than having global variables.  This would be
+substantially more important when working with modular code but would also vie
+against common API considerations (i.e. in deciding what to keep private within
+a module, as opposed to exposing through a public data structure).</p>
+
+<p>Unifying the model is a somewhat messy operation, since it involves changing
+several type annotations, but this is also very illustrative.  We can see how
+higher level functions deal with the <code>Model</code> type, which flows down to lower
+level functions, where it is decomposed piecemeal for functions that only need,
+for instance, <code>grid</code> or <code>cellSize</code> fields.  This makes the flow of data through
+our functions explicitly visible, from top to bottom.</p>
+
+<figure class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span><span class="gh">diff --git 1/_examples/elm/game_of_life.elm 2/_examples/elm/game_of_life_gold_plated_step1.elm</span>
+<span class="gh">index 8e9e4c6..58db25f 100644</span>
+<span class="gd">--- 1/_examples/elm/game_of_life.elm</span>
+<span class="gi">+++ 2/_examples/elm/game_of_life_gold_plated_step1.elm</span>
+<span class="gu">@@ -9,10 +9,21 @@ import Html exposing (Html, Attribute, div, text)</span>
+ import Html.Attributes exposing (style)
+ 
+ type alias Grid = List (List Bool)
+<span class="gi">+type alias Model =</span>
+<span class="gi">+  { grid : Grid</span>
+<span class="gi">+  , rows : Int</span>
+<span class="gi">+  , columns : Int</span>
+<span class="gi">+  , cellSize : Int</span>
+<span class="gi">+  }</span>
+ type Msg = Initialize Grid | Tick Time
+ 
+<span class="gd">-cellSize = 5</span>
+<span class="gd">-(columns, rows) = (35, 35)</span>
+<span class="gi">+model : Model</span>
+<span class="gi">+model =</span>
+<span class="gi">+  { grid = [[]]</span>
+<span class="gi">+  , cellSize = 5</span>
+<span class="gi">+  , columns = 35</span>
+<span class="gi">+  , rows = 35</span>
+<span class="gi">+  }</span>
+ 
+ main =
+   Html.program
+<span class="gu">@@ -22,33 +33,38 @@ main =</span>
+     , subscriptions = subscriptions
+     }
+ 
+<span class="gd">-init : (Grid, Cmd Msg)</span>
+<span class="gi">+init : (Model, Cmd Msg)</span>
+ init =
+<span class="gd">-  ([[]], Random.generate</span>
+<span class="gd">-    Initialize</span>
+<span class="gd">-    (Random.map (groupInto columns) (Random.list (rows * columns) Random.bool)))</span>
+<span class="gi">+  (model, Random.generate</span>
+<span class="gi">+     Initialize</span>
+<span class="gi">+     (Random.map</span>
+<span class="gi">+       (groupInto model.columns)</span>
+<span class="gi">+       (Random.list (model.rows * model.columns) Random.bool)))</span>
+ 
+<span class="gd">-view : Grid -&gt; Html msg</span>
+<span class="gd">-view grid = div [ ] (List.map row grid)</span>
+<span class="gi">+view : Model -&gt; Html msg</span>
+<span class="gi">+view model = div [ ] (List.map (row model.cellSize) model.grid)</span>
+ 
+<span class="gd">-update : Msg -&gt; Grid -&gt; (Grid, Cmd Msg)</span>
+<span class="gi">+update : Msg -&gt; Model -&gt; (Model, Cmd Msg)</span>
+ update msg state =
+   case msg of
+<span class="gd">-    Initialize initial -&gt; (initial, Cmd.none)</span>
+<span class="gi">+    Initialize initial -&gt;</span>
+<span class="gi">+      ({ state | grid = initial }, Cmd.none)</span>
+ 
+<span class="gd">-    Tick _ -&gt; (evolve state, Cmd.none)</span>
+<span class="gi">+    Tick _ -&gt;</span>
+<span class="gi">+      ({ state | grid = evolve state }, Cmd.none)</span>
+ 
+<span class="gd">-subscriptions : Grid -&gt; Sub Msg</span>
+<span class="gi">+subscriptions : Model -&gt; Sub Msg</span>
+ subscriptions _ = Time.every Time.second Tick
+ 
+<span class="gd">-row : List Bool -&gt; Html msg</span>
+<span class="gd">-row row = div [ style [ (&quot;clear&quot;, &quot;both&quot;) ] ] (List.map cell row)</span>
+<span class="gi">+row : Int -&gt; List Bool -&gt; Html msg</span>
+<span class="gi">+row size row =</span>
+<span class="gi">+  div [ style [ (&quot;clear&quot;, &quot;both&quot;) ] ] (List.map (cell size) row)</span>
+ 
+<span class="gd">-cell : Bool -&gt; Html msg</span>
+<span class="gd">-cell on = div [ cellStyle on ] [ text &quot; &quot; ]</span>
+<span class="gi">+cell : Int -&gt; Bool -&gt; Html msg</span>
+<span class="gi">+cell size on = div [ cellStyle size on ] [ text &quot; &quot; ]</span>
+ 
+<span class="gd">-cellStyle : Bool -&gt; Attribute msg</span>
+<span class="gd">-cellStyle on =</span>
+<span class="gi">+cellStyle : Int -&gt; Bool -&gt; Attribute msg</span>
+<span class="gi">+cellStyle cellSize on =</span>
+   style
+     [ (&quot;background&quot;, if on then &quot;black&quot; else &quot;white&quot;)
+     , (&quot;width&quot;, toString cellSize ++ &quot;px&quot;)
+<span class="gu">@@ -63,14 +79,14 @@ groupInto n lst =</span>
+   else
+     (List.take n lst) :: (groupInto n (List.drop n lst))
+ 
+<span class="gd">-evolve : Grid -&gt; Grid</span>
+<span class="gd">-evolve generation =</span>
+<span class="gi">+evolve : Model -&gt; Grid</span>
+<span class="gi">+evolve ({grid} as model) =</span>
+   List.indexedMap (\y row -&gt;
+     List.indexedMap (\x _ -&gt;
+<span class="gd">-      descend generation x y) row) generation</span>
+<span class="gi">+      descend model x y) row) grid</span>
+ 
+<span class="gd">-descend : Grid -&gt; Int -&gt; Int -&gt; Bool</span>
+<span class="gd">-descend grid x y =</span>
+<span class="gi">+descend : Model -&gt; Int -&gt; Int -&gt; Bool</span>
+<span class="gi">+descend {grid, rows, columns} x y =</span>
+   List.concatMap (\n -&gt; List.map (\m -&gt; (x + n, y + m))
+                    [-1, 0, 1]) [-1, 0, 1]
+     |&gt; List.filter (\p -&gt; (first p) &gt; -1 &amp;&amp; (first p) &lt; columns &amp;&amp;</code></pre></figure>
+
+<h2>Restarting the Simulation</h2>
+
+<p>The first feature we will add is the ability to restart the simulation.  This
+is a fairly straightforward modification, and is the first illustration of the
+ease with which new features can be added.  This is preformed in a few simple
+steps:</p>
+
+<ol>
+<li>Add a new <code>Restart</code> type case to our <code>Msg</code> union type.</li>
+<li>Draw the button in our <code>view</code> functions, configured to generate our <code>Restart</code> message when clicked.</li>
+<li>Handle the <code>Restart</code> case in the <code>update</code> function.</li>
+</ol>
+
+<p>This latter point did require the factoring of a separate <code>seed</code> function for
+generating the command to repopulate the <code>grid</code> from the <code>init</code> function, but
+that is more corollary than an integral aspect of adding this feature.  We also
+needed to import some additional modules (and expose some additional functions
+on those already imported).</p>
+
+<p>(N.B. A cursory search regarding the terminology for particular concrete cases
+of a union type appears to be
+<span> <a href="http://web.cs.ucla.edu/~palsberg/tba/papers/turbak-dimock-muller-wells-tic97.pdf">virtual variant</a> <span style="vertical-align: super"> <a href="http://web.cs.ucla.edu/~palsberg/tba/papers/turbak-dimock-muller-wells-tic97.pdf" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
+though this is not part of the Elm vernacular.)</p>
+
+<figure class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span><span class="gh">diff --git 1/_examples/elm/game_of_life_gold_plated_step1.elm 2/_examples/elm/game_of_life_gold_plated_step2.elm</span>
+<span class="gh">index 58db25f..f2874ec 100644</span>
+<span class="gd">--- 1/_examples/elm/game_of_life_gold_plated_step1.elm</span>
+<span class="gi">+++ 2/_examples/elm/game_of_life_gold_plated_step2.elm</span>
+<span class="gu">@@ -5,7 +5,8 @@ import Random</span>
+ import Time exposing (Time)
+ import Tuple exposing (first, second)
+ 
+<span class="gd">-import Html exposing (Html, Attribute, div, text)</span>
+<span class="gi">+import Html exposing (Html, Attribute, div, label, button, text)</span>
+<span class="gi">+import Html.Events exposing (onClick)</span>
+ import Html.Attributes exposing (style)
+ 
+ type alias Grid = List (List Bool)
+<span class="gu">@@ -15,7 +16,10 @@ type alias Model =</span>
+   , columns : Int
+   , cellSize : Int
+   }
+<span class="gd">-type Msg = Initialize Grid | Tick Time</span>
+<span class="gi">+</span>
+<span class="gi">+type Msg = Initialize Grid</span>
+<span class="gi">+         | Tick Time</span>
+<span class="gi">+         | Restart</span>
+ 
+ model : Model
+ model =
+<span class="gu">@@ -34,15 +38,14 @@ main =</span>
+     }
+ 
+ init : (Model, Cmd Msg)
+<span class="gd">-init =</span>
+<span class="gd">-  (model, Random.generate</span>
+<span class="gd">-     Initialize</span>
+<span class="gd">-     (Random.map</span>
+<span class="gd">-       (groupInto model.columns)</span>
+<span class="gd">-       (Random.list (model.rows * model.columns) Random.bool)))</span>
+<span class="gi">+init = (model, seed model.rows model.columns)</span>
+ 
+<span class="gd">-view : Model -&gt; Html msg</span>
+<span class="gd">-view model = div [ ] (List.map (row model.cellSize) model.grid)</span>
+<span class="gi">+view : Model -&gt; Html Msg</span>
+<span class="gi">+view model =</span>
+<span class="gi">+  div [ ]</span>
+<span class="gi">+    [ div [ ] [ button [ onClick Restart ] [ text &quot;Restart Simulation&quot; ] ]</span>
+<span class="gi">+    , div [ ] (List.map (row model.cellSize) model.grid)</span>
+<span class="gi">+    ]</span>
+ 
+ update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+ update msg state =
+<span class="gu">@@ -53,9 +56,19 @@ update msg state =</span>
+     Tick _ -&gt;
+       ({ state | grid = evolve state }, Cmd.none)
+ 
+<span class="gi">+    Restart -&gt;</span>
+<span class="gi">+      (state, seed state.rows state.columns)</span>
+<span class="gi">+</span>
+ subscriptions : Model -&gt; Sub Msg
+ subscriptions _ = Time.every Time.second Tick
+ 
+<span class="gi">+seed : Int -&gt; Int -&gt; Cmd Msg</span>
+<span class="gi">+seed rows columns =</span>
+<span class="gi">+  Random.generate Initialize</span>
+<span class="gi">+     (Random.map</span>
+<span class="gi">+       (groupInto columns)</span>
+<span class="gi">+       (Random.list (rows * columns) Random.bool))</span>
+<span class="gi">+</span>
+ row : Int -&gt; List Bool -&gt; Html msg
+ row size row =
+   div [ style [ (&quot;clear&quot;, &quot;both&quot;) ] ] (List.map (cell size) row)</code></pre></figure>
+
+<h2>Controlling Grid Dimensions</h2>
+
+<p>Now, we come to the point where the initial step of unifying the model will
+actually pay off.  Adding this feature, again, requires changes to the imports
+section of the program, but otherwise simply adds code <em>without changing any
+that has already been written</em>.  This point demands emphasis:  we are able to
+add entirely new functionality without touching any of the pre-existing code,
+making our program much more robust to change than many other languages (think
+about how horrendous adding sliders for controlling the dimensions of the grid
+in JavaScript could look).</p>
+
+<p>Our additions, much like with the restart button, are of a very particular sort
+(expect to see this pattern again):  update the <code>Msg</code> union type, write HTML to
+send the new message, and handle the message in the <code>update</code> function.</p>
+
+<p>This particular feature requires an <code>onChange</code> helper method, which is not
+supplied by the Elm HTML library.  This is a consequence of the indeterminacy
+in the type of values produced by the change event.  In this case, we want an
+integer, but defer handling of parsing the value ourselves until the update
+cycle—we could perform this type conversion during the initial event handler,
+but this would be an issue for two reasons.  The first of which being the
+inability to reuse the function easily; we would need a new one if we ever
+wanted to handle floats.  Additionally, if our type conversion fails, for any
+reason, we are unable to supply a reasonable default value (e.g. the current
+value in the state of our application).</p>
+
+<p>Another point of interest in the implementation of this simple feature is the
+use of an additional <code>Dimension</code> union type.  A significant feature of Elm, as
+fas as I am concerned, is this ability to combine union types in such a way
+that promotes composability.  While not inherently obvious from this example, it
+would be possible to extract a separate <code>Dimension</code> module, exposing this type,
+and handling various responsibilities related to dimensions of the grid.  In
+the <code>update</code> function, we could, instead of having a nested <code>case</code> statement on
+the <code>Dimension</code>, call out to a function in our library, thereby reducing the
+verbosity of the primary update cycle and encapsulating the detailed knowledge
+of dimensionality.</p>
+
+<p>It is also worth noting that the <code>update</code> function for the <code>UpdateSize</code> branch
+makes use of the new <code>seed</code> function introduced to handle restarting the
+simulation.  This is done to prevent a mismatch between the values of <code>rows</code>
+and <code>columns</code>, as compared to the size of our <code>grid</code>, in the internal instance
+of the <code>Model</code> structure that Elm passes around.  For clarity, imagine a
+situation where the number of rows is updated, but not the contents of the
+nested list structure:  this would have potential to yield nonsensical results,
+especially in the case where the rows are decreased below their initial value.</p>
+
+<figure class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span><span class="gh">diff --git 1/_examples/elm/game_of_life_gold_plated_step2.elm 2/_examples/elm/game_of_life_gold_plated_step3.elm</span>
+<span class="gh">index f2874ec..07ff1c3 100644</span>
+<span class="gd">--- 1/_examples/elm/game_of_life_gold_plated_step2.elm</span>
+<span class="gi">+++ 2/_examples/elm/game_of_life_gold_plated_step3.elm</span>
+<span class="gu">@@ -5,9 +5,11 @@ import Random</span>
+ import Time exposing (Time)
+ import Tuple exposing (first, second)
+ 
+<span class="gd">-import Html exposing (Html, Attribute, div, label, button, text)</span>
+<span class="gd">-import Html.Events exposing (onClick)</span>
+<span class="gd">-import Html.Attributes exposing (style)</span>
+<span class="gi">+import Json.Decode as Json</span>
+<span class="gi">+</span>
+<span class="gi">+import Html exposing (Html, Attribute, div, label, button, input, text)</span>
+<span class="gi">+import Html.Events exposing (onClick, on, targetValue)</span>
+<span class="gi">+import Html.Attributes as Attr exposing (style)</span>
+ 
+ type alias Grid = List (List Bool)
+ type alias Model =
+<span class="gu">@@ -20,6 +22,9 @@ type alias Model =</span>
+ type Msg = Initialize Grid
+          | Tick Time
+          | Restart
+<span class="gi">+         | UpdateSize Dimension String</span>
+<span class="gi">+</span>
+<span class="gi">+type Dimension = Rows | Columns</span>
+ 
+ model : Model
+ model =
+<span class="gu">@@ -44,6 +49,29 @@ view : Model -&gt; Html Msg</span>
+ view model =
+   div [ ]
+     [ div [ ] [ button [ onClick Restart ] [ text &quot;Restart Simulation&quot; ] ]
+<span class="gi">+</span>
+<span class="gi">+    , div [ ]</span>
+<span class="gi">+      [ label [ ] [ text (&quot;Grid Rows (&quot; ++ toString model.rows ++ &quot;)&quot;) ]</span>
+<span class="gi">+      , input</span>
+<span class="gi">+        [ Attr.type_ &quot;range&quot;</span>
+<span class="gi">+        , Attr.value (toString model.rows)</span>
+<span class="gi">+        , Attr.min &quot;10&quot;</span>
+<span class="gi">+        , Attr.max &quot;200&quot;</span>
+<span class="gi">+        , onChange (UpdateSize Rows)</span>
+<span class="gi">+        ] [ ]</span>
+<span class="gi">+      ]</span>
+<span class="gi">+</span>
+<span class="gi">+    , div [ ]</span>
+<span class="gi">+      [ label [ ] [ text (&quot;Grid Columns (&quot; ++ toString model.columns ++ &quot;)&quot;) ]</span>
+<span class="gi">+      , input</span>
+<span class="gi">+        [ Attr.type_ &quot;range&quot;</span>
+<span class="gi">+        , Attr.value (toString model.columns)</span>
+<span class="gi">+        , Attr.min &quot;10&quot;</span>
+<span class="gi">+        , Attr.max &quot;200&quot;</span>
+<span class="gi">+        , onChange (UpdateSize Columns)</span>
+<span class="gi">+        ] [ ]</span>
+<span class="gi">+      ]</span>
+<span class="gi">+</span>
+     , div [ ] (List.map (row model.cellSize) model.grid)
+     ]
+ 
+<span class="gu">@@ -59,6 +87,20 @@ update msg state =</span>
+     Restart -&gt;
+       (state, seed state.rows state.columns)
+ 
+<span class="gi">+    UpdateSize dim size -&gt;</span>
+<span class="gi">+      case dim of</span>
+<span class="gi">+        Rows -&gt;</span>
+<span class="gi">+          let</span>
+<span class="gi">+            rows = Result.withDefault state.rows (String.toInt size)</span>
+<span class="gi">+          in</span>
+<span class="gi">+            ({ state | rows = rows }, seed rows state.columns)</span>
+<span class="gi">+</span>
+<span class="gi">+        Columns -&gt;</span>
+<span class="gi">+          let</span>
+<span class="gi">+            columns = Result.withDefault state.columns (String.toInt size)</span>
+<span class="gi">+          in</span>
+<span class="gi">+            ({ state | columns = columns }, seed state.rows columns)</span>
+<span class="gi">+</span>
+ subscriptions : Model -&gt; Sub Msg
+ subscriptions _ = Time.every Time.second Tick
+ 
+<span class="gu">@@ -85,6 +127,10 @@ cellStyle cellSize on =</span>
+     , (&quot;float&quot;, &quot;left&quot;)
+     ]
+ 
+<span class="gi">+onChange : (String -&gt; msg) -&gt; Attribute msg</span>
+<span class="gi">+onChange tagger =</span>
+<span class="gi">+  on &quot;change&quot; (Json.map tagger targetValue)</span>
+<span class="gi">+</span>
+ groupInto : Int -&gt; List a -&gt; List (List a)
+ groupInto n lst =
+   if List.length lst == 0 then</code></pre></figure>
+
+<h2>Population Density</h2>
+
+<p>The ability to change the density of cells in the active state when reseeding
+the grid fits perfectly within the purview of gold plating, so we should add
+that feature, as well.  The basic pattern, as seen in the previous two
+examples, remains the same and will not be elaborated upon.</p>
+
+<p>Instead, we should consider how our earlier decision to keep the <code>onChange</code>
+function generic has allowed its reuse in this implementation.  Our new feature,
+however, does have a much larger footprint than others, since the <code>density</code>
+field must be propagated through any call to the <code>seed</code> function.  An
+alternative function signature would simply take the model, rather than three
+fields therefrom, but that is a point which could be argued either way and
+would not decrease the footprint of this change.</p>
+
+<p>We also rewrite the <code>seed</code> function, in light of its additional complexity,
+using
+<span> <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#|%3E">forward function application</a> <span style="vertical-align: super"> <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Basics#|%3E" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
+for improved legibility.</p>
+
+<figure class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span><span class="gh">diff --git 1/_examples/elm/game_of_life_gold_plated_step3.elm 2/_examples/elm/game_of_life_gold_plated_step4.elm</span>
+<span class="gh">index 07ff1c3..944ed9e 100644</span>
+<span class="gd">--- 1/_examples/elm/game_of_life_gold_plated_step3.elm</span>
+<span class="gi">+++ 2/_examples/elm/game_of_life_gold_plated_step4.elm</span>
+<span class="gu">@@ -17,12 +17,14 @@ type alias Model =</span>
+   , rows : Int
+   , columns : Int
+   , cellSize : Int
+<span class="gi">+  , density : Float</span>
+   }
+ 
+ type Msg = Initialize Grid
+          | Tick Time
+          | Restart
+          | UpdateSize Dimension String
+<span class="gi">+         | UpdateDensity String</span>
+ 
+ type Dimension = Rows | Columns
+ 
+<span class="gu">@@ -32,6 +34,7 @@ model =</span>
+   , cellSize = 5
+   , columns = 35
+   , rows = 35
+<span class="gi">+  , density = 0.5</span>
+   }
+ 
+ main =
+<span class="gu">@@ -43,7 +46,7 @@ main =</span>
+     }
+ 
+ init : (Model, Cmd Msg)
+<span class="gd">-init = (model, seed model.rows model.columns)</span>
+<span class="gi">+init = (model, seed model.rows model.columns model.density)</span>
+ 
+ view : Model -&gt; Html Msg
+ view model =
+<span class="gu">@@ -72,6 +75,18 @@ view model =</span>
+         ] [ ]
+       ]
+ 
+<span class="gi">+    , div [ ]</span>
+<span class="gi">+      [ label [ ] [ text (&quot;Population Density (&quot; ++ toString model.density ++ &quot;)&quot;) ]</span>
+<span class="gi">+      , input</span>
+<span class="gi">+        [ Attr.type_ &quot;range&quot;</span>
+<span class="gi">+        , Attr.value (toString model.density)</span>
+<span class="gi">+        , Attr.min &quot;0&quot;</span>
+<span class="gi">+        , Attr.max &quot;1&quot;</span>
+<span class="gi">+        , Attr.step &quot;.01&quot;</span>
+<span class="gi">+        , onChange UpdateDensity</span>
+<span class="gi">+        ] [ ]</span>
+<span class="gi">+      ]</span>
+<span class="gi">+</span>
+     , div [ ] (List.map (row model.cellSize) model.grid)
+     ]
+ 
+<span class="gu">@@ -85,7 +100,7 @@ update msg state =</span>
+       ({ state | grid = evolve state }, Cmd.none)
+ 
+     Restart -&gt;
+<span class="gd">-      (state, seed state.rows state.columns)</span>
+<span class="gi">+      (state, seed state.rows state.columns state.density)</span>
+ 
+     UpdateSize dim size -&gt;
+       case dim of
+<span class="gu">@@ -93,23 +108,29 @@ update msg state =</span>
+           let
+             rows = Result.withDefault state.rows (String.toInt size)
+           in
+<span class="gd">-            ({ state | rows = rows }, seed rows state.columns)</span>
+<span class="gi">+            ({ state | rows = rows }, seed rows state.columns state.density)</span>
+ 
+         Columns -&gt;
+           let
+             columns = Result.withDefault state.columns (String.toInt size)
+           in
+<span class="gd">-            ({ state | columns = columns }, seed state.rows columns)</span>
+<span class="gi">+            ({ state | columns = columns }, seed state.rows columns state.density)</span>
+<span class="gi">+</span>
+<span class="gi">+    UpdateDensity val -&gt;</span>
+<span class="gi">+      let</span>
+<span class="gi">+        density = Result.withDefault state.density (String.toFloat val)</span>
+<span class="gi">+      in</span>
+<span class="gi">+        ({ state | density = density }, seed state.rows state.columns density)</span>
+ 
+ subscriptions : Model -&gt; Sub Msg
+ subscriptions _ = Time.every Time.second Tick
+ 
+<span class="gd">-seed : Int -&gt; Int -&gt; Cmd Msg</span>
+<span class="gd">-seed rows columns =</span>
+<span class="gd">-  Random.generate Initialize</span>
+<span class="gd">-     (Random.map</span>
+<span class="gd">-       (groupInto columns)</span>
+<span class="gd">-       (Random.list (rows * columns) Random.bool))</span>
+<span class="gi">+seed : Int -&gt; Int -&gt; Float -&gt; Cmd Msg</span>
+<span class="gi">+seed rows columns density =</span>
+<span class="gi">+  Random.map (\n -&gt; n &lt; density) (Random.float 0 1)</span>
+<span class="gi">+    |&gt; Random.list (rows * columns)</span>
+<span class="gi">+    |&gt; Random.map (groupInto columns)</span>
+<span class="gi">+    |&gt; Random.generate Initialize</span>
+ 
+ row : Int -&gt; List Bool -&gt; Html msg
+ row size row =</code></pre></figure>
+
+<h2>Controlling Tick Rate</h2>
+
+<p>Changing the speed at which the simulation runs is as simple as can be.
+Following the, by now, well established pattern, we can do so in just a few
+short lines.  If anything, the use of additional functions from the <code>Time</code>
+module are interesting.</p>
+
+<figure class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span><span class="gh">diff --git 1/_examples/elm/game_of_life_gold_plated_step4.elm 2/_examples/elm/game_of_life_gold_plated_step5.elm</span>
+<span class="gh">index 944ed9e..3ff7ae6 100644</span>
+<span class="gd">--- 1/_examples/elm/game_of_life_gold_plated_step4.elm</span>
+<span class="gi">+++ 2/_examples/elm/game_of_life_gold_plated_step5.elm</span>
+<span class="gu">@@ -18,6 +18,7 @@ type alias Model =</span>
+   , columns : Int
+   , cellSize : Int
+   , density : Float
+<span class="gi">+  , tickRate : Int</span>
+   }
+ 
+ type Msg = Initialize Grid
+<span class="gu">@@ -25,6 +26,7 @@ type Msg = Initialize Grid</span>
+          | Restart
+          | UpdateSize Dimension String
+          | UpdateDensity String
+<span class="gi">+         | UpdateTickRate String</span>
+ 
+ type Dimension = Rows | Columns
+ 
+<span class="gu">@@ -35,6 +37,7 @@ model =</span>
+   , columns = 35
+   , rows = 35
+   , density = 0.5
+<span class="gi">+  , tickRate = 1</span>
+   }
+ 
+ main =
+<span class="gu">@@ -87,6 +90,18 @@ view model =</span>
+         ] [ ]
+       ]
+ 
+<span class="gi">+    , div [ ]</span>
+<span class="gi">+      [ label [ ] [ text (&quot;Tick Rate (&quot; ++ toString model.tickRate ++ &quot; hz)&quot;) ]</span>
+<span class="gi">+      , input</span>
+<span class="gi">+        [ Attr.type_ &quot;range&quot;</span>
+<span class="gi">+        , Attr.value (toString model.tickRate)</span>
+<span class="gi">+        , Attr.min &quot;1&quot;</span>
+<span class="gi">+        , Attr.max &quot;10&quot;</span>
+<span class="gi">+        , Attr.step &quot;1&quot;</span>
+<span class="gi">+        , onChange UpdateTickRate</span>
+<span class="gi">+        ] [ ]</span>
+<span class="gi">+      ]</span>
+<span class="gi">+</span>
+     , div [ ] (List.map (row model.cellSize) model.grid)
+     ]
+ 
+<span class="gu">@@ -122,8 +137,15 @@ update msg state =</span>
+       in
+         ({ state | density = density }, seed state.rows state.columns density)
+ 
+<span class="gi">+    UpdateTickRate val -&gt;</span>
+<span class="gi">+      let</span>
+<span class="gi">+        tickRate = Result.withDefault state.tickRate (String.toInt val)</span>
+<span class="gi">+      in</span>
+<span class="gi">+        ({ state | tickRate = tickRate }, Cmd.none)</span>
+<span class="gi">+</span>
+ subscriptions : Model -&gt; Sub Msg
+<span class="gd">-subscriptions _ = Time.every Time.second Tick</span>
+<span class="gi">+subscriptions state =</span>
+<span class="gi">+  Time.every (Time.millisecond * (1000 / (toFloat state.tickRate))) Tick</span>
+ 
+ seed : Int -&gt; Int -&gt; Float -&gt; Cmd Msg
+ seed rows columns density =</code></pre></figure>
+
+<h2>Mouse Reactivity</h2>
+
+<p>Having reached a point where new functionality, of a kind, is as trivial to add
+as possible, we will now move on to adding a slightly different feature.  In
+this case, we will set any cell moused over to the on state.</p>
+
+<p>This change affects a larger footprint, but is still fairly well contained.  We
+need to pass <code>Int</code> values for row and column through the <code>row</code> and <code>cell</code>
+functions, such that the latter is able to add them to the <code>onMouseOver</code>
+attribute for the divs of individual cells.</p>
+
+<p>We also need to write a, rather kludgy <code>setAt</code> helper function, for updating an
+item at an arbitrary point in our nested list.  We will discuss some
+implications revealed by this, seemingly tangential aspect, shortly</p>
+
+<figure class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span><span class="gh">diff --git 1/_examples/elm/game_of_life_gold_plated_step5.elm 2/_examples/elm/game_of_life_gold_plated.elm</span>
+<span class="gh">index 3ff7ae6..8689a89 100644</span>
+<span class="gd">--- 1/_examples/elm/game_of_life_gold_plated_step5.elm</span>
+<span class="gi">+++ 2/_examples/elm/game_of_life_gold_plated.elm</span>
+<span class="gu">@@ -8,7 +8,7 @@ import Tuple exposing (first, second)</span>
+ import Json.Decode as Json
+ 
+ import Html exposing (Html, Attribute, div, label, button, input, text)
+<span class="gd">-import Html.Events exposing (onClick, on, targetValue)</span>
+<span class="gi">+import Html.Events exposing (onClick, onMouseOut, on, targetValue)</span>
+ import Html.Attributes as Attr exposing (style)
+ 
+ type alias Grid = List (List Bool)
+<span class="gu">@@ -27,6 +27,7 @@ type Msg = Initialize Grid</span>
+          | UpdateSize Dimension String
+          | UpdateDensity String
+          | UpdateTickRate String
+<span class="gi">+         | ToggleCell Int Int</span>
+ 
+ type Dimension = Rows | Columns
+ 
+<span class="gu">@@ -102,7 +103,7 @@ view model =</span>
+         ] [ ]
+       ]
+ 
+<span class="gd">-    , div [ ] (List.map (row model.cellSize) model.grid)</span>
+<span class="gi">+    , div [ ] (List.indexedMap (row model.cellSize) model.grid)</span>
+     ]
+ 
+ update : Msg -&gt; Model -&gt; (Model, Cmd Msg)
+<span class="gu">@@ -143,6 +144,9 @@ update msg state =</span>
+       in
+         ({ state | tickRate = tickRate }, Cmd.none)
+ 
+<span class="gi">+    ToggleCell x y -&gt;</span>
+<span class="gi">+      ({ state | grid = setAt x y True state.grid }, Cmd.none)</span>
+<span class="gi">+</span>
+ subscriptions : Model -&gt; Sub Msg
+ subscriptions state =
+   Time.every (Time.millisecond * (1000 / (toFloat state.tickRate))) Tick
+<span class="gu">@@ -154,12 +158,19 @@ seed rows columns density =</span>
+     |&gt; Random.map (groupInto columns)
+     |&gt; Random.generate Initialize
+ 
+<span class="gd">-row : Int -&gt; List Bool -&gt; Html msg</span>
+<span class="gd">-row size row =</span>
+<span class="gd">-  div [ style [ (&quot;clear&quot;, &quot;both&quot;) ] ] (List.map (cell size) row)</span>
+<span class="gi">+row : Int -&gt; Int -&gt; List Bool -&gt; Html Msg</span>
+<span class="gi">+row size column row =</span>
+<span class="gi">+  div</span>
+<span class="gi">+    [ style [ (&quot;clear&quot;, &quot;both&quot;) ] ]</span>
+<span class="gi">+    (List.indexedMap (cell size column) row)</span>
+ 
+<span class="gd">-cell : Int -&gt; Bool -&gt; Html msg</span>
+<span class="gd">-cell size on = div [ cellStyle size on ] [ text &quot; &quot; ]</span>
+<span class="gi">+cell : Int -&gt; Int -&gt; Int -&gt; Bool -&gt; Html Msg</span>
+<span class="gi">+cell size x y on =</span>
+<span class="gi">+  div</span>
+<span class="gi">+    [ cellStyle size on</span>
+<span class="gi">+    , onMouseOut (ToggleCell x y)</span>
+<span class="gi">+    ]</span>
+<span class="gi">+    [ text &quot; &quot; ]</span>
+ 
+ cellStyle : Int -&gt; Bool -&gt; Attribute msg
+ cellStyle cellSize on =
+<span class="gu">@@ -203,3 +214,11 @@ descend {grid, rows, columns} x y =</span>
+ valueAt : Int -&gt; a -&gt; List a -&gt; a
+ valueAt i default lst =
+   Maybe.withDefault default (List.head (List.drop i lst))
+<span class="gi">+</span>
+<span class="gi">+setAt : Int -&gt; Int -&gt; a -&gt; List (List a) -&gt; List (List a)</span>
+<span class="gi">+setAt x y val lst =</span>
+<span class="gi">+  let</span>
+<span class="gi">+    inner = valueAt x [] lst</span>
+<span class="gi">+    updated = (List.take y inner) ++ (val :: (List.drop (y + 1) inner))</span>
+<span class="gi">+  in</span>
+<span class="gi">+    (List.take x lst) ++ (updated :: List.drop (x + 1) lst)</span></code></pre></figure>
+
+<h2>Discussion</h2>
+
+<p>At long last, behold the full example before we discuss it in more detail:</p>
+
+<h4>game_of_life_gold_plated.elm</h4>
+
+<h5>Source</h5>
+
+<figure class="highlight"><pre><code class="language-elm" data-lang="elm"><span></span><span class="kn">import </span><span class="nc">List</span>
+<span class="kn">import </span><span class="nc">Random</span>
+<span class="kn">import </span><span class="nc">Time</span> <span class="nv">exposing</span> <span class="p">(</span><span class="kt">Time</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Tuple</span> <span class="nv">exposing</span> <span class="p">(</span><span class="nv">first</span><span class="p">,</span> <span class="nv">second</span><span class="p">)</span>
+
+<span class="kn">import </span><span class="nc">Json.Decode</span> <span class="kr">as</span> <span class="kt">Json</span>
+
+<span class="kn">import </span><span class="nc">Html</span> <span class="nv">exposing</span> <span class="p">(</span><span class="kt">Html</span><span class="p">,</span> <span class="kt">Attribute</span><span class="p">,</span> <span class="nv">div</span><span class="p">,</span> <span class="nv">label</span><span class="p">,</span> <span class="nv">button</span><span class="p">,</span> <span class="nv">input</span><span class="p">,</span> <span class="nv">text</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Html.Events</span> <span class="nv">exposing</span> <span class="p">(</span><span class="nv">onClick</span><span class="p">,</span> <span class="nv">onMouseOut</span><span class="p">,</span> <span class="nv">on</span><span class="p">,</span> <span class="nv">targetValue</span><span class="p">)</span>
+<span class="kn">import </span><span class="nc">Html.Attributes</span> <span class="kr">as</span> <span class="kt">Attr</span> <span class="nv">exposing</span> <span class="p">(</span><span class="nv">style</span><span class="p">)</span>
+
+<span class="kr">type</span> <span class="kr">alias</span> <span class="kt">Grid</span> <span class="nf">=</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="kt">Bool</span><span class="p">)</span>
+<span class="kr">type</span> <span class="kr">alias</span> <span class="kt">Model</span> <span class="nf">=</span>
+  <span class="p">{</span> <span class="nv">grid</span> <span class="nf">:</span> <span class="kt">Grid</span>
+  <span class="p">,</span> <span class="nv">rows</span> <span class="nf">:</span> <span class="kt">Int</span>
+  <span class="p">,</span> <span class="nv">columns</span> <span class="nf">:</span> <span class="kt">Int</span>
+  <span class="p">,</span> <span class="nv">cellSize</span> <span class="nf">:</span> <span class="kt">Int</span>
+  <span class="p">,</span> <span class="nv">density</span> <span class="nf">:</span> <span class="kt">Float</span>
+  <span class="p">,</span> <span class="nv">tickRate</span> <span class="nf">:</span> <span class="kt">Int</span>
+  <span class="p">}</span>
+
+<span class="kr">type</span> <span class="kt">Msg</span> <span class="nf">=</span> <span class="kt">Initialize</span> <span class="kt">Grid</span>
+         <span class="nf">|</span> <span class="kt">Tick</span> <span class="kt">Time</span>
+         <span class="nf">|</span> <span class="kt">Restart</span>
+         <span class="nf">|</span> <span class="kt">UpdateSize</span> <span class="kt">Dimension</span> <span class="kt">String</span>
+         <span class="nf">|</span> <span class="kt">UpdateDensity</span> <span class="kt">String</span>
+         <span class="nf">|</span> <span class="kt">UpdateTickRate</span> <span class="kt">String</span>
+         <span class="nf">|</span> <span class="kt">ToggleCell</span> <span class="kt">Int</span> <span class="kt">Int</span>
+
+<span class="kr">type</span> <span class="kt">Dimension</span> <span class="nf">=</span> <span class="kt">Rows</span> <span class="nf">|</span> <span class="kt">Columns</span>
+
+<span class="nv">model</span> <span class="nf">:</span> <span class="kt">Model</span>
+<span class="nv">model</span> <span class="nf">=</span>
+  <span class="p">{</span> <span class="nv">grid</span> <span class="nf">=</span> <span class="p">[[]]</span>
+  <span class="p">,</span> <span class="nv">cellSize</span> <span class="nf">=</span> <span class="mi">5</span>
+  <span class="p">,</span> <span class="nv">columns</span> <span class="nf">=</span> <span class="mi">35</span>
+  <span class="p">,</span> <span class="nv">rows</span> <span class="nf">=</span> <span class="mi">35</span>
+  <span class="p">,</span> <span class="nv">density</span> <span class="nf">=</span> <span class="mf">0.</span><span class="mi">5</span>
+  <span class="p">,</span> <span class="nv">tickRate</span> <span class="nf">=</span> <span class="mi">1</span>
+  <span class="p">}</span>
+
+<span class="kr">main </span><span class="nf">=</span>
+  <span class="kt">Html</span><span class="nf">.</span><span class="nv">program</span>
+    <span class="p">{</span> <span class="nv">init</span> <span class="nf">=</span> <span class="nv">init</span>
+    <span class="p">,</span> <span class="nv">view</span> <span class="nf">=</span> <span class="nv">view</span>
+    <span class="p">,</span> <span class="nv">update</span> <span class="nf">=</span> <span class="nv">update</span>
+    <span class="p">,</span> <span class="nv">subscriptions</span> <span class="nf">=</span> <span class="nv">subscriptions</span>
+    <span class="p">}</span>
+
+<span class="nv">init</span> <span class="nf">:</span> <span class="p">(</span><span class="kt">Model</span><span class="p">,</span> <span class="kt">Cmd</span> <span class="kt">Msg</span><span class="p">)</span>
+<span class="nv">init</span> <span class="nf">=</span> <span class="p">(</span><span class="nv">model</span><span class="p">,</span> <span class="nv">seed</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">rows</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">columns</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">density</span><span class="p">)</span>
+
+<span class="nv">view</span> <span class="nf">:</span> <span class="kt">Model</span> <span class="nf">-&gt;</span> <span class="kt">Html</span> <span class="kt">Msg</span>
+<span class="nv">view</span> <span class="nv">model</span> <span class="nf">=</span>
+  <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span>
+    <span class="p">[</span> <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span> <span class="p">[</span> <span class="nv">button</span> <span class="p">[</span> <span class="nv">onClick</span> <span class="kt">Restart</span> <span class="p">]</span> <span class="p">[</span> <span class="nv">text</span> <span class="s">&quot;Restart Simulation&quot;</span> <span class="p">]</span> <span class="p">]</span>
+
+    <span class="p">,</span> <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">[</span> <span class="nv">label</span> <span class="p">[</span> <span class="p">]</span> <span class="p">[</span> <span class="nv">text</span> <span class="p">(</span><span class="s">&quot;Grid Rows (&quot;</span> <span class="nf">++</span> <span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">rows</span> <span class="nf">++</span> <span class="s">&quot;)&quot;</span><span class="p">)</span> <span class="p">]</span>
+      <span class="p">,</span> <span class="nv">input</span>
+        <span class="p">[</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">type_</span> <span class="s">&quot;range&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">value</span> <span class="p">(</span><span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">rows</span><span class="p">)</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">min</span> <span class="s">&quot;10&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">max</span> <span class="s">&quot;200&quot;</span>
+        <span class="p">,</span> <span class="nv">onChange</span> <span class="p">(</span><span class="kt">UpdateSize</span> <span class="kt">Rows</span><span class="p">)</span>
+        <span class="p">]</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">]</span>
+
+    <span class="p">,</span> <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">[</span> <span class="nv">label</span> <span class="p">[</span> <span class="p">]</span> <span class="p">[</span> <span class="nv">text</span> <span class="p">(</span><span class="s">&quot;Grid Columns (&quot;</span> <span class="nf">++</span> <span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">columns</span> <span class="nf">++</span> <span class="s">&quot;)&quot;</span><span class="p">)</span> <span class="p">]</span>
+      <span class="p">,</span> <span class="nv">input</span>
+        <span class="p">[</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">type_</span> <span class="s">&quot;range&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">value</span> <span class="p">(</span><span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">columns</span><span class="p">)</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">min</span> <span class="s">&quot;10&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">max</span> <span class="s">&quot;200&quot;</span>
+        <span class="p">,</span> <span class="nv">onChange</span> <span class="p">(</span><span class="kt">UpdateSize</span> <span class="kt">Columns</span><span class="p">)</span>
+        <span class="p">]</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">]</span>
+
+    <span class="p">,</span> <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">[</span> <span class="nv">label</span> <span class="p">[</span> <span class="p">]</span> <span class="p">[</span> <span class="nv">text</span> <span class="p">(</span><span class="s">&quot;Population Density (&quot;</span> <span class="nf">++</span> <span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">density</span> <span class="nf">++</span> <span class="s">&quot;)&quot;</span><span class="p">)</span> <span class="p">]</span>
+      <span class="p">,</span> <span class="nv">input</span>
+        <span class="p">[</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">type_</span> <span class="s">&quot;range&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">value</span> <span class="p">(</span><span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">density</span><span class="p">)</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">min</span> <span class="s">&quot;0&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">max</span> <span class="s">&quot;1&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">step</span> <span class="s">&quot;.01&quot;</span>
+        <span class="p">,</span> <span class="nv">onChange</span> <span class="kt">UpdateDensity</span>
+        <span class="p">]</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">]</span>
+
+    <span class="p">,</span> <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">[</span> <span class="nv">label</span> <span class="p">[</span> <span class="p">]</span> <span class="p">[</span> <span class="nv">text</span> <span class="p">(</span><span class="s">&quot;Tick Rate (&quot;</span> <span class="nf">++</span> <span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">tickRate</span> <span class="nf">++</span> <span class="s">&quot; hz)&quot;</span><span class="p">)</span> <span class="p">]</span>
+      <span class="p">,</span> <span class="nv">input</span>
+        <span class="p">[</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">type_</span> <span class="s">&quot;range&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">value</span> <span class="p">(</span><span class="nv">toString</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">tickRate</span><span class="p">)</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">min</span> <span class="s">&quot;1&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">max</span> <span class="s">&quot;10&quot;</span>
+        <span class="p">,</span> <span class="kt">Attr</span><span class="nf">.</span><span class="nv">step</span> <span class="s">&quot;1&quot;</span>
+        <span class="p">,</span> <span class="nv">onChange</span> <span class="kt">UpdateTickRate</span>
+        <span class="p">]</span> <span class="p">[</span> <span class="p">]</span>
+      <span class="p">]</span>
+
+    <span class="p">,</span> <span class="nv">div</span> <span class="p">[</span> <span class="p">]</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nv">row</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">cellSize</span><span class="p">)</span> <span class="nv">model</span><span class="nf">.</span><span class="nv">grid</span><span class="p">)</span>
+    <span class="p">]</span>
+
+<span class="nv">update</span> <span class="nf">:</span> <span class="kt">Msg</span> <span class="nf">-&gt;</span> <span class="kt">Model</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="kt">Model</span><span class="p">,</span> <span class="kt">Cmd</span> <span class="kt">Msg</span><span class="p">)</span>
+<span class="nv">update</span> <span class="nv">msg</span> <span class="nv">state</span> <span class="nf">=</span>
+  <span class="kr">case</span> <span class="nv">msg</span> <span class="kr">of</span>
+    <span class="kt">Initialize</span> <span class="nv">initial</span> <span class="nf">-&gt;</span>
+      <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">grid</span> <span class="nf">=</span> <span class="nv">initial</span> <span class="p">},</span> <span class="kt">Cmd</span><span class="nf">.</span><span class="nv">none</span><span class="p">)</span>
+
+    <span class="kt">Tick</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
+      <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">grid</span> <span class="nf">=</span> <span class="nv">evolve</span> <span class="nv">state</span> <span class="p">},</span> <span class="kt">Cmd</span><span class="nf">.</span><span class="nv">none</span><span class="p">)</span>
+
+    <span class="kt">Restart</span> <span class="nf">-&gt;</span>
+      <span class="p">(</span><span class="nv">state</span><span class="p">,</span> <span class="nv">seed</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">rows</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">columns</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">density</span><span class="p">)</span>
+
+    <span class="kt">UpdateSize</span> <span class="nv">dim</span> <span class="nv">size</span> <span class="nf">-&gt;</span>
+      <span class="kr">case</span> <span class="nv">dim</span> <span class="kr">of</span>
+        <span class="kt">Rows</span> <span class="nf">-&gt;</span>
+          <span class="kr">let</span>
+            <span class="nv">rows</span> <span class="nf">=</span> <span class="kt">Result</span><span class="nf">.</span><span class="nv">withDefault</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">rows</span> <span class="p">(</span><span class="kt">String</span><span class="nf">.</span><span class="nv">toInt</span> <span class="nv">size</span><span class="p">)</span>
+          <span class="kr">in</span>
+            <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">rows</span> <span class="nf">=</span> <span class="nv">rows</span> <span class="p">},</span> <span class="nv">seed</span> <span class="nv">rows</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">columns</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">density</span><span class="p">)</span>
+
+        <span class="kt">Columns</span> <span class="nf">-&gt;</span>
+          <span class="kr">let</span>
+            <span class="nv">columns</span> <span class="nf">=</span> <span class="kt">Result</span><span class="nf">.</span><span class="nv">withDefault</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">columns</span> <span class="p">(</span><span class="kt">String</span><span class="nf">.</span><span class="nv">toInt</span> <span class="nv">size</span><span class="p">)</span>
+          <span class="kr">in</span>
+            <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">columns</span> <span class="nf">=</span> <span class="nv">columns</span> <span class="p">},</span> <span class="nv">seed</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">rows</span> <span class="nv">columns</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">density</span><span class="p">)</span>
+
+    <span class="kt">UpdateDensity</span> <span class="nv">val</span> <span class="nf">-&gt;</span>
+      <span class="kr">let</span>
+        <span class="nv">density</span> <span class="nf">=</span> <span class="kt">Result</span><span class="nf">.</span><span class="nv">withDefault</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">density</span> <span class="p">(</span><span class="kt">String</span><span class="nf">.</span><span class="nv">toFloat</span> <span class="nv">val</span><span class="p">)</span>
+      <span class="kr">in</span>
+        <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">density</span> <span class="nf">=</span> <span class="nv">density</span> <span class="p">},</span> <span class="nv">seed</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">rows</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">columns</span> <span class="nv">density</span><span class="p">)</span>
+
+    <span class="kt">UpdateTickRate</span> <span class="nv">val</span> <span class="nf">-&gt;</span>
+      <span class="kr">let</span>
+        <span class="nv">tickRate</span> <span class="nf">=</span> <span class="kt">Result</span><span class="nf">.</span><span class="nv">withDefault</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">tickRate</span> <span class="p">(</span><span class="kt">String</span><span class="nf">.</span><span class="nv">toInt</span> <span class="nv">val</span><span class="p">)</span>
+      <span class="kr">in</span>
+        <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">tickRate</span> <span class="nf">=</span> <span class="nv">tickRate</span> <span class="p">},</span> <span class="kt">Cmd</span><span class="nf">.</span><span class="nv">none</span><span class="p">)</span>
+
+    <span class="kt">ToggleCell</span> <span class="nv">x</span> <span class="nv">y</span> <span class="nf">-&gt;</span>
+      <span class="p">({</span> <span class="nv">state</span> <span class="nf">|</span> <span class="nv">grid</span> <span class="nf">=</span> <span class="nv">setAt</span> <span class="nv">x</span> <span class="nv">y</span> <span class="kt">True</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">grid</span> <span class="p">},</span> <span class="kt">Cmd</span><span class="nf">.</span><span class="nv">none</span><span class="p">)</span>
+
+<span class="nv">subscriptions</span> <span class="nf">:</span> <span class="kt">Model</span> <span class="nf">-&gt;</span> <span class="kt">Sub</span> <span class="kt">Msg</span>
+<span class="nv">subscriptions</span> <span class="nv">state</span> <span class="nf">=</span>
+  <span class="kt">Time</span><span class="nf">.</span><span class="nv">every</span> <span class="p">(</span><span class="kt">Time</span><span class="nf">.</span><span class="nv">millisecond</span> <span class="nf">*</span> <span class="p">(</span><span class="mi">1000</span> <span class="nf">/</span> <span class="p">(</span><span class="nv">toFloat</span> <span class="nv">state</span><span class="nf">.</span><span class="nv">tickRate</span><span class="p">)))</span> <span class="kt">Tick</span>
+
+<span class="nv">seed</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Float</span> <span class="nf">-&gt;</span> <span class="kt">Cmd</span> <span class="kt">Msg</span>
+<span class="nv">seed</span> <span class="nv">rows</span> <span class="nv">columns</span> <span class="nv">density</span> <span class="nf">=</span>
+  <span class="kt">Random</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nf">\</span><span class="nv">n</span> <span class="nf">-&gt;</span> <span class="nv">n</span> <span class="nf">&lt;</span> <span class="nv">density</span><span class="p">)</span> <span class="p">(</span><span class="kt">Random</span><span class="nf">.</span><span class="nv">float</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">list</span> <span class="p">(</span><span class="nv">rows</span> <span class="nf">*</span> <span class="nv">columns</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nv">groupInto</span> <span class="nv">columns</span><span class="p">)</span>
+    <span class="nf">|&gt;</span> <span class="kt">Random</span><span class="nf">.</span><span class="nv">generate</span> <span class="kt">Initialize</span>
+
+<span class="nv">row</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Html</span> <span class="kt">Msg</span>
+<span class="nv">row</span> <span class="nv">size</span> <span class="nv">column</span> <span class="nv">row</span> <span class="nf">=</span>
+  <span class="nv">div</span>
+    <span class="p">[</span> <span class="nv">style</span> <span class="p">[</span> <span class="p">(</span><span class="s">&quot;clear&quot;</span><span class="p">,</span> <span class="s">&quot;both&quot;</span><span class="p">)</span> <span class="p">]</span> <span class="p">]</span>
+    <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nv">cell</span> <span class="nv">size</span> <span class="nv">column</span><span class="p">)</span> <span class="nv">row</span><span class="p">)</span>
+
+<span class="nv">cell</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Html</span> <span class="kt">Msg</span>
+<span class="nv">cell</span> <span class="nv">size</span> <span class="nv">x</span> <span class="nv">y</span> <span class="nv">on</span> <span class="nf">=</span>
+  <span class="nv">div</span>
+    <span class="p">[</span> <span class="nv">cellStyle</span> <span class="nv">size</span> <span class="nv">on</span>
+    <span class="p">,</span> <span class="nv">onMouseOut</span> <span class="p">(</span><span class="kt">ToggleCell</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="p">[</span> <span class="nv">text</span> <span class="s">&quot; &quot;</span> <span class="p">]</span>
+
+<span class="nv">cellStyle</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Bool</span> <span class="nf">-&gt;</span> <span class="kt">Attribute</span> <span class="nv">msg</span>
+<span class="nv">cellStyle</span> <span class="nv">cellSize</span> <span class="nv">on</span> <span class="nf">=</span>
+  <span class="nv">style</span>
+    <span class="p">[</span> <span class="p">(</span><span class="s">&quot;background&quot;</span><span class="p">,</span> <span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="s">&quot;black&quot;</span> <span class="kr">else</span> <span class="s">&quot;white&quot;</span><span class="p">)</span>
+    <span class="p">,</span> <span class="p">(</span><span class="s">&quot;width&quot;</span><span class="p">,</span> <span class="nv">toString</span> <span class="nv">cellSize</span> <span class="nf">++</span> <span class="s">&quot;px&quot;</span><span class="p">)</span>
+    <span class="p">,</span> <span class="p">(</span><span class="s">&quot;height&quot;</span><span class="p">,</span> <span class="nv">toString</span> <span class="nv">cellSize</span> <span class="nf">++</span> <span class="s">&quot;px&quot;</span><span class="p">)</span>
+    <span class="p">,</span> <span class="p">(</span><span class="s">&quot;float&quot;</span><span class="p">,</span> <span class="s">&quot;left&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+
+<span class="nv">onChange</span> <span class="nf">:</span> <span class="p">(</span><span class="kt">String</span> <span class="nf">-&gt;</span> <span class="nv">msg</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">Attribute</span> <span class="nv">msg</span>
+<span class="nv">onChange</span> <span class="nv">tagger</span> <span class="nf">=</span>
+  <span class="nv">on</span> <span class="s">&quot;change&quot;</span> <span class="p">(</span><span class="kt">Json</span><span class="nf">.</span><span class="nv">map</span> <span class="nv">tagger</span> <span class="nv">targetValue</span><span class="p">)</span>
+
+<span class="nv">groupInto</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="nv">a</span><span class="p">)</span>
+<span class="nv">groupInto</span> <span class="nv">n</span> <span class="nv">lst</span> <span class="nf">=</span>
+  <span class="kr">if</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">length</span> <span class="nv">lst</span> <span class="nf">==</span> <span class="mi">0</span> <span class="kr">then</span>
+    <span class="p">[]</span>
+  <span class="kr">else</span>
+    <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="nv">lst</span><span class="p">)</span> <span class="nf">::</span> <span class="p">(</span><span class="nv">groupInto</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="nv">n</span> <span class="nv">lst</span><span class="p">))</span>
+
+<span class="nv">evolve</span> <span class="nf">:</span> <span class="kt">Model</span> <span class="nf">-&gt;</span> <span class="kt">Grid</span>
+<span class="nv">evolve</span> <span class="p">({</span><span class="nv">grid</span><span class="p">}</span> <span class="kr">as</span> <span class="nv">model</span><span class="p">)</span> <span class="nf">=</span>
+  <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">y</span> <span class="nv">row</span> <span class="nf">-&gt;</span>
+    <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">x</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
+      <span class="nv">descend</span> <span class="nv">model</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)</span> <span class="nv">row</span><span class="p">)</span> <span class="nv">grid</span>
+
+<span class="nv">descend</span> <span class="nf">:</span> <span class="kt">Model</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Bool</span>
+<span class="nv">descend</span> <span class="p">{</span><span class="nv">grid</span><span class="p">,</span> <span class="nv">rows</span><span class="p">,</span> <span class="nv">columns</span><span class="p">}</span> <span class="nv">x</span> <span class="nv">y</span> <span class="nf">=</span>
+  <span class="kt">List</span><span class="nf">.</span><span class="nv">concatMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">n</span> <span class="nf">-&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">map</span> <span class="p">(</span><span class="nf">\</span><span class="nv">m</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="nv">x</span> <span class="nf">+</span> <span class="nv">n</span><span class="p">,</span> <span class="nv">y</span> <span class="nf">+</span> <span class="nv">m</span><span class="p">))</span>
+                   <span class="p">[</span><span class="nf">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="p">[</span><span class="nf">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">filter</span> <span class="p">(</span><span class="nf">\</span><span class="nv">p</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="nv">first</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&gt;</span> <span class="nf">-</span><span class="mi">1</span> <span class="nf">&amp;&amp;</span> <span class="p">(</span><span class="nv">first</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&lt;</span> <span class="nv">columns</span> <span class="nf">&amp;&amp;</span>
+                          <span class="p">(</span><span class="nv">second</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&gt;</span> <span class="nf">-</span><span class="mi">1</span> <span class="nf">&amp;&amp;</span> <span class="p">(</span><span class="nv">second</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">&lt;</span> <span class="nv">rows</span> <span class="nf">&amp;&amp;</span>
+                          <span class="p">(</span><span class="nv">not</span> <span class="p">((</span><span class="nv">first</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">==</span> <span class="nv">x</span> <span class="nf">&amp;&amp;</span> <span class="p">(</span><span class="nv">second</span> <span class="nv">p</span><span class="p">)</span> <span class="nf">==</span> <span class="nv">y</span><span class="p">)))</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">filter</span> <span class="p">(</span><span class="nf">\</span><span class="nv">p</span> <span class="nf">-&gt;</span> <span class="p">(</span><span class="nv">valueAt</span> <span class="p">(</span><span class="nv">first</span> <span class="nv">p</span><span class="p">)</span> <span class="kt">False</span>
+                            <span class="p">(</span><span class="nv">valueAt</span> <span class="p">(</span><span class="nv">second</span> <span class="nv">p</span><span class="p">)</span> <span class="p">[]</span> <span class="nv">grid</span><span class="p">)))</span>
+    <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">length</span>
+    <span class="nf">|&gt;</span> <span class="p">(</span><span class="nf">\</span><span class="nv">l</span> <span class="nf">-&gt;</span> <span class="p">((</span><span class="nv">valueAt</span> <span class="nv">x</span> <span class="kt">False</span> <span class="p">(</span><span class="nv">valueAt</span> <span class="nv">y</span> <span class="p">[]</span> <span class="nv">grid</span><span class="p">))</span>
+                <span class="nf">&amp;&amp;</span> <span class="nv">l</span> <span class="nf">&gt;</span> <span class="mi">1</span> <span class="nf">&amp;&amp;</span> <span class="nv">l</span> <span class="nf">&lt;</span> <span class="mi">4</span><span class="p">)</span> <span class="nf">||</span> <span class="nv">l</span> <span class="nf">==</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="nv">valueAt</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="nv">a</span>
+<span class="nv">valueAt</span> <span class="nv">i</span> <span class="nv">default</span> <span class="nv">lst</span> <span class="nf">=</span>
+  <span class="kt">Maybe</span><span class="nf">.</span><span class="nv">withDefault</span> <span class="nv">default</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">head</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="nv">i</span> <span class="nv">lst</span><span class="p">))</span>
+
+<span class="nv">setAt</span> <span class="nf">:</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="kt">Int</span> <span class="nf">-&gt;</span> <span class="nv">a</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="nv">a</span><span class="p">)</span> <span class="nf">-&gt;</span> <span class="kt">List</span> <span class="p">(</span><span class="kt">List</span> <span class="nv">a</span><span class="p">)</span>
+<span class="nv">setAt</span> <span class="nv">x</span> <span class="nv">y</span> <span class="nv">val</span> <span class="nv">lst</span> <span class="nf">=</span>
+  <span class="kr">let</span>
+    <span class="nv">inner</span> <span class="nf">=</span> <span class="nv">valueAt</span> <span class="nv">x</span> <span class="p">[]</span> <span class="nv">lst</span>
+    <span class="nv">updated</span> <span class="nf">=</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">y</span> <span class="nv">inner</span><span class="p">)</span> <span class="nf">++</span> <span class="p">(</span><span class="nv">val</span> <span class="nf">::</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">y</span> <span class="nf">+</span> <span class="mi">1</span><span class="p">)</span> <span class="nv">inner</span><span class="p">))</span>
+  <span class="kr">in</span>
+    <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">x</span> <span class="nv">lst</span><span class="p">)</span> <span class="nf">++</span> <span class="p">(</span><span class="nv">updated</span> <span class="nf">::</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">x</span> <span class="nf">+</span> <span class="mi">1</span><span class="p">)</span> <span class="nv">lst</span><span class="p">)</span></code></pre></figure>
+
+<h5><a href="/examples/elm/game_of_life_gold_plated/" target="_new">Pop Out Result</a></h5>
+
+<p>This is, unfortunately, somewhat of a mess — not for any fault of Elm.  The
+main problem is having kept everything in a single file in an attempt to make
+the example self-contained.  Imagine separating out the <code>view</code> function (in
+conjunction with subordinates) and the <code>update</code> (with its helpers) into separate
+modules, leaving only the core logic in main file.  Elm, in fact, is designed in
+such a way to facilitate (and even encourage) this sort of structure.
+Additionally, we should have also created a function for generating the range
+inputs in the <code>view</code> function, but that was also skipped in favor of making each
+diff atomic.</p>
+
+<p>Now, we return to the earlier point about the <code>setAt</code> helper function.  This
+little nuisance points to a structural issue with this program.  Specifically,
+the use of lists for this implementation is, most likely, suboptimal.  Since we
+often make use of non-sequential access (via <code>valueAt</code>) and, in the final form,
+updates, we should have instead used Elm&#39;s
+<span> <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Array">Array module</a> <span style="vertical-align: super"> <a href="http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Array" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.
+This should be expected to increase performance, based on the way in which the
+two different data structures are
+<span> <a href="https://stackoverflow.com/a/37707812">implemented internally</a> <span style="vertical-align: super"> <a href="https://stackoverflow.com/a/37707812" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.
+That said, having to be aware of the implementation details of the standard
+library of a language is never optimal, but, at a certain point, abstractions
+at face value can only go so far.  Preference for lists over arrays has been
+<span> <a href="https://github.com/elm-lang/elm-plans/issues/13">discussed</a> <span style="vertical-align: super"> <a href="https://github.com/elm-lang/elm-plans/issues/13" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+before, but the proposal was dropped for lack of actual benchmarks pointing
+toward their universal superiority, and, as such, this potential optimization is
+naught but conjecture without further investigation.</p>
+
+<p>One last potential optimization worth exploring is the use of the
+<span> <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Lazy"><code>HTML.Lazy</code></a> <span style="vertical-align: super"> <a href="http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Lazy" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
+module.  In some cursory experiments, excluded from this article, the inclusion
+of lazy declarations in the various <code>view</code>, <code>row</code>, and <code>cell</code> functions did not
+noticeably improve performance under strenuous configurations.</p>
+
+<p>Overall, this example has admirably performed its task of giving us context
+within which to modify an Elm program.  As evidenced by the increasingly
+trivial, practically repetitive, nature of the modifications, it is fair to
+presume changes will normally follow the same simple pattern of updating union
+types, dispatching messages via the user interface, and handling these new
+cases in the update cycle.  Some larger changes will necessitate changes to the
+flow of data through the application (as seen during model unification and the
+addition of mouse reactivity), but even these changes are mostly local in
+scope.  As a consequence of strong type checking, Elm also ensures, at compile
+time, that any such cascading change is handled by the developer.  From a
+maintainability perspective, this makes a very compelling case for the Elm
+programming language.</p>
+
+  <span class="post-date">18 Jun 2017</span>
+</div>
+
+
+  <div class="related">
+    <h2>Related Posts</h2>
+    <ul class="related-posts">
+      
+        <li>
+          <h3>
+            <a href="/2017/05/22/revisiting-the-game-of-life-in-elm/">
+              Revisiting the Game of Life in Elm
+              <small>22 May 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/">
+              Common Table Expressions in ActiveRecord: A Case Study of Quantiles
+              <small>05 Jun 2017</small>
+            </a>
+          </h3>
+        </li>
+      
+        <li>
+          <h3>
+            <a href="/2014/05/05/writing-game-of-life-in-elm/">
+              Writing Game of Life in Elm
+              <small>05 May 2014</small>
+            </a>
+          </h3>
+        </li>
+      
+    </ul>
+  </div>
+
+
+<p class="bitcoin"></p>
+
+    </div>
+
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-47296801-1', 'sonnym.github.io');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
