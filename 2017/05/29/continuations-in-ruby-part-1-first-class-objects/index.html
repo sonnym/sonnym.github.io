@@ -1,135 +1,4 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
-
-  <head>
-  <link href="http://gmpg.org/xfn/11" rel="profile">
-  <meta http-equiv="content-type" content="text/html; charset=utf-8">
-
-  <!-- Enable responsiveness on mobile devices-->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-
-  <title>
-    Continuations in Ruby - Part 1: First Class Objects &middot; effluence
-  </title>
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="/css/poole.css">
-  <link rel="stylesheet" href="/css/syntax.css">
-  <link rel="stylesheet" href="/css/hyde.css">
-  <link rel="stylesheet" href="/css/custom.css">
-
-  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
-
-  <!-- RSS -->
-  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
-</head>
-
-
-  <body class="layout-reverse">
-
-    <div class="sidebar">
-  <div class="container sidebar-sticky">
-    <div class="sidebar-about">
-      <h1>effluence</h1>
-      <p class="lead"></p>
-    </div>
-
-    <ul class="sidebar-nav">
-      <li class="sidebar-nav-item">
-        <a href="/">home</a>
-      </li>
-
-      
-
-      
-        
-      
-        
-          
-            <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
-            </li>
-          
-        
-      
-        
-          
-            <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
-            </li>
-          
-        
-      
-        
-          
-        
-      
-        
-          
-        
-      
-
-      <li class="sidebar-nav-item">
-        <a href="/atom.xml" target="_blank">rss</a>
-      </li>
-    </ul>
-
-    <p>&copy; 2017. All rights reserved.</p>
-  </div>
-</div>
-
-
-    <div class="content container">
-      <div class="post">
-  <h1 class="post-title">Continuations in Ruby - Part 1: First Class Objects</h1>
-  <h2>Caveat Emptor</h2>
-
-<p>This is the first in an ongoing part series exploring the possibilities
-presented to the programmer when continuations are a first class part of a
-language.  These articles follow Chapter 20 of Paul Graham&#39;s venerable treatise
-<span> <a href="http://www.paulgraham.com/onlisp.html">On Lisp</a> <span style="vertical-align: super"> <a href="http://www.paulgraham.com/onlisp.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.</p>
-
-<p>While a powerful semantic construct, there is no secret that continuations are,
-for good reason,
-<span> <a href="http://okmij.org/ftp/continuations/against-callcc.html">thoroughly reviled</a> <span style="vertical-align: super"> <a href="http://okmij.org/ftp/continuations/against-callcc.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.
-In short, give us the ability to store the state of a computation and return to
-it at a later point in the execution of our program.  This form of non-local
-return (or
-<span> <a href="http://rosettacode.org/wiki/Jump_anywhere#Ruby">jump anywhere</a> <span style="vertical-align: super"> <a href="http://rosettacode.org/wiki/Jump_anywhere#Ruby" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>)
-can be compared to <code>goto</code> statements of old or <code>try</code>/<code>catch</code> semantics commonly
-seen today.  Both of these language features, in fact, can be implemented in
-terms of continuations, and in section 5.8.3 of
-<span> <a href="http://shop.oreilly.com/product/9780596516178.do">The Ruby Programming Language</a> <span style="vertical-align: super"> <a href="http://shop.oreilly.com/product/9780596516178.do" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
-the authors construct a BASIC inspired <code>goto</code> function.  Today, when we <code>require
-&#39;continuation&#39;</code>, the interpreter will kindly inform us that &#39;warning: callcc is
-obsolete; use Fiber instead&#39;.</p>
-
-<p>With continuations framed in this way, it should go without saying that, under
-no circumstances whatsoever, should these curios be used in anything with any
-degree of seriousness.  Why, then, should should we even bother?  Sometimes,
-the simple fact that we should not is enough to make it worthwhile.</p>
-
-<h2>The Basics</h2>
-
-<p>Because <code>callcc</code> is obsolete, the continuation library is not included by
-default in Ruby.  Each example contained herein requires
-<code>require &#39;continuation&#39;</code> as a prelude before being able to call
-<span> <a href="https://ruby-doc.org/core-2.4.1/Kernel.html#method-i-callcc">Kernel#callcc</a> <span style="vertical-align: super"> <a href="https://ruby-doc.org/core-2.4.1/Kernel.html#method-i-callcc" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>.
-The <code>callcc</code> function takes a block, which is passed an instance of a
-<span> <a href="http://ruby-doc.org/core-2.4.1/Continuation.html">continuation object</a> <span style="vertical-align: super"> <a href="http://ruby-doc.org/core-2.4.1/Continuation.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>,
-and ultimately returns whatever the block returns.  These first examples will
-only run inside IRB, since they otherwise cause an infinite unwinding of the
-stack (e.g. every time the continuation is <code>call</code>ed, execution moves up the
-program, only to encounter the same <code>call</code> ad infinitum).</p>
-
-<p>Here, we create a global variable in which we will store our continuation.  As
-this example shows, we can call the continuation repeatedly, and it will return
-whatever we pass into into the method.  The final key point in the
-demonstration is the way in which subsequent computation is safely discarded.
-In this case, the <code>+ 1</code> call does not result in the usual <code>TypeError: no
-implicit conversion of Integer into String</code>.</p>
-
-<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="vg">$cont</span> <span class="o">=</span> <span class="kp">nil</span>
+<!DOCTYPE html> <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us"> <head> <link href="http://gmpg.org/xfn/11" rel="profile"> <meta http-equiv="content-type" content="text/html; charset=utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"> <title> Continuations in Ruby - Part 1: First Class Objects &middot; effluence </title> <link rel="stylesheet" href="/css/poole.css"> <link rel="stylesheet" href="/css/syntax.css"> <link rel="stylesheet" href="/css/hyde.css"> <link rel="stylesheet" href="/css/custom.css"> <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml"> </head> <body class="layout-reverse"> <div class="sidebar"> <div class="container sidebar-sticky"> <div class="sidebar-about"> <h1>effluence</h1> <p class="lead"></p> </div> <ul class="sidebar-nav"> <li class="sidebar-nav-item"> <a href="/">home</a> </li> <li class="sidebar-nav-item"> <a href="/projects/">projects</a> </li> <li class="sidebar-nav-item"> <a href="/about/">about</a> </li> <li class="sidebar-nav-item"> <a href="/atom.xml" target="_blank">rss</a> </li> </ul> <p>&copy; 2017. All rights reserved.</p> </div> </div> <div class="content container"> <div class="post"> <h1 class="post-title">Continuations in Ruby - Part 1: First Class Objects</h1> <h2>Caveat Emptor</h2> <p>This is the first in an ongoing part series exploring the possibilities presented to the programmer when continuations are a first class part of a language. These articles follow Chapter 20 of Paul Graham&#39;s venerable treatise <span> <a href="http://www.paulgraham.com/onlisp.html">On Lisp</a> <span style="vertical-align: super"> <a href="http://www.paulgraham.com/onlisp.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>.</p> <p>While a powerful semantic construct, there is no secret that continuations are, for good reason, <span> <a href="http://okmij.org/ftp/continuations/against-callcc.html">thoroughly reviled</a> <span style="vertical-align: super"> <a href="http://okmij.org/ftp/continuations/against-callcc.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>. In short, give us the ability to store the state of a computation and return to it at a later point in the execution of our program. This form of non-local return (or <span> <a href="http://rosettacode.org/wiki/Jump_anywhere#Ruby">jump anywhere</a> <span style="vertical-align: super"> <a href="http://rosettacode.org/wiki/Jump_anywhere#Ruby" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>) can be compared to <code>goto</code> statements of old or <code>try</code>/<code>catch</code> semantics commonly seen today. Both of these language features, in fact, can be implemented in terms of continuations, and in section 5.8.3 of <span> <a href="http://shop.oreilly.com/product/9780596516178.do">The Ruby Programming Language</a> <span style="vertical-align: super"> <a href="http://shop.oreilly.com/product/9780596516178.do" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>, the authors construct a BASIC inspired <code>goto</code> function. Today, when we <code>require &#39;continuation&#39;</code>, the interpreter will kindly inform us that &#39;warning: callcc is obsolete; use Fiber instead&#39;.</p> <p>With continuations framed in this way, it should go without saying that, under no circumstances whatsoever, should these curios be used in anything with any degree of seriousness. Why, then, should should we even bother? Sometimes, the simple fact that we should not is enough to make it worthwhile.</p> <h2>The Basics</h2> <p>Because <code>callcc</code> is obsolete, the continuation library is not included by default in Ruby. Each example contained herein requires <code>require &#39;continuation&#39;</code> as a prelude before being able to call <span> <a href="https://ruby-doc.org/core-2.4.1/Kernel.html#method-i-callcc">Kernel#callcc</a> <span style="vertical-align: super"> <a href="https://ruby-doc.org/core-2.4.1/Kernel.html#method-i-callcc" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>. The <code>callcc</code> function takes a block, which is passed an instance of a <span> <a href="http://ruby-doc.org/core-2.4.1/Continuation.html">continuation object</a> <span style="vertical-align: super"> <a href="http://ruby-doc.org/core-2.4.1/Continuation.html" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>, and ultimately returns whatever the block returns. These first examples will only run inside IRB, since they otherwise cause an infinite unwinding of the stack (e.g. every time the continuation is <code>call</code>ed, execution moves up the program, only to encounter the same <code>call</code> ad infinitum).</p> <p>Here, we create a global variable in which we will store our continuation. As this example shows, we can call the continuation repeatedly, and it will return whatever we pass into into the method. The final key point in the demonstration is the way in which subsequent computation is safely discarded. In this case, the <code>+ 1</code> call does not result in the usual <code>TypeError: no implicit conversion of Integer into String</code>.</p> <figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="vg">$cont</span> <span class="o">=</span> <span class="kp">nil</span>
 <span class="go">&gt;&gt;</span>
 <span class="gp">&gt;&gt; </span><span class="s2">&quot;the call/cc returned </span><span class="si">#{</span><span class="nb">callcc</span> <span class="si">{</span> <span class="o">|</span><span class="n">c</span><span class="o">|</span> <span class="vg">$cont</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span> <span class="s1">&#39;a&#39;</span> <span class="si">}}</span><span class="s2">&quot;</span>
 <span class="go">=&gt; &quot;the call/cc returned a&quot;</span>
@@ -138,21 +7,7 @@ implicit conversion of Integer into String</code>.</p>
 <span class="gp">&gt;&gt; </span><span class="vg">$cont</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="ss">:thrice</span><span class="p">)</span>
 <span class="go">=&gt; &quot;the call/cc returned thrice&quot;</span>
 <span class="gp">&gt;&gt; </span><span class="vg">$cont</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="ss">:safely</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-<span class="go">=&gt; &quot;the call/cc returned safely&quot;</span></code></pre></figure>
-
-<p>As an aside, it is worth noting that it is possible to make IRB act more like
-the interpreter proper.  Two ways to prevent it from taking control of the
-stack and allowing these examples to run without looping indefinitely are:</p>
-
-<ol>
-<li>Elide the calls onto one line (e.g <code>puts &quot;the call/cc returned #{callcc { |c| $cont = c; &#39;a&#39; }}&quot;; $cont.call</code>)</li>
-<li>Wrap the calls to <code>Kernel#callcc</code> and the <code>Continuation#call</code> inside a <code>begin</code>..<code>end</code> block</li>
-</ol>
-
-<p>Our next example demonstrates that the stack is shared between continuations.
-We can call either one, and receive successive numbers.</p>
-
-<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="vg">$cont1</span><span class="p">,</span> <span class="vg">$cont2</span> <span class="o">=</span> <span class="kp">nil</span>
+<span class="go">=&gt; &quot;the call/cc returned safely&quot;</span></code></pre></figure> <p>As an aside, it is worth noting that it is possible to make IRB act more like the interpreter proper. Two ways to prevent it from taking control of the stack and allowing these examples to run without looping indefinitely are:</p> <ol> <li>Elide the calls onto one line (e.g <code>puts &quot;the call/cc returned #{callcc { |c| $cont = c; &#39;a&#39; }}&quot;; $cont.call</code>)</li> <li>Wrap the calls to <code>Kernel#callcc</code> and the <code>Continuation#call</code> inside a <code>begin</code>..<code>end</code> block</li> </ol> <p>Our next example demonstrates that the stack is shared between continuations. We can call either one, and receive successive numbers.</p> <figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="vg">$cont1</span><span class="p">,</span> <span class="vg">$cont2</span> <span class="o">=</span> <span class="kp">nil</span>
 <span class="go">&gt;&gt;</span>
 <span class="gp">&gt;&gt; </span><span class="o">-&gt;</span> <span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
 <span class="gp">?&gt; </span>  <span class="nb">callcc</span> <span class="k">do</span> <span class="o">|</span><span class="n">cc</span><span class="o">|</span>
@@ -167,21 +22,7 @@ We can call either one, and receive successive numbers.</p>
 <span class="gp">&gt;&gt; </span><span class="vg">$cont2</span><span class="o">.</span><span class="n">call</span>
 <span class="go">=&gt; 2</span>
 <span class="gp">&gt;&gt; </span><span class="vg">$cont1</span><span class="o">.</span><span class="n">call</span>
-<span class="go">=&gt; 3</span></code></pre></figure>
-
-<h2>A Practical Example: Depth First Traversal</h2>
-
-<p>In this next example, we will implement a depth first traversal for trees
-represented as nested arrays of values (inspired by the homoiconicity of Lisp).
-Rather than using a traditional recursive method, we make use of continuations
-to pause the calculation at appropriate points, only to restart it at any point
-in the future.  <code>Tree#dft</code> processes the entire tree at once, storing
-intermediate calculations (cf.
-<span> <a href="https://en.wikipedia.org/wiki/Thunk">thunks</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Thunk" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>)
-in the <code>saved</code> array, which are then processed after the current branch is
-completed.</p>
-
-<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">class</span> <span class="nc">Tree</span>
+<span class="go">=&gt; 3</span></code></pre></figure> <h2>A Practical Example: Depth First Traversal</h2> <p>In this next example, we will implement a depth first traversal for trees represented as nested arrays of values (inspired by the homoiconicity of Lisp). Rather than using a traditional recursive method, we make use of continuations to pause the calculation at appropriate points, only to restart it at any point in the future. <code>Tree#dft</code> processes the entire tree at once, storing intermediate calculations (cf. <span> <a href="https://en.wikipedia.org/wiki/Thunk">thunks</a> <span style="vertical-align: super"> <a href="https://en.wikipedia.org/wiki/Thunk" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span>) in the <code>saved</code> array, which are then processed after the current branch is completed.</p> <figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span></span><span class="k">class</span> <span class="nc">Tree</span>
   <span class="kp">attr_accessor</span> <span class="ss">:tree</span><span class="p">,</span> <span class="ss">:saved</span><span class="p">,</span> <span class="ss">:output</span>
 
   <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
@@ -220,11 +61,7 @@ completed.</p>
 
     <span class="n">saved</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">tap</span> <span class="p">{</span> <span class="nb">self</span><span class="o">.</span><span class="n">saved</span> <span class="o">=</span> <span class="n">saved</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">call</span>
   <span class="k">end</span>
-<span class="k">end</span></code></pre></figure>
-
-<p>And the output is identical to what you would expect with the recursive solution.</p>
-
-<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="n">tree</span> <span class="o">=</span> <span class="no">Tree</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">[</span><span class="ss">:a</span><span class="p">,</span> <span class="o">[</span><span class="ss">:b</span><span class="p">,</span> <span class="o">[</span><span class="ss">:d</span><span class="p">,</span> <span class="ss">:h</span><span class="o">]]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:c</span><span class="p">,</span> <span class="ss">:e</span><span class="p">,</span> <span class="o">[</span><span class="ss">:f</span><span class="p">,</span> <span class="ss">:i</span><span class="o">]</span><span class="p">,</span> <span class="ss">:g</span><span class="o">]]</span><span class="p">)</span>
+<span class="k">end</span></code></pre></figure> <p>And the output is identical to what you would expect with the recursive solution.</p> <figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="n">tree</span> <span class="o">=</span> <span class="no">Tree</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">[</span><span class="ss">:a</span><span class="p">,</span> <span class="o">[</span><span class="ss">:b</span><span class="p">,</span> <span class="o">[</span><span class="ss">:d</span><span class="p">,</span> <span class="ss">:h</span><span class="o">]]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:c</span><span class="p">,</span> <span class="ss">:e</span><span class="p">,</span> <span class="o">[</span><span class="ss">:f</span><span class="p">,</span> <span class="ss">:i</span><span class="o">]</span><span class="p">,</span> <span class="ss">:g</span><span class="o">]]</span><span class="p">)</span>
 <span class="go">=&gt; #&lt;Tree:0x00557411a28a48 ...&gt;</span>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">dft</span>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">output</span>
@@ -234,24 +71,7 @@ completed.</p>
 <span class="go">=&gt; #&lt;Tree:0x005574119c48b8 ...&gt;</span>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">dft</span>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">output</span>
-<span class="go">=&gt; [1, 2, 3, 6, 7, 4, 5]</span></code></pre></figure>
-
-<p>The most interesting aspects of this implementation, however, is not simply that
-it produces the expected result.  The first thing to notice, as Graham points
-out, is the lack of any explicit iteration or recursion.  Control flow is
-entirely handled through the partial calculations we store as continuations and
-restart until we have completed the traversal.  &quot;Search with continuations
-represents a novel way of thinking about programs:  put the right code in the
-stack, and get the result by repeatedly returning up through it.&quot;</p>
-
-<p>The second novel feature of this implementation is that we are able to take
-control of it using the <code>Tree#dft_node</code> and <code>Tree#restart</code> methods.  Once we
-have an instance of a tree, we can take off as many nodes as we want.  It is
-possible, in fact, to turn this implementation into a lazy enumerator with very
-little effort.  This next figure displays the output when the flow is explicitly
-handled by the caller.</p>
-
-<figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="n">tree</span> <span class="o">=</span> <span class="no">Tree</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">[</span><span class="ss">:a</span><span class="p">,</span> <span class="o">[</span><span class="ss">:b</span><span class="p">,</span> <span class="o">[</span><span class="ss">:d</span><span class="p">,</span> <span class="ss">:h</span><span class="o">]]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:c</span><span class="p">,</span> <span class="ss">:e</span><span class="p">,</span> <span class="o">[</span><span class="ss">:f</span><span class="p">,</span> <span class="ss">:i</span><span class="o">]</span><span class="p">,</span> <span class="ss">:g</span><span class="o">]]</span><span class="p">)</span>
+<span class="go">=&gt; [1, 2, 3, 6, 7, 4, 5]</span></code></pre></figure> <p>The most interesting aspects of this implementation, however, is not simply that it produces the expected result. The first thing to notice, as Graham points out, is the lack of any explicit iteration or recursion. Control flow is entirely handled through the partial calculations we store as continuations and restart until we have completed the traversal. &quot;Search with continuations represents a novel way of thinking about programs: put the right code in the stack, and get the result by repeatedly returning up through it.&quot;</p> <p>The second novel feature of this implementation is that we are able to take control of it using the <code>Tree#dft_node</code> and <code>Tree#restart</code> methods. Once we have an instance of a tree, we can take off as many nodes as we want. It is possible, in fact, to turn this implementation into a lazy enumerator with very little effort. This next figure displays the output when the flow is explicitly handled by the caller.</p> <figure class="highlight"><pre><code class="language-irb" data-lang="irb"><span></span><span class="gp">&gt;&gt; </span><span class="n">tree</span> <span class="o">=</span> <span class="no">Tree</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="o">[</span><span class="ss">:a</span><span class="p">,</span> <span class="o">[</span><span class="ss">:b</span><span class="p">,</span> <span class="o">[</span><span class="ss">:d</span><span class="p">,</span> <span class="ss">:h</span><span class="o">]]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:c</span><span class="p">,</span> <span class="ss">:e</span><span class="p">,</span> <span class="o">[</span><span class="ss">:f</span><span class="p">,</span> <span class="ss">:i</span><span class="o">]</span><span class="p">,</span> <span class="ss">:g</span><span class="o">]]</span><span class="p">)</span>
 <span class="go">=&gt; #&lt;Tree:0x0055a9c66363a0 ...&gt;</span>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">dft_node</span>
 <span class="go">=&gt; :a</span>
@@ -260,72 +80,4 @@ handled by the caller.</p>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">restart</span>
 <span class="go">=&gt; :d</span>
 <span class="gp">&gt;&gt; </span><span class="n">tree</span><span class="o">.</span><span class="n">restart</span>
-<span class="go">=&gt; :h</span></code></pre></figure>
-
-<h2>Continuation Passing Style Without Macros</h2>
-
-<p>This article has glossed over a very key point:  Lisp does not actually have
-continuations, and all these examples are taken from Scheme as a way to frame
-an implementation of continuations in Lisp using macros.  This is accomplished
-using macros, which, in Lisp, are statically interpolated, making it possible
-to fall back on lexical scope and variable shadowing as the primary mechanisms
-for implementing semantics similar to continuations.  Since metaprogramming in
-Ruby is dynamically performed at runtime, we do not have the same facilities at
-our disposal.  We will have to, instead, take a different approach to the
-problem and, likely, abuse some language features to accomplish the same result.</p>
-
-  <span class="post-date">29 May 2017</span>
-</div>
-
-
-  <div class="related">
-    <h2>Related Posts</h2>
-    <ul class="related-posts">
-      
-        <li>
-          <h3>
-            <a href="/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/">
-              Common Table Expressions in ActiveRecord: A Case Study of Quantiles
-              <small>05 Jun 2017</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
-            <a href="/2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/">
-              On Maintainability: Gold Plating the Game of Life in Elm
-              <small>18 Jun 2017</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
-            <a href="/2015/02/26/hacking-s-expressions-into-ruby/">
-              Hacking S-expressions into Ruby
-              <small>26 Feb 2015</small>
-            </a>
-          </h3>
-        </li>
-      
-    </ul>
-  </div>
-
-
-<p class="bitcoin"></p>
-
-    </div>
-
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-      ga('create', 'UA-47296801-1', 'sonnym.github.io');
-      ga('send', 'pageview');
-    </script>
-
-  </body>
-</html>
+<span class="go">=&gt; :h</span></code></pre></figure> <h2>Continuation Passing Style Without Macros</h2> <p>This article has glossed over a very key point: Lisp does not actually have continuations, and all these examples are taken from Scheme as a way to frame an implementation of continuations in Lisp using macros. This is accomplished using macros, which, in Lisp, are statically interpolated, making it possible to fall back on lexical scope and variable shadowing as the primary mechanisms for implementing semantics similar to continuations. Since metaprogramming in Ruby is dynamically performed at runtime, we do not have the same facilities at our disposal. We will have to, instead, take a different approach to the problem and, likely, abuse some language features to accomplish the same result.</p> <span class="post-date">29 May 2017</span> </div> <div class="related"> <h2>Related Posts</h2> <ul class="related-posts"> <li> <h3> <a href="/2017/05/29/continuations-in-ruby-part-1-first-class-objects/"> Continuations in Ruby - Part 1: First Class Objects <small>29 May 2017</small> </a> </h3> </li> <li> <h3> <a href="/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/"> Common Table Expressions in ActiveRecord: A Case Study of Quantiles <small>05 Jun 2017</small> </a> </h3> </li> <li> <h3> <a href="/2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/"> On Maintainability: Gold Plating the Game of Life in Elm <small>18 Jun 2017</small> </a> </h3> </li> </ul> </div> <p class="bitcoin"></p> </div> <script>!function(e,n,t,a,c,o,s){e.GoogleAnalyticsObject=c,e[c]=e[c]||function(){(e[c].q=e[c].q||[]).push(arguments)},e[c].l=1*new Date,o=n.createElement(t),s=n.getElementsByTagName(t)[0],o.async=1,o.src=a,s.parentNode.insertBefore(o,s)}(window,document,"script","//www.google-analytics.com/analytics.js","ga"),ga("create","UA-47296801-1","sonnym.github.io"),ga("send","pageview");</script> </body> </html>

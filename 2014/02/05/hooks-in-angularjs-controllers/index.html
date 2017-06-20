@@ -1,119 +1,4 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
-
-  <head>
-  <link href="http://gmpg.org/xfn/11" rel="profile">
-  <meta http-equiv="content-type" content="text/html; charset=utf-8">
-
-  <!-- Enable responsiveness on mobile devices-->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-
-  <title>
-    Hooks in AngularJS Controllers &middot; effluence
-  </title>
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="/css/poole.css">
-  <link rel="stylesheet" href="/css/syntax.css">
-  <link rel="stylesheet" href="/css/hyde.css">
-  <link rel="stylesheet" href="/css/custom.css">
-
-  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
-
-  <!-- RSS -->
-  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
-</head>
-
-
-  <body class="layout-reverse">
-
-    <div class="sidebar">
-  <div class="container sidebar-sticky">
-    <div class="sidebar-about">
-      <h1>effluence</h1>
-      <p class="lead"></p>
-    </div>
-
-    <ul class="sidebar-nav">
-      <li class="sidebar-nav-item">
-        <a href="/">home</a>
-      </li>
-
-      
-
-      
-        
-      
-        
-          
-            <li class="sidebar-nav-item">
-              <a href="/projects/">projects</a>
-            </li>
-          
-        
-      
-        
-          
-            <li class="sidebar-nav-item">
-              <a href="/about/">about</a>
-            </li>
-          
-        
-      
-        
-          
-        
-      
-        
-          
-        
-      
-
-      <li class="sidebar-nav-item">
-        <a href="/atom.xml" target="_blank">rss</a>
-      </li>
-    </ul>
-
-    <p>&copy; 2017. All rights reserved.</p>
-  </div>
-</div>
-
-
-    <div class="content container">
-      <div class="post">
-  <h1 class="post-title">Hooks in AngularJS Controllers</h1>
-  <h2>The Situation</h2>
-
-<p>Sometimes when working with nested scopes, you may encounter a situation in
-which some scope action depends on the status of some arbitrarily nested
-controller. This could be a multi-part form built from reusable components,
-preventing the user from proceeding until complete, for example.</p>
-
-<p>An architecture that allows scopes nested within another scope to influence the
-life cycle of the latter has one primary advantage, namely, greater separation
-of concerns. A nested controller can supply functions for data validation and
-formatting, while the parent controller defines functions for navigation and
-accumulation of results. This leads to better modularity, as the parent
-controller is isolated from the implementation of nested controllers, while the
-latter are able to be used modularly in more contexts.</p>
-
-<h2>A Simple Example</h2>
-
-<p><span> <a href="http://plnkr.co/edit/QKzZZq?p=preview">Open in Plunkr</a> <span style="vertical-align: super"> <a href="http://plnkr.co/edit/QKzZZq?p=preview" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span></p>
-
-<p>As the structure of the following example indicates, we have three controllers
-- one that coordinates and two that handle user input. We have taken the
-liberty of using
-<span> <a href="http://underscorejs.org/">underscore</a> <span style="vertical-align: super"> <a href="http://underscorejs.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a>  </span> </span>
-to simplify checking if all conditions are met.</p>
-
-<p>Here, the <code>FormCheckboxCtrl</code> has no validation, but does coerce its results to
-be human readable, while <code>FormTextInputCtrl</code> returns the text input and is
-invalid if none is provided.</p>
-
-<p>What remains is, simply, to make it work.</p>
-
-<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">body</span> <span class="na">ng-app</span><span class="o">=</span><span class="s">&quot;HookExample&quot;</span><span class="p">&gt;</span>
+<!DOCTYPE html> <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us"> <head> <link href="http://gmpg.org/xfn/11" rel="profile"> <meta http-equiv="content-type" content="text/html; charset=utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"> <title> Hooks in AngularJS Controllers &middot; effluence </title> <link rel="stylesheet" href="/css/poole.css"> <link rel="stylesheet" href="/css/syntax.css"> <link rel="stylesheet" href="/css/hyde.css"> <link rel="stylesheet" href="/css/custom.css"> <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml"> </head> <body class="layout-reverse"> <div class="sidebar"> <div class="container sidebar-sticky"> <div class="sidebar-about"> <h1>effluence</h1> <p class="lead"></p> </div> <ul class="sidebar-nav"> <li class="sidebar-nav-item"> <a href="/">home</a> </li> <li class="sidebar-nav-item"> <a href="/projects/">projects</a> </li> <li class="sidebar-nav-item"> <a href="/about/">about</a> </li> <li class="sidebar-nav-item"> <a href="/atom.xml" target="_blank">rss</a> </li> </ul> <p>&copy; 2017. All rights reserved.</p> </div> </div> <div class="content container"> <div class="post"> <h1 class="post-title">Hooks in AngularJS Controllers</h1> <h2>The Situation</h2> <p>Sometimes when working with nested scopes, you may encounter a situation in which some scope action depends on the status of some arbitrarily nested controller. This could be a multi-part form built from reusable components, preventing the user from proceeding until complete, for example.</p> <p>An architecture that allows scopes nested within another scope to influence the life cycle of the latter has one primary advantage, namely, greater separation of concerns. A nested controller can supply functions for data validation and formatting, while the parent controller defines functions for navigation and accumulation of results. This leads to better modularity, as the parent controller is isolated from the implementation of nested controllers, while the latter are able to be used modularly in more contexts.</p> <h2>A Simple Example</h2> <p><span> <a href="http://plnkr.co/edit/QKzZZq?p=preview">Open in Plunkr</a> <span style="vertical-align: super"> <a href="http://plnkr.co/edit/QKzZZq?p=preview" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span></p> <p>As the structure of the following example indicates, we have three controllers - one that coordinates and two that handle user input. We have taken the liberty of using <span> <a href="http://underscorejs.org/">underscore</a> <span style="vertical-align: super"> <a href="http://underscorejs.org/" target="_blank" alt="Pop Out" title="Pop Out"><svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a> </span> </span> to simplify checking if all conditions are met.</p> <p>Here, the <code>FormCheckboxCtrl</code> has no validation, but does coerce its results to be human readable, while <code>FormTextInputCtrl</code> returns the text input and is invalid if none is provided.</p> <p>What remains is, simply, to make it work.</p> <figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">body</span> <span class="na">ng-app</span><span class="o">=</span><span class="s">&quot;HookExample&quot;</span><span class="p">&gt;</span>
   <span class="p">&lt;</span><span class="nt">div</span> <span class="na">ng-controller</span><span class="o">=</span><span class="s">&quot;FormPageCtrl&quot;</span><span class="p">&gt;</span>
     <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Please enter some text below.<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
 
@@ -127,9 +12,7 @@ invalid if none is provided.</p>
 
     <span class="p">&lt;</span><span class="nt">div</span> <span class="na">ng-show</span><span class="o">=</span><span class="s">&quot;showResults()&quot;</span><span class="p">&gt;</span>{{ $scope.results() }}<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
   <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span></code></pre></figure>
-
-<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="kd">var</span> <span class="nx">HookExample</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;HookExample&quot;</span><span class="p">,</span> <span class="p">[]);</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span></code></pre></figure> <figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="kd">var</span> <span class="nx">HookExample</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s2">&quot;HookExample&quot;</span><span class="p">,</span> <span class="p">[]);</span>
 
 <span class="nx">HookExample</span><span class="p">.</span><span class="nx">controller</span><span class="p">(</span><span class="s2">&quot;FormPageCtrl&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$scope</span><span class="p">,</span> <span class="nx">RegisterHook</span><span class="p">)</span> <span class="p">{</span>
   <span class="nx">$scope</span><span class="p">.</span><span class="nx">showResults</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
@@ -157,16 +40,7 @@ invalid if none is provided.</p>
   <span class="nx">$scope</span><span class="p">.</span><span class="nx">getResults</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
     <span class="k">return</span> <span class="nx">$scope</span><span class="p">.</span><span class="nx">checkbox</span> <span class="o">?</span> <span class="s2">&quot;Yes&quot;</span> <span class="o">:</span> <span class="s2">&quot;No&quot;</span><span class="p">;</span>
   <span class="p">};</span>
-<span class="p">});</span></code></pre></figure>
-
-<h2>A Hook Implementation</h2>
-
-<p>By recursively traversing the <code>$$childHead</code> and <code>$$nextSibling</code> properties of
-the scope, we can give ask if any controller nested within the hierarchy wishes
-to respond to the hook, thereby influencing the life cycle of our parent
-controller.</p>
-
-<figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+<span class="p">});</span></code></pre></figure> <h2>A Hook Implementation</h2> <p>By recursively traversing the <code>$$childHead</code> and <code>$$nextSibling</code> properties of the scope, we can give ask if any controller nested within the hierarchy wishes to respond to the hook, thereby influencing the life cycle of our parent controller.</p> <figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span></span><span class="nx">HookExample</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s2">&quot;RegisterHook&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
   <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">scope</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
     <span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="p">[];</span>
 
@@ -185,101 +59,4 @@ controller.</p>
 
     <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">results</span><span class="p">);</span>
   <span class="p">}</span>
-<span class="p">});</span></code></pre></figure>
-
-<p>This simple implemnation will look for and call the <code>name</code> function on any
-scope, starting from the <code>$$childHead</code> of the scope passed in. Once all the
-results have been accumulated, the <code>callback</code> is called with those results,
-allowing for a nice functional interface, as in the case of passing in
-<code>_.every</code>.</p>
-
-<p>Since the callback is required in this naive implementation, it
-would be possible to pass in <code>angular.noop</code> as the callback to discard the
-results, thereby issuing some call to arbitrarily nested controllers. In that
-case, however, a more reasonable approach would be to <code>$broadcast</code> an event.</p>
-
-<h2>Hooks vs. Events vs. Services</h2>
-
-<p>When is this approach of registering hooks more appropriate than using events?
-Primarily when you need to get the data back from the user via collaborating
-controllers. The way event broadcasting requires an event to the child
-controllers, each of which must call another event for the parent controller to
-handle quickly becomes brittle.  In cases where the data is not transient, it
-is likely best to use a service object to store all the data and have the
-collaborators reference it directly.</p>
-
-<p>That said, there is certainly still a place for hooks like the one outlined
-above, but it is necessary to use it in appropriate situations. Littering our
-code with hooks that would be best treated as services for their persistence or
-events for their unidirectionality will not be an improvement.</p>
-
-<p>But in cases where data transience and bidirectional collaboration between
-controllers at different levels of nesting is present, hooks reign supreme by
-exposing carefully selected points of interaction.</p>
-
-<h2>Improvements</h2>
-
-<p>Herein, we have only examined a very simple hooking mechanism, which can
-certainly be built out to have some additional interesting properties. Optional
-callbacks and the ability to handle arguments would be straight forward
-changes.  More interesting is the possibility to return more than just a single
-function for accumulating results, but instead having a more robust interface.
-This could include functionality akin to that in <code>ActiveRecord</code> callbacks,
-wherein returning false prevents future hooks from running and prevents some
-default action.</p>
-
-  <span class="post-date">05 Feb 2014</span>
-</div>
-
-
-  <div class="related">
-    <h2>Related Posts</h2>
-    <ul class="related-posts">
-      
-        <li>
-          <h3>
-            <a href="/2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/">
-              On Maintainability: Gold Plating the Game of Life in Elm
-              <small>18 Jun 2017</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
-            <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/">
-              Using Defined Properties for Better AngularJS Directives
-              <small>21 Jan 2015</small>
-            </a>
-          </h3>
-        </li>
-      
-        <li>
-          <h3>
-            <a href="/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/">
-              Common Table Expressions in ActiveRecord: A Case Study of Quantiles
-              <small>05 Jun 2017</small>
-            </a>
-          </h3>
-        </li>
-      
-    </ul>
-  </div>
-
-
-<p class="bitcoin"></p>
-
-    </div>
-
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-      ga('create', 'UA-47296801-1', 'sonnym.github.io');
-      ga('send', 'pageview');
-    </script>
-
-  </body>
-</html>
+<span class="p">});</span></code></pre></figure> <p>This simple implemnation will look for and call the <code>name</code> function on any scope, starting from the <code>$$childHead</code> of the scope passed in. Once all the results have been accumulated, the <code>callback</code> is called with those results, allowing for a nice functional interface, as in the case of passing in <code>_.every</code>.</p> <p>Since the callback is required in this naive implementation, it would be possible to pass in <code>angular.noop</code> as the callback to discard the results, thereby issuing some call to arbitrarily nested controllers. In that case, however, a more reasonable approach would be to <code>$broadcast</code> an event.</p> <h2>Hooks vs. Events vs. Services</h2> <p>When is this approach of registering hooks more appropriate than using events? Primarily when you need to get the data back from the user via collaborating controllers. The way event broadcasting requires an event to the child controllers, each of which must call another event for the parent controller to handle quickly becomes brittle. In cases where the data is not transient, it is likely best to use a service object to store all the data and have the collaborators reference it directly.</p> <p>That said, there is certainly still a place for hooks like the one outlined above, but it is necessary to use it in appropriate situations. Littering our code with hooks that would be best treated as services for their persistence or events for their unidirectionality will not be an improvement.</p> <p>But in cases where data transience and bidirectional collaboration between controllers at different levels of nesting is present, hooks reign supreme by exposing carefully selected points of interaction.</p> <h2>Improvements</h2> <p>Herein, we have only examined a very simple hooking mechanism, which can certainly be built out to have some additional interesting properties. Optional callbacks and the ability to handle arguments would be straight forward changes. More interesting is the possibility to return more than just a single function for accumulating results, but instead having a more robust interface. This could include functionality akin to that in <code>ActiveRecord</code> callbacks, wherein returning false prevents future hooks from running and prevents some default action.</p> <span class="post-date">05 Feb 2014</span> </div> <div class="related"> <h2>Related Posts</h2> <ul class="related-posts"> <li> <h3> <a href="/2014/02/05/hooks-in-angularjs-controllers/"> Hooks in AngularJS Controllers <small>05 Feb 2014</small> </a> </h3> </li> <li> <h3> <a href="/2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/"> On Maintainability: Gold Plating the Game of Life in Elm <small>18 Jun 2017</small> </a> </h3> </li> <li> <h3> <a href="/2015/01/21/using-defined-properties-for-better-angularjs-directives/"> Using Defined Properties for Better AngularJS Directives <small>21 Jan 2015</small> </a> </h3> </li> </ul> </div> <p class="bitcoin"></p> </div> <script>!function(e,n,t,a,c,o,s){e.GoogleAnalyticsObject=c,e[c]=e[c]||function(){(e[c].q=e[c].q||[]).push(arguments)},e[c].l=1*new Date,o=n.createElement(t),s=n.getElementsByTagName(t)[0],o.async=1,o.src=a,s.parentNode.insertBefore(o,s)}(window,document,"script","//www.google-analytics.com/analytics.js","ga"),ga("create","UA-47296801-1","sonnym.github.io"),ga("send","pageview");</script> </body> </html>
