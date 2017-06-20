@@ -174,7 +174,7 @@ are all on to begin with.</p>
   <span class="nv">spacer</span> <span class="nv">cellSize</span> <span class="nv">cellSize</span>
     <span class="nf">|&gt;</span> <span class="nv">color</span> <span class="p">(</span><span class="kr">if</span> <span class="nv">on</span> <span class="kr">then</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">else</span> <span class="p">(</span><span class="nv">rgb</span> <span class="mi">255</span> <span class="mi">255</span> <span class="mi">255</span><span class="p">))</span></code></pre></figure>
 
-<h5><a href="/examples/elm/0.14/static_grid/" target="_new">Pop Out Result</a></h5>
+<h5><a href="/examples/elm/0.14/static_grid/" target="_new">View Result <svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a></h5>
 
 <p>The crux of this program is that we want to turn a nested list of boolean
 values (<code>List (List Bool)</code>) into an <code>Element</code>, one of two possible types for
@@ -280,7 +280,7 @@ very few steps. These are as follows:</p>
       <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">i</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
           <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></figure>
 
-<h5><a href="/examples/elm/0.14/random_grid/" target="_new">Pop Out Result</a></h5>
+<h5><a href="/examples/elm/0.14/random_grid/" target="_new">View Result <svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a></h5>
 
 <p>We do write two other helper functions, <code>generateRow</code> and <code>groupInto</code>, but
 neither change is essential for the example. In fact, the rendering we wrote
@@ -399,7 +399,7 @@ process, consisting primarily of the following steps:</p>
       <span class="nf">|&gt;</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">indexedMap</span> <span class="p">(</span><span class="nf">\</span><span class="nv">i</span> <span class="nv">_</span> <span class="nf">-&gt;</span>
           <span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">n</span> <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">n</span> <span class="nf">*</span> <span class="nv">i</span><span class="p">)</span> <span class="nv">initial</span><span class="p">))</span></code></pre></figure>
 
-<h5><a href="/examples/elm/0.14/game_of_life/" target="_new">Pop Out Result</a></h5>
+<h5><a href="/examples/elm/0.14/game_of_life/" target="_new">View Result <svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a></h5>
 
 <p>The only real nuance here is that we must <code>sampleOn seed (every second)</code>, which
 updates the signal with the constant initial value. We use an empty default to

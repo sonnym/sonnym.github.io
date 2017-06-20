@@ -978,11 +978,11 @@ implications revealed by this, seemingly tangential aspect, shortly</p>
   <span class="kr">in</span>
     <span class="p">(</span><span class="kt">List</span><span class="nf">.</span><span class="nv">take</span> <span class="nv">x</span> <span class="nv">lst</span><span class="p">)</span> <span class="nf">++</span> <span class="p">(</span><span class="nv">updated</span> <span class="nf">::</span> <span class="kt">List</span><span class="nf">.</span><span class="nv">drop</span> <span class="p">(</span><span class="nv">x</span> <span class="nf">+</span> <span class="mi">1</span><span class="p">)</span> <span class="nv">lst</span><span class="p">)</span></code></pre></figure>
 
-<h5><a href="/examples/elm/game_of_life_gold_plated/" target="_new">Pop Out Result</a></h5>
+<h5><a href="/examples/elm/game_of_life_gold_plated/" target="_new">View Result <svg class="octicon octicon-link-external" viewBox="0 0 12 16" version="1.1" width="12" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z"/></svg></a></h5>
 
-<p>This is, unfortunately, somewhat of a mess — not for any fault of Elm.  The
-main problem is having kept everything in a single file in an attempt to make
-the example self-contained.  Imagine separating out the <code>view</code> function (in
+<p>This is, unfortunately, somewhat of a mess—not for any fault of Elm.  The main
+problem is having kept everything in a single file in an attempt to make the
+example self-contained.  Imagine separating out the <code>view</code> function (in
 conjunction with subordinates) and the <code>update</code> (with its helpers) into separate
 modules, leaving only the core logic in main file.  Elm, in fact, is designed in
 such a way to facilitate (and even encourage) this sort of structure.
