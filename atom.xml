@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
  <title>effluence</title>
- <link href="http://localhost:4000/atom.xml" rel="self"/>
- <link href="http://localhost:4000/"/>
- <updated>2018-01-03T19:57:59-05:00</updated>
- <id>http://localhost:4000</id>
+ <link href="https://sonnym.github.io//atom.xml" rel="self"/>
+ <link href="https://sonnym.github.io//"/>
+ <updated>2018-01-03T21:42:24-05:00</updated>
+ <id>https://sonnym.github.io/</id>
  <author>
    <name></name>
    <email></email>
@@ -13,10 +13,42 @@
 
  
  <entry>
+   <title>Privacy and Exposure, Gatekeepers and Privileged Consumers</title>
+   <link href="https://sonnym.github.io//2018/01/03/privacy-and-exposure-gatekeeprs-and-privileged-consumers/?utm_medium=rss"/>
+   <updated>2018-01-03T00:00:00-05:00</updated>
+   <id>https://sonnym.github.io//2018/01/03/privacy-and-exposure-gatekeeprs-and-privileged-consumers</id>
+   <content type="html">&lt;h2&gt;Encapsulation and Information Hiding&lt;/h2&gt;
+
+&lt;p&gt;&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Information_hiding&quot;&gt;Encapsulation&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Information_hiding&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
+and
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Information_hiding&quot;&gt;information hiding&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Information_hiding&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
+are well known principles in object-oriented programming, common mechanisms for
+maintaining DRY code and enforcing the
+&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Single_responsibility_principle&quot;&gt;single responsibility principle&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Single_responsibility_principle&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.
+While these foundational elements imbue the programmer with significant
+expressive power and are essential for writing software with possessing anything  more than a
+semblance of maintainability, they sometimes introduce restrictions that are
+ultimately antithetical to those goals.  We, the writers of code,  should,
+therefore, have a solid understanding of not only the standard use of these core
+object-oriented principles, but also, and, perhaps, more importantly, where they
+break down in addition to how and when to work around them.&lt;/p&gt;
+
+&lt;p&gt;We will look at the ways in which we are able to subvert typical safety nets, and
+this exploration of various means for exposing otherwise private members will
+also serve as an introduction to some features of the Ruby programming language
+less frequently encountered in day to day practice.  We will, ultimately,
+introduce additional safety to objects that traditionally have little, in an
+attempt to limit the use of our newfound powers for good.  Let us begin by
+looking at the three levels of visibility available and how they are used via a
+concrete, storybook example.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
    <title>On Maintainability: Gold Plating the Game of Life in Elm</title>
-   <link href="http://localhost:4000/2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm/?utm_medium=rss"/>
    <updated>2017-06-18T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm</id>
+   <id>https://sonnym.github.io//2017/06/18/on-maintainability-gold-plating-the-game-of-life-in-elm</id>
    <content type="html">&lt;h2&gt;Launch Pad&lt;/h2&gt;
 
 &lt;p&gt;In a previous
@@ -38,9 +70,9 @@ implementation, while moving toward the final version.&lt;/p&gt;
  
  <entry>
    <title>Common Table Expressions in ActiveRecord: A Case Study of Quantiles</title>
-   <link href="http://localhost:4000/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles/?utm_medium=rss"/>
    <updated>2017-06-05T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles</id>
+   <id>https://sonnym.github.io//2017/06/05/common-table-expressions-in-activerecord-a-case-study-of-quantiles</id>
    <content type="html">&lt;h2&gt;Framing&lt;/h2&gt;
 
 &lt;p&gt;Today, we are going to look at a straightforward real-world problem, and build a
@@ -62,9 +94,9 @@ student, also display the quintile into which their grade falls.&lt;/p&gt;
  
  <entry>
    <title>Continuations in Ruby - Part 1: First Class Objects</title>
-   <link href="http://localhost:4000/2017/05/29/continuations-in-ruby-part-1-first-class-objects/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2017/05/29/continuations-in-ruby-part-1-first-class-objects/?utm_medium=rss"/>
    <updated>2017-05-29T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2017/05/29/continuations-in-ruby-part-1-first-class-objects</id>
+   <id>https://sonnym.github.io//2017/05/29/continuations-in-ruby-part-1-first-class-objects</id>
    <content type="html">&lt;h2&gt;Caveat Emptor&lt;/h2&gt;
 
 &lt;p&gt;This is the first in an ongoing part series exploring the possibilities
@@ -96,9 +128,9 @@ the simple fact that we should not is enough to make it worthwhile.&lt;/p&gt;
  
  <entry>
    <title>Revisiting the Game of Life in Elm</title>
-   <link href="http://localhost:4000/2017/05/22/revisiting-the-game-of-life-in-elm/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2017/05/22/revisiting-the-game-of-life-in-elm/?utm_medium=rss"/>
    <updated>2017-05-22T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2017/05/22/revisiting-the-game-of-life-in-elm</id>
+   <id>https://sonnym.github.io//2017/05/22/revisiting-the-game-of-life-in-elm</id>
    <content type="html">&lt;h2&gt;Reflection&lt;/h2&gt;
 
 &lt;p&gt;Over three years ago, I wrote an
@@ -116,9 +148,9 @@ simple modern Elm program.&lt;/p&gt;
  
  <entry>
    <title>Hacking S-expressions into Ruby</title>
-   <link href="http://localhost:4000/2015/02/26/hacking-s-expressions-into-ruby/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby/?utm_medium=rss"/>
    <updated>2015-02-26T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2015/02/26/hacking-s-expressions-into-ruby</id>
+   <id>https://sonnym.github.io//2015/02/26/hacking-s-expressions-into-ruby</id>
    <content type="html">&lt;h2&gt;Background&lt;/h2&gt;
 
 &lt;p&gt;&lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot;&gt;S-expressions&lt;/a&gt; &lt;span style=&quot;vertical-align: super&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 12 16&quot; version=&quot;1.1&quot; width=&quot;12&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path fill-rule=&quot;evenodd&quot; d=&quot;M11 10h1v3c0 .55-.45 1-1 1H1c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h3v1H1v10h10v-3zM6 2l2.25 2.25L5 7.5 6.5 9l3.25-3.25L12 8V2H6z&quot;/&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
@@ -145,9 +177,9 @@ along the road to ultimate failure.&lt;/p&gt;
  
  <entry>
    <title>Using Defined Properties for Better AngularJS Directives</title>
-   <link href="http://localhost:4000/2015/01/21/using-defined-properties-for-better-angularjs-directives/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2015/01/21/using-defined-properties-for-better-angularjs-directives/?utm_medium=rss"/>
    <updated>2015-01-21T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2015/01/21/using-defined-properties-for-better-angularjs-directives</id>
+   <id>https://sonnym.github.io//2015/01/21/using-defined-properties-for-better-angularjs-directives</id>
    <content type="html">&lt;h2&gt;On Directives&lt;/h2&gt;
 
 &lt;p&gt;Directives in AngularJS are an exemplary solution for writing reusable
@@ -174,9 +206,9 @@ how we can improve our directives.&lt;/p&gt;
  
  <entry>
    <title>Barebones Architecture in Elm</title>
-   <link href="http://localhost:4000/2014/12/23/barebones-architecture-in-elm/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2014/12/23/barebones-architecture-in-elm/?utm_medium=rss"/>
    <updated>2014-12-23T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2014/12/23/barebones-architecture-in-elm</id>
+   <id>https://sonnym.github.io//2014/12/23/barebones-architecture-in-elm</id>
    <content type="html">&lt;h2&gt;Motivation and Background&lt;/h2&gt;
 
 &lt;p&gt;In the process of writing larger applications in
@@ -207,9 +239,9 @@ article.&lt;/p&gt;
  
  <entry>
    <title>Writing Game of Life in Elm</title>
-   <link href="http://localhost:4000/2014/05/05/writing-game-of-life-in-elm/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2014/05/05/writing-game-of-life-in-elm/?utm_medium=rss"/>
    <updated>2014-05-05T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2014/05/05/writing-game-of-life-in-elm</id>
+   <id>https://sonnym.github.io//2014/05/05/writing-game-of-life-in-elm</id>
    <content type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;In this article, we will walk through the steps for writing an implementation
@@ -235,9 +267,9 @@ fashion as a consequence of the core concept in Elm: signals.&lt;/p&gt;
  
  <entry>
    <title>Lazy Ruby</title>
-   <link href="http://localhost:4000/2014/04/05/lazy-ruby/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2014/04/05/lazy-ruby/?utm_medium=rss"/>
    <updated>2014-04-05T00:00:00-04:00</updated>
-   <id>http://localhost:4000/2014/04/05/lazy-ruby</id>
+   <id>https://sonnym.github.io//2014/04/05/lazy-ruby</id>
    <content type="html">&lt;h2&gt;Lazy Evaluation and Recursive Lists&lt;/h2&gt;
 
 &lt;p&gt;In Haskell, it is possible to construct infinite lists via recursive
@@ -254,9 +286,9 @@ the fibonacci sequence.&lt;/p&gt;
  
  <entry>
    <title>Hooks in AngularJS Controllers</title>
-   <link href="http://localhost:4000/2014/02/05/hooks-in-angularjs-controllers/?utm_medium=rss"/>
+   <link href="https://sonnym.github.io//2014/02/05/hooks-in-angularjs-controllers/?utm_medium=rss"/>
    <updated>2014-02-05T00:00:00-05:00</updated>
-   <id>http://localhost:4000/2014/02/05/hooks-in-angularjs-controllers</id>
+   <id>https://sonnym.github.io//2014/02/05/hooks-in-angularjs-controllers</id>
    <content type="html">&lt;h2&gt;The Situation&lt;/h2&gt;
 
 &lt;p&gt;Sometimes when working with nested scopes, you may encounter a situation in
