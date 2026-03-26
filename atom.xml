@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
- <title>effluence</title>
+ <title>Sonny Michaud - Engineering Leader</title>
  <link href="https://sonnym.com/atom.xml" rel="self"/>
  <link href="https://sonnym.com/"/>
- <updated>2026-02-01T17:08:22-06:00</updated>
+ <updated>2026-03-26T10:45:06-05:00</updated>
  <id>https://sonnym.com</id>
  <author>
    <name></name>
@@ -123,41 +123,6 @@ student, also display the quintile into which their grade falls.&lt;/p&gt;
  </entry>
  
  <entry>
-   <title>Continuations in Ruby - Part 1: First Class Objects</title>
-   <link href="https://sonnym.com/2017/05/29/continuations-in-ruby-part-1-first-class-objects/?utm_medium=rss"/>
-   <updated>2017-05-29T00:00:00-05:00</updated>
-   <id>https://sonnym.com/2017/05/29/continuations-in-ruby-part-1-first-class-objects</id>
-   <content type="html">&lt;h2 id=&quot;caveat-emptor&quot;&gt;Caveat Emptor&lt;/h2&gt;
-
-&lt;p&gt;This is the first in an ongoing part series exploring the possibilities
-presented to the programmer when continuations are a first class part of a
-language.  These articles follow Chapter 20 of Paul Graham’s venerable treatise
-&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;http://www.paulgraham.com/onlisp.html&quot;&gt;On Lisp&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;http://www.paulgraham.com/onlisp.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.&lt;/p&gt;
-
-&lt;p&gt;While a powerful semantic construct, there is no secret that continuations are,
-for good reason,
-&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;http://okmij.org/ftp/continuations/against-callcc.html&quot;&gt;thoroughly reviled&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;http://okmij.org/ftp/continuations/against-callcc.html&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;.
-In short, give us the ability to store the state of a computation and return to
-it at a later point in the execution of our program.  This form of non-local
-return (or
-&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;http://rosettacode.org/wiki/Jump_anywhere#Ruby&quot;&gt;jump anywhere&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;http://rosettacode.org/wiki/Jump_anywhere#Ruby&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;)
-can be compared to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;goto&lt;/code&gt; statements of old or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;try&lt;/code&gt;/&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;catch&lt;/code&gt; semantics commonly
-seen today.  Both of these language features, in fact, can be implemented in
-terms of continuations, and in section 5.8.3 of
-&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;http://shop.oreilly.com/product/9780596516178.do&quot;&gt;The Ruby Programming Language&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;http://shop.oreilly.com/product/9780596516178.do&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
-the authors construct a BASIC inspired &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;goto&lt;/code&gt; function.  Today, when we &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;require
-&apos;continuation&apos;&lt;/code&gt;, the interpreter will kindly inform us that ‘warning: callcc is
-obsolete; use Fiber instead’.&lt;/p&gt;
-
-&lt;p&gt;With continuations framed in this way, it should go without saying that, under
-no circumstances whatsoever, should these curios be used in anything with any
-degree of seriousness.  Why, then, should should we even bother?  Sometimes,
-the simple fact that we should not is enough to make it worthwhile.&lt;/p&gt;
-
-</content>
- </entry>
- 
- <entry>
    <title>Revisiting the Game of Life in Elm</title>
    <link href="https://sonnym.com/2017/05/22/revisiting-the-game-of-life-in-elm/?utm_medium=rss"/>
    <updated>2017-05-22T00:00:00-05:00</updated>
@@ -174,36 +139,6 @@ In the process, Elm has
 in favor of subscription-based concurrency.  Today, we will go through the same
 exercise of writing the game of life, as a means of exploring the basics of a
 simple modern Elm program.&lt;/p&gt;
-
-</content>
- </entry>
- 
- <entry>
-   <title>Hacking S-expressions into Ruby</title>
-   <link href="https://sonnym.com/2015/02/26/hacking-s-expressions-into-ruby/?utm_medium=rss"/>
-   <updated>2015-02-26T00:00:00-06:00</updated>
-   <id>https://sonnym.com/2015/02/26/hacking-s-expressions-into-ruby</id>
-   <content type="html">&lt;h2 id=&quot;background&quot;&gt;Background&lt;/h2&gt;
-
-&lt;p&gt;&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot;&gt;S-expressions&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/S-expression&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
-are a classic means of storing trees of data. Part of the original Lisp
-specification, they have been a part of software engineering since the very
-beginning. Other languages, notably Scheme and, more recently, Clojure, have
-helped maintain the relevancy of this very simple means for representing data.&lt;/p&gt;
-
-&lt;p&gt;In the spirit of
-&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule&quot;&gt;Greenspun’s tenth rule&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;,
-we are going to attempt make first-class s-expressions in Ruby. There is
-already a
-&lt;span class=&quot;fancylink&quot;&gt; &lt;a href=&quot;http://rosettacode.org/wiki/S-Expressions#Ruby&quot;&gt;nice implementation&lt;/a&gt; &lt;span&gt; &lt;a href=&quot;http://rosettacode.org/wiki/S-Expressions#Ruby&quot; target=&quot;_blank&quot; alt=&quot;Pop Out&quot; title=&quot;Pop Out&quot;&gt;&lt;svg class=&quot;octicon octicon-link-external&quot; viewBox=&quot;0 0 16 16&quot; version=&quot;1.1&quot; width=&quot;16&quot; height=&quot;16&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;  &lt;/span&gt; &lt;/span&gt;
-of s-expressions in Ruby, for reference, but they are not first-class, which
-makes them less than ideal. As such, we are going to to see how far we can
-push (read: abuse) the dynamic nature of the Ruby language, and investigate
-just how much control we have over certain elements of its syntax.&lt;/p&gt;
-
-&lt;p&gt;For anyone more interested in the result than the journey, be warned that this
-attempt will not be successful, but some interesting results will be found
-along the road to ultimate failure.&lt;/p&gt;
 
 </content>
  </entry>
